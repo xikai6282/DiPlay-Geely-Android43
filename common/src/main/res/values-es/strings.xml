@@ -467,4 +467,14 @@
     <string name="center_map_no_permission_screen">Esta unidad principal no tiene pantalla de ajustes para este permiso. Permítelo por ADB.</string>
     <string name="launcher_map_sharing">Compartir el mapa en vivo con otros launchers</string>
     <string name="launcher_map_sharing_description">Los launchers compatibles con DiPlay pueden mostrar el mapa en vivo del panel de instrumentos en su propia pantalla de inicio. Desactivado por defecto, porque entonces cualquier aplicación de la unidad principal podría pedir el mapa. Consulta docs/LAUNCHER_INTEGRATION.md.</string>
+    <string name="geely_bt_connection_title">Probar la conexión Bluetooth de fábrica de H52</string>
+    <string name="geely_bt_connection_description">Solo para Geely H52. Empareja primero el iPhone en la interfaz de fábrica del vehículo. Al activarlo, DiPlay puede registrar un servicio SPP local e intentar la conexión del fabricante. No empareja teléfonos ni cambia la alimentación de Bluetooth. La compatibilidad aún debe probarse en el vehículo.</string>
+    <string name="geely_bt_factory_pairing_instructions">Empareja primero el iPhone en la pantalla Bluetooth de fábrica del vehículo. DiPlay lee los emparejamientos existentes; no empareja teléfonos ni activa o desactiva Bluetooth.</string>
+    <string name="geely_bt_picker_loading_title">Leyendo teléfonos emparejados de fábrica</string>
+    <string name="geely_bt_picker_loading_message">Consultando la lista de teléfonos H52 emparejados. Esto no cambia la configuración de Bluetooth.</string>
+    <string name="geely_bt_picker_busy_message">La consulta anterior de la lista H52 sigue en curso. Espera a que termine y vuelve a intentarlo.</string>
+    <string name="geely_bt_picker_empty_title">No se encontraron teléfonos emparejados de fábrica</string>
+    <string name="geely_bt_picker_empty_message">Empareja el iPhone en la pantalla Bluetooth de fábrica del vehículo y vuelve para seleccionarlo. DiPlay no lo emparejará automáticamente.</string>
+    <string name="geely_bt_picker_failed_title">No se pudo leer la lista de teléfonos emparejados</string>
+    <string name="geely_bt_picker_failed_message">El servicio Bluetooth H52 no devolvió la lista (%1$s). Comprueba la pantalla Bluetooth del vehículo e inténtalo de nuevo.</string>
 </resources>

@@ -479,4 +479,14 @@
     <string name="widget_minutes">%1$d хв</string>
     <string name="widget_no_route">Немає маршруту</string>
     <string name="widget_not_connected">CarPlay не підключено</string>
+    <string name="geely_bt_connection_title">Перевірити штатне Bluetooth-підключення H52</string>
+    <string name="geely_bt_connection_description">Лише для Geely H52. Спочатку створіть пару з iPhone у штатному інтерфейсі автомобіля. Після ввімкнення DiPlay може зареєструвати локальну службу SPP і спробувати підключення через канал виробника. Програма не створює пари та не змінює живлення Bluetooth. Сумісність потрібно перевірити в автомобілі.</string>
+    <string name="geely_bt_factory_pairing_instructions">Спочатку створіть пару з iPhone на штатному екрані Bluetooth автомобіля. DiPlay читає наявні записи й не створює пару та не перемикає Bluetooth.</string>
+    <string name="geely_bt_picker_loading_title">Читання штатного списку спарених телефонів</string>
+    <string name="geely_bt_picker_loading_message">Перевіряється список H52. Налаштування Bluetooth не змінюються.</string>
+    <string name="geely_bt_picker_busy_message">Попередній запит списку H52 ще виконується. Дочекайтеся завершення та повторіть спробу.</string>
+    <string name="geely_bt_picker_empty_title">Штатні спарені телефони не знайдено</string>
+    <string name="geely_bt_picker_empty_message">Спочатку створіть пару з iPhone на штатному екрані Bluetooth автомобіля, потім поверніться й виберіть його. DiPlay не створює пару автоматично.</string>
+    <string name="geely_bt_picker_failed_title">Не вдалося прочитати список спарених телефонів</string>
+    <string name="geely_bt_picker_failed_message">Служба Bluetooth H52 не повернула список (%1$s). Перевірте штатний екран Bluetooth автомобіля та повторіть спробу.</string>
 </resources>

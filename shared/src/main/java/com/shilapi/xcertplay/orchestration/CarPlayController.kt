@@ -150,6 +150,7 @@ class CarPlayController(
     private val clearPairRecord: () -> Unit = {},
     private val locationProvider: Iap2LocationProvider? = null,
     private val vehicleStatusProvider: com.shilapi.xcertplay.transport.VehicleStatusProvider? = null,
+    private val geelyBluetoothEnabled: Boolean = false,
 ) : Closeable {
     init {
         require(!config.locationReportingEnabled || locationProvider != null) {
@@ -225,7 +226,7 @@ class CarPlayController(
     @Volatile private var hotspot: WirelessHotspotManager? = null
     @Volatile private var bonjour: CarPlayBonjour? = null
     @Volatile private var bluetoothSocket: BluetoothSocket? = null
-    @Volatile private var bluetoothStream: BluetoothRfcommDuplexStream? = null
+    @Volatile private var bluetoothStream: BlockingDuplexByteStream? = null
     @Volatile private var wirelessTunnelChannel: Iap2Session? = null
     @Volatile private var wirelessIdentification: Iap2IdentificationConfig? = null
     @Volatile private var wirelessAirPlayEndpoint: Iap2WirelessCarPlayEndpoint? = null
@@ -965,15 +966,23 @@ class CarPlayController(
             )
             onStatus(CarPlayStatus.WaitingForPairedIphone)
 
-            val adapter = bluetoothAdapter
-                ?: throw IOException("Bluetooth adapter is unavailable")
-            if (!adapter.isEnabled) throw IOException("Bluetooth is not enabled")
-            val device = selectWirelessBluetoothDevice(adapter)
-            val hostBluetoothMac = accessoryBluetoothMac(adapter)
-            debugLog(
-                "wireless selected Bluetooth target name=${device.name ?: "unknown"} " +
-                    "address=${device.address} localBt=$hostBluetoothMac",
-            )
+            val vendorBackend = if (geelyBluetoothEnabled) com.shilapi.xcertplay.transport.AnwBluetoothBackend(appContext) else null
+            val adapter = if (vendorBackend == null) bluetoothAdapter
+                ?: throw IOException("Bluetooth adapter is unavailable") else null
+            if (adapter != null && !adapter.isEnabled) throw IOException("Bluetooth is not enabled")
+            val device = adapter?.let { selectWirelessBluetoothDevice(it) }
+            val vendorDevice = vendorBackend?.let { backend ->
+                val paired = backend.pairedDevices()
+                config.wirelessBluetoothDeviceAddress?.let { selected ->
+                    paired.firstOrNull { it.address.equals(selected, ignoreCase = true) }
+                        ?: throw IOException("Selected iPhone is not in the H52 factory paired list")
+                } ?: paired.filter { it.name.contains("iPhone", ignoreCase = true) }.singleOrNull()
+                    ?: paired.singleOrNull()
+                    ?: throw IOException("Choose an iPhone from the H52 factory paired list first")
+            }
+            val targetAddress = vendorDevice?.address ?: device!!.address
+            val hostBluetoothMac = vendorBackend?.localAddress() ?: accessoryBluetoothMac(adapter!!)
+            debugLog("wireless Bluetooth backend=${if (vendorBackend != null) "H52-ANW" else "Android"}")
             val wirelessAirPlayConfig = airPlayConfig.copy(
                 deviceId = deviceIdentifier,
                 btMac = hostBluetoothMac,
@@ -1031,35 +1040,34 @@ class CarPlayController(
             }
 
             onStatus(CarPlayStatus.ConnectingBluetooth)
-            debugLog(
-                "wireless RFCOMM connecting address=${device.address} " +
-                    "uuid=$IAP2_IPHONE_UUID",
-            )
-            val socket = device
-                    .createRfcommSocketToServiceRecord(UUID.fromString(IAP2_IPHONE_UUID))
+            debugLog("wireless Bluetooth connecting backend=${if (vendorBackend != null) "H52-ANW" else "Android"}")
+            val stream: BlockingDuplexByteStream = if (vendorBackend != null) {
+                vendorBackend.connect(targetAddress, UUID.fromString(IAP2_IPHONE_UUID), onTrace = ::debugLog) {
+                    isStaleWirelessRun(generation)
+                }.also { bluetoothStream = it }
+            } else {
+                val standardDevice = device!!
+                val socket = standardDevice.createRfcommSocketToServiceRecord(UUID.fromString(IAP2_IPHONE_UUID))
                     .also { bluetoothSocket = it }
-            logBluetoothConnectionSnapshot(device, "before-connect")
-            val bluetoothStarted = System.nanoTime()
-            try {
-                connectBluetoothSocket(socket, device.address)
-                connectionDiagnostic("Bluetooth connect completed elapsedMs=${elapsedMillis(bluetoothStarted)}")
-            } catch (error: Throwable) {
-                connectionDiagnostic(
-                    "Bluetooth connect failed elapsedMs=${elapsedMillis(bluetoothStarted)} " +
-                        "failureClass=${diagnosticFailureClass(error)}",
-                )
-                logBluetoothConnectionSnapshot(device, "after-failure")
-                throw error
+                logBluetoothConnectionSnapshot(standardDevice, "before-connect")
+                val bluetoothStarted = System.nanoTime()
+                try {
+                    connectBluetoothSocket(socket, standardDevice.address)
+                    connectionDiagnostic("Bluetooth connect completed elapsedMs=${elapsedMillis(bluetoothStarted)}")
+                } catch (error: Throwable) {
+                    connectionDiagnostic("Bluetooth connect failed elapsedMs=${elapsedMillis(bluetoothStarted)} failureClass=${diagnosticFailureClass(error)}")
+                    logBluetoothConnectionSnapshot(standardDevice, "after-failure")
+                    throw error
+                }
+                BluetoothRfcommDuplexStream(socket).also { bluetoothStream = it }
             }
-            debugLog("wireless RFCOMM connected address=${device.address}")
             if (isStaleWirelessRun(generation)) {
                 closeWirelessStack()
                 return
             }
-            val stream = BluetoothRfcommDuplexStream(socket).also { bluetoothStream = it }
             val channel = Iap2Session.openWireless(
                 stream,
-                traceContext = "wireless-rfcomm",
+                traceContext = if (vendorBackend != null) "wireless-h52-anw" else "wireless-rfcomm",
                 onTrace = ::debugLog,
                 onArtwork = ::onArtworkTransfer,
             ).also { csm = it }

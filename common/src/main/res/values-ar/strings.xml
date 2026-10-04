@@ -467,4 +467,14 @@
     <string name="center_map_no_permission_screen">لا توجد في وحدة القيادة شاشة إعدادات لهذا الإذن. اسمح به عبر ADB.</string>
     <string name="launcher_map_sharing">مشاركة الخريطة المباشرة مع المشغّلات الأخرى</string>
     <string name="launcher_map_sharing_description">يمكن للمشغّلات التي تدعم DiPlay عرض خريطة لوحة العدادات المباشرة داخل شاشتها الرئيسية. معطّل افتراضيًا، لأن أي تطبيق على وحدة القيادة يمكنه عندها طلب الخريطة. راجع docs/LAUNCHER_INTEGRATION.md.</string>
+    <string name="geely_bt_connection_title">تجربة اتصال Bluetooth الأصلي في H52</string>
+    <string name="geely_bt_connection_description">مخصص لسيارات Geely H52 فقط. أقرن iPhone أولاً من واجهة السيارة الأصلية. عند التفعيل، قد يسجل DiPlay خدمة SPP محلية ويحاول الاتصال عبر مسار الشركة. لا يقرن الهواتف ولا يغيّر طاقة Bluetooth. ما زالت التوافقية بحاجة إلى اختبار في السيارة.</string>
+    <string name="geely_bt_factory_pairing_instructions">أقرن iPhone أولاً من شاشة Bluetooth الأصلية في السيارة. يقرأ DiPlay الاقترانات الموجودة ولا ينشئ اقتراناً أو يغيّر حالة Bluetooth.</string>
+    <string name="geely_bt_picker_loading_title">جارٍ قراءة الهواتف المقترنة من السيارة</string>
+    <string name="geely_bt_picker_loading_message">جارٍ التحقق من قائمة H52. لن تتغير إعدادات Bluetooth.</string>
+    <string name="geely_bt_picker_busy_message">ما زال طلب قراءة قائمة H52 السابق قيد التنفيذ. انتظر اكتماله ثم أعد المحاولة.</string>
+    <string name="geely_bt_picker_empty_title">لم يتم العثور على هواتف مقترنة من السيارة</string>
+    <string name="geely_bt_picker_empty_message">أقرن iPhone من شاشة Bluetooth الأصلية في السيارة، ثم عُد إلى هنا لاختياره. لن ينشئ DiPlay الاقتران تلقائياً.</string>
+    <string name="geely_bt_picker_failed_title">تعذرت قراءة الهواتف المقترنة</string>
+    <string name="geely_bt_picker_failed_message">لم تُرجع خدمة Bluetooth في H52 قائمة الأجهزة (%1$s). تحقق من شاشة Bluetooth في السيارة ثم أعد المحاولة.</string>
 </resources>

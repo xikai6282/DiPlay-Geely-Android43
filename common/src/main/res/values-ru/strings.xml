@@ -467,4 +467,14 @@
     <string name="center_map_no_permission_screen">На этом головном устройстве нет экрана настроек для этого разрешения. Разрешите его через ADB.</string>
     <string name="launcher_map_sharing">Делиться живой картой с другими лаунчерами</string>
     <string name="launcher_map_sharing_description">Лаунчеры с поддержкой DiPlay смогут показывать живую карту приборной панели на своём главном экране. Выключено по умолчанию, потому что тогда карту сможет запросить любое приложение на головном устройстве. Подробнее: docs/LAUNCHER_INTEGRATION.md.</string>
+    <string name="geely_bt_connection_title">Проверить штатное Bluetooth-подключение H52</string>
+    <string name="geely_bt_connection_description">Только для Geely H52. Сначала выполните сопряжение iPhone в штатном интерфейсе автомобиля. При включении DiPlay может зарегистрировать локальную службу SPP и попробовать подключение через канал производителя. Приложение не выполняет сопряжение и не меняет питание Bluetooth. Совместимость нужно проверить в автомобиле.</string>
+    <string name="geely_bt_factory_pairing_instructions">Сначала выполните сопряжение iPhone на штатном экране Bluetooth автомобиля. DiPlay читает существующие записи и не выполняет сопряжение или переключение Bluetooth.</string>
+    <string name="geely_bt_picker_loading_title">Чтение штатного списка сопряжённых телефонов</string>
+    <string name="geely_bt_picker_loading_message">Проверяется список H52. Настройки Bluetooth не изменяются.</string>
+    <string name="geely_bt_picker_busy_message">Предыдущий запрос списка H52 ещё выполняется. Дождитесь его завершения и повторите попытку.</string>
+    <string name="geely_bt_picker_empty_title">Штатные сопряжённые телефоны не найдены</string>
+    <string name="geely_bt_picker_empty_message">Сначала выполните сопряжение iPhone на штатном экране Bluetooth автомобиля, затем вернитесь и выберите его. DiPlay не выполняет сопряжение автоматически.</string>
+    <string name="geely_bt_picker_failed_title">Не удалось прочитать список сопряжённых телефонов</string>
+    <string name="geely_bt_picker_failed_message">Служба Bluetooth H52 не вернула список (%1$s). Проверьте штатный экран Bluetooth автомобиля и повторите попытку.</string>
 </resources>

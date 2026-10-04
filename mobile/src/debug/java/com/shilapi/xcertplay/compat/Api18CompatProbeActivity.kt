@@ -85,6 +85,93 @@ class Api18CompatProbeActivity : Activity(), SurfaceHolder.Callback {
 
     private fun runProbes(surface: Surface) {
         val mode = intent.getStringExtra("probe") ?: "full"
+        if (mode == "geely_spp") {
+            checkCase("ANW_BACKEND_BINDER_MOCK_API18") {
+                val address = "01:02:03:04:05:06"
+                val writes = java.io.ByteArrayOutputStream()
+                val released = java.util.concurrent.CountDownLatch(1)
+                var callback: android.os.IBinder? = null
+                val binder = object : android.os.Binder() {
+                    init { attachInterface(null, "com.anwsdk.service.IAnwPhoneLink") }
+                    override fun onTransact(code: Int, data: android.os.Parcel, reply: android.os.Parcel?, flags: Int): Boolean {
+                        val out = requireNotNull(reply)
+                        data.enforceInterface("com.anwsdk.service.IAnwPhoneLink")
+                        out.writeNoException()
+                        when (code) {
+                            3 -> out.writeInt(1)
+                            0x43 -> out.writeInt(1)
+                            0x44 -> callback = data.readStrongBinder()
+                            0x45 -> check(data.readStrongBinder() == callback)
+                            0x40 -> {
+                                check(data.readString() == address)
+                                check(data.createByteArray()!!.size == 16)
+                                check(data.readInt() == 1)
+                                val packet = android.os.Parcel.obtain()
+                                val result = android.os.Parcel.obtain()
+                                try {
+                                    packet.writeInterfaceToken("com.anwsdk.service.IAnwSPPDataCallBack")
+                                    packet.writeInt(1); packet.writeByteArray(byteArrayOf(7,8,9)); packet.writeInt(3)
+                                    check(callback!!.transact(1, packet, result, 0)); result.readException()
+                                } finally { result.recycle(); packet.recycle() }
+                                out.writeInt(1); out.writeIntArray(intArrayOf(1))
+                            }
+                            0xd0 -> {
+                                check(data.readInt() == 1); repeat(4) { check(data.readInt() == 1) }
+                                out.writeInt(1); out.writeIntArray(intArrayOf(1))
+                                out.writeStringArray(arrayOf(address)); out.writeStringArray(arrayOf("iPhone"))
+                                out.writeInt(1); out.writeInt(0)
+                            }
+                            0x42 -> {
+                                check(data.readInt() == 1)
+                                val bytes = data.createByteArray()!!
+                                check(data.readInt() == bytes.size); check(data.readInt() == 1)
+                                val count = minOf(2,bytes.size); writes.write(bytes,0,count)
+                                out.writeInt(1); out.writeIntArray(intArrayOf(count))
+                            }
+                            0x41 -> { check(data.readInt() == 1); out.writeInt(1); released.countDown() }
+                            else -> error("Unexpected mock ANW transaction $code")
+                        }
+                        check(data.dataAvail() == 0)
+                        return true
+                    }
+                }
+                val backendClass = com.shilapi.xcertplay.transport.AnwBluetoothBackend::class.java
+                val backend = backendClass.getDeclaredConstructor(Context::class.java, android.os.IBinder::class.java)
+                    .newInstance(applicationContext, binder) as com.shilapi.xcertplay.transport.AnwBluetoothBackend
+                val stream = backend.connect(address, java.util.UUID.fromString("00000000-deca-fade-deca-deafdecacafe"))
+                check(stream.recv(10,0)!!.contentEquals(byteArrayOf(7,8,9)))
+                stream.send(byteArrayOf(1,2,3,4,5))
+                check(writes.toByteArray().contentEquals(byteArrayOf(1,2,3,4,5)))
+                stream.close(); check(released.await(5,java.util.concurrent.TimeUnit.SECONDS))
+                "nativeStateContract=true earlyData=true partialWrite=true ownedClose=true (mock, real H52/iPhone not tested)"
+            }
+            checkCase("ANW_CALLBACK_DUPLEX_API18") {
+                val output = java.io.ByteArrayOutputStream()
+                var closes = 0
+                val stream = com.shilapi.xcertplay.transport.CallbackDuplexByteStream(
+                    writeBytes = { bytes, offset, length ->
+                        val count = minOf(2, length)
+                        output.write(bytes, offset, count)
+                        count
+                    },
+                    closeTransport = { closes++ },
+                )
+                val payload = byteArrayOf(1, 2, 3, 4, 5)
+                stream.send(payload)
+                check(output.toByteArray().contentEquals(payload))
+                check(stream.onBytes(payload))
+                check(stream.recv(2, 0)!!.contentEquals(byteArrayOf(1, 2)))
+                check(stream.recv(8, 0)!!.contentEquals(byteArrayOf(3, 4, 5)))
+                check(stream.recv(8, 5) == null)
+                stream.close()
+                check(!stream.onBytes(payload))
+                check(stream.recv(8, 0)!!.isEmpty())
+                check(closes == 1)
+                "partialWrite=true fifo=true timeout=true closed=true lateCallbackRejected=true (no OEM service or iPhone connection)"
+            }
+            complete()
+            return
+        }
         if (mode == "geely_bluetooth") {
             checkCase("H52_ANW_READONLY_PARCEL_MOCK") { geelyAnwParcelMock() }
             checkCase("H52_ECARX_READONLY_PARCEL_MOCK") { geelyEcarxParcelMock() }

@@ -46,9 +46,12 @@ import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
 import com.shilapi.xcertplay.transport.EvChargingConnectors
 import java.io.File
+import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
 /** DiAuto's visual language, with a connection flow for an independent CarPlay receiver. */
@@ -62,6 +65,8 @@ class DiPlayActivity : ComponentActivity() {
     private var disconnectButton: Button? = null
     private var lastRunning: Boolean? = null
     private var pendingWireless = false
+    private var geelyPhoneLookupDialog: AlertDialog? = null
+    private var geelyPhoneLookupGeneration = 0
     private var bluetoothProbeRequest: GeelyBluetoothDiagnostics.Request? = null
     private var bluetoothProbeDialog: AlertDialog? = null
     private var initialLaunch = true
@@ -147,6 +152,7 @@ class DiPlayActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        if (!isChangingConfigurations && geelyPhoneLookupDialog != null) cancelGeelyPhoneLookup()
         super.onStop()
         if (!isFinishing && !isChangingConfigurations) CenterMapOverlay.scheduleShow()
     }
@@ -171,6 +177,7 @@ class DiPlayActivity : ComponentActivity() {
     override fun onPause() { handler.removeCallbacks(tick); super.onPause() }
 
     override fun onDestroy() {
+        cancelGeelyPhoneLookup()
         cancelBluetoothStatusProbe()
         super.onDestroy()
     }
@@ -211,7 +218,13 @@ class DiPlayActivity : ComponentActivity() {
         status = label(getString(R.string.ready_when_you_are), 24, TEXT, true).apply { setPadding(0, dp(10), 0, dp(16)) }
         card.addView(status)
         connectButton = button(getString(R.string.connect_phone), true) {
-            if (CarPlayBackgroundSession.hasSession()) openProjection()
+            val useGeelyBluetooth = AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this)
+            if (CarPlayBackgroundSession.hasSession() &&
+                !DiPlayPreferences.phoneSelectedForTransport(this, useGeelyBluetooth)
+            ) {
+                pendingWireless = true
+                choosePhone()
+            } else if (CarPlayBackgroundSession.hasSession()) openProjection()
             else connect(true)
         }
         card.addView(connectButton, matchButton())
@@ -276,6 +289,15 @@ class DiPlayActivity : ComponentActivity() {
         content.addView(label(getString(R.string.apply_reconnects_carplay_for_size_resolution_music_buffer), 17, MUTED).apply { setPadding(0, dp(8), 0, dp(24)) })
         section(content, getString(R.string.connection_setup), R.drawable.ic_dp_connection) { card ->
             card.addView(label(getString(R.string.choose_how_to_connect_follow_the_setup_steps_and_save_your), 16, MUTED))
+            toggle(
+                card,
+                getString(R.string.geely_bt_connection_title),
+                getString(R.string.geely_bt_connection_description),
+                AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this),
+            ) { enabled ->
+                AirPlayPersistence.saveGeelyBluetoothConnectionEnabled(this, enabled)
+                refreshStatus()
+            }
             card.addView(button(getString(R.string.open_connection_setup), false) { page = "connection"; render() }, matchButton(12, 60))
         }
         section(content, getString(R.string.diagnostics), R.drawable.ic_dp_diagnostics) { card ->
@@ -310,7 +332,7 @@ class DiPlayActivity : ComponentActivity() {
         section(content, getString(R.string.automatic_connection), R.drawable.ic_dp_automation) { card ->
             toggle(card, getString(R.string.connect_when_diplay_opens), getString(R.string.use_your_last_connection_type_and_selected_iphone), DiPlayPreferences.autoConnect(this)) { DiPlayPreferences.saveAutoConnect(this, it) }
             toggle(card, getString(R.string.open_after_the_car_starts), getString(R.string.availability_depends_on_your_head_unit_s_startup_settings), AirPlayPersistence.loadAutoStartOnBoot(this)) { AirPlayPersistence.saveAutoStartOnBoot(this, it) }
-            card.addView(button("${getString(R.string.choose_iphone_prefix)}${DiPlayPreferences.phoneName(this)}", false) { choosePhone() }, matchButton(12, 60))
+            card.addView(button(selectedPhoneButtonLabel(), false) { choosePhone() }, matchButton(12, 60))
         }
         section(content, getString(R.string.display_and_performance), R.drawable.ic_dp_display) { card ->
             carPlaySizeControl(card)
@@ -581,8 +603,9 @@ class DiPlayActivity : ComponentActivity() {
         content.addView(label(getString(R.string.set_up_once_your_details_stay_saved_for_the_next_drive_cha), 17, MUTED).apply { setPadding(0, dp(8), 0, dp(24)) })
         section(content, getString(R.string.s_1_choose_your_connection)) { card -> wirelessLinkControls(card) }
         section(content, getString(R.string.s_2_pair_your_iphone)) { card ->
-            card.addView(label(getString(R.string.keep_bluetooth_and_wi_fi_on_your_iphone_pair_with_the_car), 16, MUTED))
-            card.addView(button("${getString(R.string.choose_iphone_prefix)}${DiPlayPreferences.phoneName(this)}", false) { choosePhone() }, matchButton(12, 60))
+            val geelyConnection = AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this)
+            card.addView(label(getString(if (geelyConnection) R.string.geely_bt_factory_pairing_instructions else R.string.keep_bluetooth_and_wi_fi_on_your_iphone_pair_with_the_car), 16, MUTED))
+            card.addView(button(selectedPhoneButtonLabel(), false) { choosePhone() }, matchButton(12, 60))
             card.addView(button(getString(R.string.review_app_permissions), false) {
                 openSystem(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
             }, matchButton(12, 60))
@@ -974,7 +997,8 @@ class DiPlayActivity : ComponentActivity() {
             return
         }
         if (wireless && carHotspotOff()) { carHotspotOffDialog(); return }
-        if (wireless && DiPlayPreferences.phoneAddress(this) == null) {
+        val useGeelyBluetooth = AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this)
+        if (wireless && !DiPlayPreferences.phoneSelectedForTransport(this, useGeelyBluetooth)) {
             pendingWireless = true; choosePhone(); return
         }
         val preferences = getSharedPreferences("diplay", MODE_PRIVATE)
@@ -999,6 +1023,10 @@ class DiPlayActivity : ComponentActivity() {
         )
     }
     private fun choosePhone() {
+        if (AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this)) {
+            chooseGeelyPhone()
+            return
+        }
         if (Build.VERSION.SDK_INT >= 31 && com.shilapi.xcertplay.compat.ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             bluetoothPermission.launch(Manifest.permission.BLUETOOTH_CONNECT); return
         }
@@ -1027,6 +1055,131 @@ class DiPlayActivity : ComponentActivity() {
             }.setNeutralButton(getString(R.string.pair_another)) { _, _ -> openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }
             .setNegativeButton(getString(R.string.cancel)) { _, _ -> pendingWireless = false }.show()
     }
+
+    /** Reads only the already-paired H52 device list, off the UI thread and without Android adapter access. */
+    private fun chooseGeelyPhone() {
+        if (geelyPhoneLookupDialog != null) return
+        if (!geelyPhoneLookupBusy.compareAndSet(false, true)) {
+            AlertDialog.Builder(this)
+                .setTitle(getString(R.string.geely_bt_picker_loading_title))
+                .setMessage(getString(R.string.geely_bt_picker_busy_message))
+                .setPositiveButton(getString(R.string.got_it), null)
+                .show()
+            return
+        }
+        val generation = ++geelyPhoneLookupGeneration
+        val activity = WeakReference(this)
+        val appContext = applicationContext
+        val progress = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.geely_bt_picker_loading_title))
+            .setMessage(getString(R.string.geely_bt_picker_loading_message))
+            .setNegativeButton(getString(R.string.cancel)) { _, _ ->
+                invalidateGeelyPhoneLookup()
+            }
+            .create()
+        geelyPhoneLookupDialog = progress
+        progress.setOnCancelListener { invalidateGeelyPhoneLookup() }
+        progress.show()
+
+        geelyPhoneLookupExecutor.execute {
+            val result: Result<List<com.shilapi.xcertplay.transport.AnwPairedDevice>> = try {
+                Result.success(com.shilapi.xcertplay.transport.AnwBluetoothBackend(appContext).pairedDevices())
+            } catch (error: Throwable) {
+                Result.failure(error)
+            } finally {
+                geelyPhoneLookupBusy.set(false)
+            }
+            geelyPhoneLookupMainHandler.post {
+                val target = activity.get() ?: return@post
+                if (target.geelyPhoneLookupGeneration != generation ||
+                    target.geelyPhoneLookupDialog == null || target.isFinishing || target.isDestroyed
+                ) return@post
+                target.geelyPhoneLookupDialog?.dismiss()
+                target.geelyPhoneLookupDialog = null
+                if (!AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(target)) {
+                    target.pendingWireless = false
+                    return@post
+                }
+                result.fold(
+                    onSuccess = target::showGeelyPairedPhones,
+                    onFailure = { target.showGeelyPhoneLookupFailure(it) },
+                )
+            }
+        }
+    }
+
+    private fun invalidateGeelyPhoneLookup() {
+        geelyPhoneLookupGeneration++
+        geelyPhoneLookupDialog = null
+        pendingWireless = false
+    }
+
+    private fun cancelGeelyPhoneLookup() {
+        geelyPhoneLookupGeneration++
+        geelyPhoneLookupDialog?.let { dialog ->
+            dialog.setOnCancelListener(null)
+            dialog.dismiss()
+        }
+        geelyPhoneLookupDialog = null
+        pendingWireless = false
+    }
+
+    private fun showGeelyPairedPhones(devices: List<com.shilapi.xcertplay.transport.AnwPairedDevice>) {
+        val usable = devices.filter { it.address.isNotBlank() }.sortedBy { it.name.trim().lowercase(Locale.ROOT) }
+        if (usable.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle(getString(R.string.geely_bt_picker_empty_title))
+                .setMessage(getString(R.string.geely_bt_picker_empty_message))
+                .setPositiveButton(getString(R.string.got_it), null)
+                .setNegativeButton(getString(R.string.cancel)) { _, _ -> pendingWireless = false }
+                .show()
+            return
+        }
+        val nameCounts = usable.groupingBy { it.name.trim().ifBlank { getString(R.string.paired_device) } }.eachCount()
+        val labels = usable.map { device ->
+            val name = device.name.trim().ifBlank { getString(R.string.paired_device) }
+            if ((nameCounts[name] ?: 0) > 1) "$name · ${device.address.takeLast(5)}" else name
+        }
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.choose_your_iphone))
+            .setItems(labels.toTypedArray()) { _, index ->
+                if (!AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this)) {
+                    pendingWireless = false
+                    return@setItems
+                }
+                val device = usable[index]
+                DiPlayPreferences.savePhone(this, device.address, device.name.trim().ifBlank { getString(R.string.paired_device) }, geelyBluetooth = true)
+                val start = pendingWireless
+                pendingWireless = false
+                render()
+                if (start) connect(true)
+            }
+            .setNegativeButton(getString(R.string.cancel)) { _, _ -> pendingWireless = false }
+            .show()
+    }
+
+    private fun showGeelyPhoneLookupFailure(error: Throwable) {
+        val detail = error.message
+            ?.replace(Regex("[\\r\\n\\t]+"), " ")
+            ?.take(160)
+            ?.takeIf { it.isNotBlank() }
+            ?.let { "${error.javaClass.simpleName}: $it" }
+            ?: error.javaClass.simpleName
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.geely_bt_picker_failed_title))
+            .setMessage(getString(R.string.geely_bt_picker_failed_message, detail))
+            .setPositiveButton(getString(R.string.legacy_report_retry)) { _, _ -> choosePhone() }
+            .setNegativeButton(getString(R.string.cancel)) { _, _ -> pendingWireless = false }
+            .show()
+    }
+
+    private fun selectedPhoneButtonLabel(): String =
+        if (DiPlayPreferences.phoneSelectedForTransport(
+                this,
+                AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this),
+            )
+        ) "${getString(R.string.choose_iphone_prefix)}${DiPlayPreferences.phoneName(this)}"
+        else getString(R.string.choose_iphone)
 
     private fun showBluetoothStackStatus(adapterPresent: Boolean, adapterEnabled: Boolean, manual: Boolean = false) {
         if (!GeelyBluetoothDiagnosticsOptIn.enabled(this)) {
@@ -1100,13 +1253,16 @@ class DiPlayActivity : ComponentActivity() {
                 },
                 snapshot,
             )
-            val summary = getString(
+            val factorySelected = AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this)
+            val statusSummary = getString(
                 R.string.bt_stack_summary,
                 adapterLabel,
                 serviceLabel,
                 powerLabel,
                 ecarxLabel,
-            ) + "\n\n" + getString(when {
+            )
+            val summary = (if (factorySelected) statusSummary.substringBefore("\n\n") else statusSummary) + "\n\n" + getString(when {
+                factorySelected -> R.string.geely_bt_connection_status_note
                 adapterEnabled -> R.string.bt_stack_android_on_note
                 vendorReportedOn -> R.string.bt_stack_vendor_on_next_step
                 else -> R.string.bt_stack_unknown_next_step
@@ -1245,7 +1401,7 @@ class DiPlayActivity : ComponentActivity() {
             setupError != null -> getString(R.string.setup_needs_attention)
             CarPlayBackgroundSession.active -> getString(R.string.carplay_connected)
             running -> getString(R.string.connecting_to_your_iphone)
-            DiPlayPreferences.phoneAddress(this) != null -> "${getString(R.string.status_ready_for_prefix)}${DiPlayPreferences.phoneName(this)}"
+            DiPlayPreferences.phoneSelectedForTransport(this, AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this)) -> "${getString(R.string.status_ready_for_prefix)}${DiPlayPreferences.phoneName(this)}"
             else -> getString(R.string.ready_when_you_are)
         }
         if (lastRunning != running) {
@@ -1290,6 +1446,7 @@ class DiPlayActivity : ComponentActivity() {
                     appendLine("Android ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}")
                     appendLine("Head unit: ${Build.MANUFACTURER} ${Build.MODEL}")
                     appendLine("Connection: ${if (AirPlayPersistence.loadWirelessEnabled(appContext)) "wireless" else "USB"}")
+                    appendLine("Saved Bluetooth backend preference (not active-link proof): ${if (AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(appContext)) "H52-ANW" else "Android"}")
                     appendLine("Authentication: local experimental beta identity; no remote fallback")
                     appendLine("CarPlay setup: ${if (setupError == null) "ready" else "authentication unavailable"}")
                     appendLine("Saved video preference (may differ from active session): ${if (AirPlayPersistence.loadHevcEnabled(appContext)) "HEVC" else "H.264"}; ${AirPlayPersistence.loadFps(appContext)} fps")
@@ -1534,6 +1691,11 @@ class DiPlayActivity : ComponentActivity() {
     private fun space(height: Int) = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
     companion object {
+        private val geelyPhoneLookupBusy = AtomicBoolean(false)
+        private val geelyPhoneLookupExecutor = Executors.newSingleThreadExecutor { task ->
+            Thread(task, "diplay-h52-paired-phones").apply { isDaemon = true }
+        }
+        private val geelyPhoneLookupMainHandler = Handler(Looper.getMainLooper())
         private val BG = Color.rgb(12, 17, 27)
         private val SURFACE = Color.rgb(21, 30, 44)
         private val BORDER = Color.rgb(42, 56, 75)

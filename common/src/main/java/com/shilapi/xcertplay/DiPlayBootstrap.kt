@@ -60,8 +60,15 @@ internal object DiPlayPreferences {
     private fun prefs(context: Context) = context.getSharedPreferences("diplay", Context.MODE_PRIVATE)
     fun phoneAddress(context: Context): String? = prefs(context).getString("phone_address", null)
     fun phoneName(context: Context): String = prefs(context).getString("phone_name", null) ?: "Your iPhone"
-    fun savePhone(context: Context, address: String, name: String) {
-        prefs(context).edit().putString("phone_address", address).putString("phone_name", name).apply()
+    fun phoneUsesGeelyBluetooth(context: Context): Boolean = prefs(context).getBoolean("phone_uses_geely_h52_bluetooth", false)
+    fun phoneSelectedForTransport(context: Context, geelyBluetooth: Boolean): Boolean =
+        phoneAddress(context) != null && phoneUsesGeelyBluetooth(context) == geelyBluetooth
+    fun savePhone(context: Context, address: String, name: String, geelyBluetooth: Boolean = false) {
+        prefs(context).edit()
+            .putString("phone_address", address)
+            .putString("phone_name", name)
+            .putBoolean("phone_uses_geely_h52_bluetooth", geelyBluetooth)
+            .apply()
     }
     fun autoConnect(context: Context) = prefs(context).getBoolean("auto_connect", false)
     fun saveAutoConnect(context: Context, value: Boolean) {

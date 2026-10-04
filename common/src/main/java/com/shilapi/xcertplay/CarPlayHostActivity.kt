@@ -306,6 +306,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var advancedAudioChannelMapping = false
     private var geelyAudioRouting = false
     private var geelyNavigationAlert = false
+    private var geelyBluetoothEnabled = false
     private var navigationStreamType = 14
     private var debugLogsEnabled = false
     private var autoStartOnBoot = false
@@ -491,6 +492,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 AirPlayPersistence.loadAdvancedAudioChannelMapping(this)
         geelyAudioRouting = AirPlayPersistence.loadGeelyAudioRouting(this)
         geelyNavigationAlert = AirPlayPersistence.loadGeelyNavigationAlert(this)
+        geelyBluetoothEnabled = AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this)
         navigationStreamType = AirPlayPersistence.loadNavigationStreamType(this)
         debugLogsEnabled = AirPlayPersistence.loadDebugLogsEnabled(this)
         autoStartOnBoot = AirPlayPersistence.loadAutoStartOnBoot(this)
@@ -700,7 +702,25 @@ class CarPlayHostActivity : ComponentActivity() {
             }
             return true
         }
+        val geelyBluetoothChanged = reloadGeelyBluetoothConnectionSettingIfChanged()
+        if (geelyBluetoothChanged && wirelessEnabled) {
+            switchingTransport = true
+            val restart = { recreate() }
+            if (CarPlayBackgroundSession.hasSession() || controller != null) {
+                shutdown(terminateProcess = false, reason = "H52 Bluetooth backend changed", completion = restart)
+            } else {
+                restart()
+            }
+            return true
+        }
         return false
+    }
+
+    private fun reloadGeelyBluetoothConnectionSettingIfChanged(): Boolean {
+        val enabled = AirPlayPersistence.loadGeelyBluetoothConnectionEnabled(this)
+        if (enabled == geelyBluetoothEnabled) return false
+        geelyBluetoothEnabled = enabled
+        return true
     }
 
     private fun reloadGeelyAudioSettingsIfChanged(): Boolean {
@@ -3391,6 +3411,7 @@ class CarPlayHostActivity : ComponentActivity() {
             } else {
                 null
             },
+            geelyBluetoothEnabled = geelyBluetoothEnabled,
         )
         controller = next
         CarPlayMediaKeys.attach(this, next)

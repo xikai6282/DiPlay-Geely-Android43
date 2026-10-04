@@ -44,3 +44,6 @@ Release 提供**内置实验性认证材料的完整车测 APK**，无需用户�
 新增原厂音频配置和默认关闭的厂商蓝牙只读检测按钮。**OEM 无线传输尚未实现**。API18 可复制蓝牙诊断摘要，完整文件导出仍不支持。
 
 详见 [音频代码说明](docs/geely-android43/H52-AUDIO.md)、[蓝牙协议说明](docs/geely-android43/H52-BLUETOOTH.md)、[固定APK独立验收](docs/geely-android43/H52-VALIDATION.md)。
+
+
+2026-10-04：新增默认关闭的“尝试 H52 原厂蓝牙连接”实验开关，使用 ANW SPP 接入既有 iAP2 流程。实车 iPhone 握手尚未验证。实现与使用说明见 [H52-ANW-CONNECTION](docs/geely-android43/H52-ANW-CONNECTION.md)。

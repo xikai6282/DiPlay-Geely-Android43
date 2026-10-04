@@ -490,6 +490,16 @@
     <string name="geely_audio_test_media">CarPlay media (23)</string>
     <string name="geely_audio_test_speech">Navigation speech (11)</string>
     <string name="geely_audio_test_alert">Navigation alert (25)</string>
+    <string name="geely_bt_connection_title">Try H52 factory Bluetooth connection</string>
+    <string name="geely_bt_connection_description">For Geely H52 only. Pair the iPhone in the vehicle factory UI first. When enabled, DiPlay may register a local SPP service and try the vendor connection path. It does not pair phones or change Bluetooth power. Compatibility still needs vehicle testing.</string>
+    <string name="geely_bt_factory_pairing_instructions">Pair your iPhone in the vehicle factory Bluetooth screen first. DiPlay reads existing factory pairings; it does not pair phones or switch Bluetooth power.</string>
+    <string name="geely_bt_picker_loading_title">Reading factory-paired phones</string>
+    <string name="geely_bt_picker_loading_message">Checking the H52 paired-phone list. This does not change Bluetooth settings.</string>
+    <string name="geely_bt_picker_busy_message">A previous H52 list query is still running. Wait for it to finish, then try again.</string>
+    <string name="geely_bt_picker_empty_title">No factory-paired phones found</string>
+    <string name="geely_bt_picker_empty_message">Pair your iPhone in the vehicle factory Bluetooth screen, then return here and choose it. DiPlay will not pair it automatically.</string>
+    <string name="geely_bt_picker_failed_title">Could not read factory-paired phones</string>
+    <string name="geely_bt_picker_failed_message">The H52 Bluetooth service did not return a paired-phone list (%1$s). Check the vehicle Bluetooth screen and try again.</string>
     <string name="bt_stack_checking_title">Checking vehicle Bluetooth</string>
     <string name="bt_stack_checking_message">Reading available Bluetooth status without changing it…</string>
     <string name="bt_stack_check_cancel">Cancel</string>
@@ -530,4 +540,5 @@
     <string name="legacy_report_destination">Reports are saved directly to the user-storage root (/sdcard). The saved path is shown after completion.</string>
     <string name="legacy_report_failed">The user-storage root is unavailable or not writable. Check storage and retry.</string>
     <string name="legacy_report_retry">Retry</string>
+    <string name="geely_bt_connection_status_note">The H52 factory connection route is selected. Choose an iPhone already paired in the factory interface, then try connecting. These status readings do not prove that wireless CarPlay is connected.</string>
 </resources>

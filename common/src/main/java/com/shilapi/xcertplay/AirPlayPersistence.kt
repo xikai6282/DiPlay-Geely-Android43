@@ -42,6 +42,7 @@ object AirPlayPersistence {
     private const val KEY_HEVC_SOFTWARE_DECODER = "hevc_software_decoder"
     private const val KEY_ADVANCED_AUDIO_CHANNEL_MAPPING = "advanced_audio_channel_mapping"
     private const val KEY_AUDIO_FOCUS_ENABLED = "audio_focus_enabled"
+    private const val KEY_GEELY_BLUETOOTH_CONNECTION_ENABLED = "geely_h52_bluetooth_connection_enabled"
     private const val KEY_MEDIA_AUDIO_CHANNEL = "media_audio_channel"
     private const val KEY_NAVIGATION_AUDIO_CHANNEL = "navigation_audio_channel"
     private const val KEY_NAVIGATION_STREAM_TYPE = "navigation_stream_type"
@@ -178,6 +179,17 @@ object AirPlayPersistence {
     fun saveGeelyBluetoothDiagnosticsEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putBoolean("geely_h52_bluetooth_diagnostics_enabled", enabled).apply()
+    }
+
+    /** Enables the experimental H52 connection backend. This is independent of read-only diagnostics. */
+    fun loadGeelyBluetoothConnectionEnabled(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean(KEY_GEELY_BLUETOOTH_CONNECTION_ENABLED, false)
+
+    fun saveGeelyBluetoothConnectionEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean(KEY_GEELY_BLUETOOTH_CONNECTION_ENABLED, enabled)
+            .apply()
     }
 
     fun saveAudioFocusEnabled(context: Context, enabled: Boolean) {
