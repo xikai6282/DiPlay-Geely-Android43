@@ -55,7 +55,7 @@ HotspotUiLabels 将内部 Wi-Fi P2P / LocalOnlyHotspot / Manual hotspot 标识�
 
 静态固件呈现 API18 / ARMv7 / imx6、OEM Binder/JNI、系统 UID、USB NCM 网卡和 Audio HAL 路径。生命周期可借鉴 NONE → ATTACHED → CONNECTED → OPENED → AUTHED 的分阶段处理；旧 MediaCodec 缓冲区和 Surface 路径与本适配方向一致。
 
-其系统服务、私有 net management、认证 IC 和 native 库依赖 OEM 权限/硬件，不能直接作为普通 APK 模块复制使用。系统属性中的品牌/型号也与用户称谓不完全一致，不能仅凭文件名确认所有吉利车型兼容。此次没有导入原厂私有实现。完整本地研究报告位于桌面交付 docs/H41-CarPlay-analysis.md，不作为公开源码分发。
+其系统服务、私有 net management、认证 IC 和 native 库依赖 OEM 权限/硬件，不能直接作为普通 APK 模块复制使用。系统属性中的品牌/型号也与用户称谓不完全一致，不能仅凭文件名确认所有吉利车型兼容。此次没有导入原厂私有实现。Release 的实验性认证输入沿用本地车测配置，不来自H41原厂固件研究。完整本地研究报告位于桌面交付 docs/H41-CarPlay-analysis.md，不作为公开源码分发。
 
 ## 已知限制
 

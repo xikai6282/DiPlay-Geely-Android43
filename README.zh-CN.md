@@ -8,7 +8,9 @@
 
 [本仓库 Releases](https://github.com/xikai6282/DiPlay-Geely-Android43/releases) 提供公开测试 APK 及对应源码。安装在车机端。测试包标识为 `com.shihab.diplay.hudtest`、`versionCode=29`、`versionName=0.2.10-hud-test`，最低 API 18。
 
-公开 APK **不包含 MFi 认证私钥/证书**，用于安装、设置页面及兼容性检查，不能保证直接完成 iPhone CarPlay 认证。携带本地认证输入的车测包仅在本地保留；需要完整车测构建时，请自行提供具有使用和分发权的认证输入，见构建文档。
+Release 提供**内置实验性认证材料的完整车测 APK**，无需用户自行补充认证文件即可尝试连接。源码不包含独立认证密钥或 APK 签名密钥；本地重新构建完整包仍需外部认证输入，见构建文档。
+
+这不是 Apple 认证产品。APK 中的认证身份可被提取；该实验身份并非为本项目新签发，来源说明沿用上游 [第三方声明](docs/THIRD_PARTY_NOTICES.md)。内置材料和模拟器签名测试均不能保证真实 iPhone 接受，未来 iOS 更新的兼容性也未验证。
 
 ## 本次适配
 
