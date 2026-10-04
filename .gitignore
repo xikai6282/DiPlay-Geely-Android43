@@ -1,0 +1,43 @@
+# Android Studio and local IDE state
+.idea/
+*.iml
+.vscode/
+
+# Gradle and local tooling
+.gradle/
+.kotlin/
+build/
+local.properties
+
+# Native build output
+.cxx/
+.externalNativeBuild/
+captures/
+
+# Local agent working notes
+/agent_docs/
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+/.idea
+
+# Local beta credentials and release signing (never commit)
+.private/
+*.jks
+*.keystore
+release-signing.properties
+
+# Never commit credential containers or installable distribution artifacts.
+*.pk8
+*.p7b
+*.p12
+*.pfx
+*.pem
+*.key
+*.apk
+*.aab
+
+# Publish selected reproducible verification logs.
+!docs/geely-android43/validation/*.log

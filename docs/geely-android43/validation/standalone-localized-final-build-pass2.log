@@ -1,0 +1,128 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :mobile:verifyStandaloneAuthentication
+> Task :mobile:rejectBundledCredentials
+> Task :mobile:preBuild
+> Task :mobile:preDebugBuild
+> Task :mobile:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :jmdns:compileJava UP-TO-DATE
+> Task :jmdns:processResources UP-TO-DATE
+> Task :jmdns:classes UP-TO-DATE
+> Task :jmdns:jar UP-TO-DATE
+> Task :common:preBuild UP-TO-DATE
+> Task :common:preDebugBuild UP-TO-DATE
+> Task :common:generateDebugResources UP-TO-DATE
+> Task :common:packageDebugResources UP-TO-DATE
+> Task :common:processDebugNavigationResources UP-TO-DATE
+> Task :common:parseDebugLocalResources UP-TO-DATE
+> Task :common:generateDebugRFile UP-TO-DATE
+> Task :shared:preBuild UP-TO-DATE
+> Task :shared:preDebugBuild UP-TO-DATE
+> Task :shared:generateDebugResources UP-TO-DATE
+> Task :shared:packageDebugResources UP-TO-DATE
+> Task :shared:processDebugNavigationResources UP-TO-DATE
+> Task :shared:parseDebugLocalResources UP-TO-DATE
+> Task :shared:generateDebugRFile UP-TO-DATE
+> Task :shared:compileDebugKotlin UP-TO-DATE
+> Task :shared:javaPreCompileDebug UP-TO-DATE
+> Task :shared:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :common:compileDebugKotlin
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/AppLocale.kt:110:19 'constructor(p0: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/AppLocale.kt:111:20 'constructor(p0: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/AppLocale.kt:112:20 'constructor(p0: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/AppLocale.kt:113:22 'constructor(p0: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt:11:8 'class RemoteControlClient : Any' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt:57:44 'class RemoteControlClient : Any' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt:182:26 'constructor(p0: PendingIntent!): RemoteControlClient' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt:235:40 'fun setPlaybackState(p0: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt:236:30 'class RemoteControlClient : Any' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt:236:50 'static field PLAYSTATE_PLAYING: Int' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt:236:73 'class RemoteControlClient : Any' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt:236:93 'static field PLAYSTATE_PAUSED: Int' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt:100:20 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt:101:20 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt:738:85 'static field SOFT_INPUT_ADJUST_RESIZE: Int' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt:1135:13 'constructor(p0: Int, p1: Int, p2: Int, p3: Int, p4: Int, p5: Int): AudioTrack' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/DiPlaySessionService.kt:36:14 'fun addAction(p0: Int, p1: CharSequence!, p2: PendingIntent!): Notification.Builder!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/main/java/com/shilapi/xcertplay/DiPlaySessionService.kt:75:29 'constructor(p0: Context!): Notification.Builder' is deprecated. Deprecated in Java.
+
+> Task :common:javaPreCompileDebug UP-TO-DATE
+> Task :common:compileDebugJavaWithJavac NO-SOURCE
+> Task :common:bundleLibCompileToJarDebug
+> Task :mobile:generateDebugResources UP-TO-DATE
+> Task :mobile:packageDebugResources UP-TO-DATE
+> Task :mobile:processDebugNavigationResources UP-TO-DATE
+> Task :mobile:parseDebugLocalResources UP-TO-DATE
+> Task :mobile:generateDebugRFile UP-TO-DATE
+
+> Task :mobile:compileDebugKotlin
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt:277:40 'static field GET_DISABLED_COMPONENTS: Int' is deprecated. Deprecated in Java.
+
+> Task :mobile:javaPreCompileDebug UP-TO-DATE
+> Task :mobile:compileDebugJavaWithJavac NO-SOURCE
+> Task :common:generateDebugAssets UP-TO-DATE
+> Task :common:mergeDebugAssets UP-TO-DATE
+> Task :mobile:generateDebugAssets UP-TO-DATE
+> Task :shared:generateDebugAssets UP-TO-DATE
+> Task :shared:mergeDebugAssets UP-TO-DATE
+> Task :mobile:mergeDebugAssets UP-TO-DATE
+> Task :mobile:compressDebugAssets UP-TO-DATE
+> Task :common:processDebugJavaRes
+> Task :mobile:processDebugJavaRes UP-TO-DATE
+> Task :shared:processDebugJavaRes UP-TO-DATE
+> Task :mobile:mergeDebugJavaResource
+> Task :common:bundleLibRuntimeToJarDebug
+> Task :shared:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :mobile:checkDebugDuplicateClasses UP-TO-DATE
+> Task :mobile:desugarDebugFileDependencies UP-TO-DATE
+> Task :common:mapDebugSourceSetPaths
+> Task :common:compileDebugLibraryResources
+> Task :common:writeDebugAarMetadata UP-TO-DATE
+> Task :shared:writeDebugAarMetadata UP-TO-DATE
+> Task :mobile:checkDebugAarMetadata UP-TO-DATE
+> Task :mobile:mapDebugSourceSetPaths UP-TO-DATE
+> Task :mobile:compileDebugNavigationResources UP-TO-DATE
+> Task :mobile:mergeDebugResources
+> Task :mobile:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :common:extractDeepLinksDebug UP-TO-DATE
+> Task :common:processDebugManifest UP-TO-DATE
+> Task :mobile:extractDeepLinksDebug UP-TO-DATE
+> Task :shared:extractDeepLinksDebug UP-TO-DATE
+> Task :shared:processDebugManifest UP-TO-DATE
+> Task :mobile:processDebugMainManifest
+> Task :mobile:processDebugManifest
+> Task :mobile:processDebugManifestForPackage
+> Task :shared:mapDebugSourceSetPaths UP-TO-DATE
+> Task :shared:compileDebugLibraryResources UP-TO-DATE
+> Task :mobile:processDebugResources
+> Task :mobile:dexBuilderDebug
+> Task :mobile:mergeDexDebug
+> Task :common:mergeDebugJniLibFolders UP-TO-DATE
+> Task :common:mergeDebugNativeLibs NO-SOURCE
+> Task :common:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :mobile:mergeDebugJniLibFolders UP-TO-DATE
+> Task :shared:configureNdkBuildDebug[arm64-v8a]
+> Task :shared:buildNdkBuildDebug[arm64-v8a]
+> Task :shared:configureNdkBuildDebug[armeabi-v7a]
+> Task :shared:buildNdkBuildDebug[armeabi-v7a]
+> Task :shared:configureNdkBuildDebug[x86]
+> Task :shared:buildNdkBuildDebug[x86]
+> Task :shared:configureNdkBuildDebug[x86_64]
+> Task :shared:buildNdkBuildDebug[x86_64]
+> Task :shared:mergeDebugJniLibFolders UP-TO-DATE
+> Task :shared:mergeDebugNativeLibs UP-TO-DATE
+> Task :shared:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :mobile:mergeDebugNativeLibs UP-TO-DATE
+> Task :mobile:stripDebugDebugSymbols UP-TO-DATE
+> Task :mobile:validateSigningDebug UP-TO-DATE
+> Task :mobile:writeDebugAppMetadata UP-TO-DATE
+> Task :mobile:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :mobile:packageDebug
+> Task :mobile:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :mobile:assembleDebug
+> Task :mobile:assembleStandaloneDebug
+
+BUILD SUCCESSFUL in 48s
+83 actionable tasks: 26 executed, 57 up-to-date

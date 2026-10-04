@@ -1,0 +1,156 @@
+--------- beginning of /dev/log/main
+
+
+10-04 03:48:04.731  4136  4136 D AndroidRuntime: 
+
+
+10-04 03:48:04.731  4136  4136 D AndroidRuntime: >>>>>> AndroidRuntime START com.android.internal.os.RuntimeInit <<<<<<
+
+
+10-04 03:48:04.731  4136  4136 D AndroidRuntime: CheckJNI is ON
+
+
+10-04 03:48:04.731  4136  4136 D dalvikvm: Trying to load lib libjavacore.so 0x0
+
+
+10-04 03:48:04.731  4136  4136 D dalvikvm: Added shared lib libjavacore.so 0x0
+
+
+10-04 03:48:04.731  4136  4136 D dalvikvm: Trying to load lib libnativehelper.so 0x0
+
+
+10-04 03:48:04.731  4136  4136 D dalvikvm: Added shared lib libnativehelper.so 0x0
+
+
+10-04 03:48:04.761  4136  4136 D AndroidRuntime: Calling main entry com.android.commands.am.Am
+
+
+10-04 03:48:04.761  4136  4136 D dalvikvm: Note: class Landroid/app/ActivityManagerNative; has 163 unimplemented (abstract) methods
+
+
+10-04 03:48:04.761  1480  1492 D dalvikvm: GC_FOR_ALLOC freed 624K, 24% free 6690K/8764K, paused 4ms, total 5ms
+
+
+10-04 03:48:04.761  4136  4136 D AndroidRuntime: Shutting down VM
+
+
+10-04 03:48:04.761  4147  4147 D dalvikvm: Not late-enabling CheckJNI (already on)
+
+
+10-04 03:48:04.761  4136  4141 D dalvikvm: GC_CONCURRENT freed 90K, 16% free 502K/596K, paused 2ms+0ms, total 2ms
+
+
+--------- beginning of /dev/log/system
+
+
+10-04 03:48:04.761  1480  1492 I ActivityManager: START u0 {flg=0x10000000 cmp=com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity (has extras)} from pid 4136
+
+
+10-04 03:48:04.781  1163  1667 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 1536000
+
+
+10-04 03:48:04.781  1620  1620 D EGL_emulation: eglMakeCurrent: 0xb8c0fe90: ver 2 0
+
+
+10-04 03:48:04.781  1480  1480 I ActivityManager: Start proc com.shihab.diplay.hudtest for activity com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity: pid=4147 uid=10046 gids={50046, 3003, 3002, 3001, 1028}
+
+
+10-04 03:48:04.791  4147  4147 I MultiDex: VM with version 1.6.0 does not have multidex support
+
+
+10-04 03:48:04.791  4147  4147 I MultiDex: Installing application
+
+
+10-04 03:48:04.791  4147  4147 I MultiDex: MultiDexExtractor(/data/app/com.shihab.diplay.hudtest-1.apk, /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes)
+
+
+10-04 03:48:04.791  4147  4147 I MultiDex: Blocking on lock /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/MultiDex.lock
+
+
+10-04 03:48:04.791  4147  4147 I MultiDex: /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/MultiDex.lock locked
+
+
+10-04 03:48:04.791  4147  4147 I MultiDex: MultiDexExtractor.load(/data/app/com.shihab.diplay.hudtest-1.apk, false, )
+
+
+10-04 03:48:04.791  4147  4147 I MultiDex: loading existing secondary dex files
+
+
+10-04 03:48:04.791  4147  4147 I MultiDex: load found 2 secondary dex files
+
+
+10-04 03:48:04.791  4147  4147 I MultiDex: install done
+
+
+10-04 03:48:04.791  4147  4147 I dalvikvm: Could not find method android.os.Trace.isEnabled, referenced from method androidx.tracing.Trace.isEnabled
+
+
+10-04 03:48:04.791  4147  4147 W dalvikvm: VFY: unable to resolve static method 2217: Landroid/os/Trace;.isEnabled ()Z
+
+
+10-04 03:48:04.791  4147  4147 D dalvikvm: VFY: replacing opcode 0x71 at 0x0004
+
+
+10-04 03:48:04.791  4147  4147 I dalvikvm: Could not find method com.shilapi.xcertplay.compat.Api18CompatProbeActivity.registerReceiver, referenced from method com.shilapi.xcertplay.compat.Api18CompatProbeActivity.onCreate
+
+
+10-04 03:48:04.791  4147  4147 W dalvikvm: VFY: unable to resolve virtual method 44906: Lcom/shilapi/xcertplay/compat/Api18CompatProbeActivity;.registerReceiver (Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;I)Landroid/content/Intent;
+
+
+10-04 03:48:04.791  1620  1620 D EGL_emulation: eglMakeCurrent: 0xb8c0fe90: ver 2 0
+
+
+10-04 03:48:04.791  4147  4147 D dalvikvm: VFY: replacing opcode 0x6e at 0x008c
+
+
+10-04 03:48:04.801  4147  4147 D dalvikvm: GC_FOR_ALLOC freed 247K, 14% free 2637K/3032K, paused 1ms, total 1ms
+
+
+10-04 03:48:04.801  4147  4147 I dalvikvm-heap: Grow heap (frag case) to 3.321MB for 635808-byte allocation
+
+
+10-04 03:48:04.801  4147  4156 D dalvikvm: GC_FOR_ALLOC freed <1K, 11% free 3257K/3656K, paused 1ms, total 1ms
+
+
+10-04 03:48:04.801  4147  4150 D dalvikvm: GC_CONCURRENT freed <1K, 11% free 3265K/3656K, paused 1ms+1ms, total 4ms
+
+
+10-04 03:48:04.801  4147  4147 I CodexApi18Probe: START sdk=18 probe=media_api18
+
+
+10-04 03:48:04.831  4147  4147 D libEGL  : loaded /system/lib/egl/libEGL_emulation.so
+
+
+10-04 03:48:04.831  4147  4147 D libEGL  : loaded /system/lib/egl/libGLESv1_CM_emulation.so
+
+
+10-04 03:48:04.831  4147  4147 D libEGL  : loaded /system/lib/egl/libGLESv2_emulation.so
+
+
+10-04 03:48:04.831  4147  4147 D         : HostConnection::get() New Host Connection established 0xb8a6c880, tid 4147
+
+
+10-04 03:48:04.841  4147  4147 D EGL_emulation: eglCreateContext: 0xb8a6e600: maj 2 min 0 rcv 2
+
+
+10-04 03:48:04.841  4147  4147 D EGL_emulation: eglMakeCurrent: 0xb8a6e600: ver 2 0
+
+
+10-04 03:48:04.841  4147  4147 D OpenGLRenderer: Enabling debug mode 0
+
+
+10-04 03:48:05.061  1480  1496 I ActivityManager: Displayed com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity: +301ms
+
+
+10-04 03:48:05.101  4147  4147 W DiPlay-Video: parked video playback requires Android 6.0 or newer
+
+
+10-04 03:48:05.101  4147  4147 I CodexApi18Probe: PASS API18_MEDIA3_CLASS_ISOLATION keysLoaded=true videoLoaded=true bridgeLoaded=true media3TypesLinked=false playerActivityEnabled=false showRejected=true
+
+
+10-04 03:48:05.101  4147  4147 I CodexApi18Probe: COMPLETE failures=0
+
+
+10-04 03:48:05.151  1163  1163 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 196608
+
+

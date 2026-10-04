@@ -1,0 +1,45 @@
+plugins {
+    id 'com.android.library'
+}
+android {
+    namespace = 'com.shilapi.xcertplay.shared'
+    compileSdk = 37
+
+    defaultConfig {
+        minSdk = 18
+        targetSdk = 37
+
+        ndk {
+            // Include x86 so Android 4.3 x86 emulator builds can load both JNI libraries.
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+        }
+
+        externalNativeBuild {
+            ndkBuild {
+                arguments 'APP_PLATFORM=android-18'
+            }
+        }
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    ndkVersion = '28.2.13676358'
+    // The JNI modules use API-18 POSIX/JNI calls. NDK r28's supported platform floor is 21.
+    experimentalProperties["android.ndk.suppressMinSdkVersionError"] = 21
+    externalNativeBuild {
+        ndkBuild {
+            path = file('src/main/jni/Android.mk')
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
+dependencies {
+    compileOnly libs.androidx.annotation
+    implementation libs.bouncycastle
+    // Vendored JmDNS 3.6.3 with the Android multicast-socket ordering/API-18 fixes.
+    api project(':jmdns')
+    testImplementation libs.junit
+    testImplementation 'org.robolectric:robolectric:4.17'
+}

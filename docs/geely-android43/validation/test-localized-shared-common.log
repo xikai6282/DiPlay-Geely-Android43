@@ -1,0 +1,94 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.5.0/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :jmdns:compileJava UP-TO-DATE
+> Task :jmdns:processResources UP-TO-DATE
+> Task :jmdns:classes UP-TO-DATE
+> Task :jmdns:jar UP-TO-DATE
+> Task :shared:preBuild UP-TO-DATE
+> Task :shared:preDebugBuild UP-TO-DATE
+> Task :shared:generateDebugResources UP-TO-DATE
+> Task :shared:packageDebugResources UP-TO-DATE
+> Task :shared:processDebugNavigationResources UP-TO-DATE
+> Task :shared:parseDebugLocalResources UP-TO-DATE
+> Task :shared:generateDebugRFile UP-TO-DATE
+> Task :shared:compileDebugKotlin UP-TO-DATE
+> Task :shared:javaPreCompileDebug UP-TO-DATE
+> Task :shared:compileDebugJavaWithJavac NO-SOURCE
+> Task :shared:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :shared:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :shared:preDebugUnitTestBuild UP-TO-DATE
+> Task :shared:generateDebugUnitTestStubRFile UP-TO-DATE
+> Task :shared:compileDebugUnitTestKotlin UP-TO-DATE
+> Task :shared:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :shared:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :shared:processDebugJavaRes UP-TO-DATE
+> Task :shared:processDebugUnitTestJavaRes UP-TO-DATE
+> Task :shared:testDebugUnitTest UP-TO-DATE
+> Task :common:preBuild UP-TO-DATE
+> Task :common:preDebugBuild UP-TO-DATE
+> Task :common:generateDebugResources UP-TO-DATE
+> Task :common:packageDebugResources UP-TO-DATE
+> Task :common:processDebugNavigationResources UP-TO-DATE
+> Task :common:parseDebugLocalResources UP-TO-DATE
+> Task :common:generateDebugRFile UP-TO-DATE
+> Task :common:compileDebugKotlin UP-TO-DATE
+> Task :common:javaPreCompileDebug UP-TO-DATE
+> Task :common:compileDebugJavaWithJavac NO-SOURCE
+> Task :common:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :common:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :common:preDebugUnitTestBuild UP-TO-DATE
+> Task :common:writeDebugAarMetadata UP-TO-DATE
+> Task :shared:writeDebugAarMetadata UP-TO-DATE
+> Task :common:checkDebugUnitTestAarMetadata UP-TO-DATE
+> Task :common:mapDebugSourceSetPaths UP-TO-DATE
+> Task :common:compileDebugLibraryResources UP-TO-DATE
+> Task :common:mapDebugUnitTestSourceSetPaths UP-TO-DATE
+> Task :common:generateDebugUnitTestResources UP-TO-DATE
+> Task :common:mergeDebugUnitTestResources
+> Task :common:extractDeepLinksDebug UP-TO-DATE
+> Task :common:processDebugManifest UP-TO-DATE
+> Task :shared:extractDeepLinksDebug UP-TO-DATE
+> Task :shared:processDebugManifest UP-TO-DATE
+> Task :common:mergeDebugUnitTestManifest UP-TO-DATE
+> Task :common:processDebugUnitTestManifest UP-TO-DATE
+> Task :shared:mapDebugSourceSetPaths UP-TO-DATE
+> Task :shared:compileDebugLibraryResources UP-TO-DATE
+> Task :common:processDebugUnitTestResources
+
+> Task :common:compileDebugUnitTestKotlin
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/AppLocaleTest.kt:56:22 'constructor(p0: String!): Locale' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:40:14 'var isWifiEnabled: Boolean' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:41:23 'val connectionInfo: WifiInfo!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:42:23 'val connectionInfo: WifiInfo!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:46:70 'val connectionInfo: WifiInfo!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:59:70 'val connectionInfo: WifiInfo!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:131:68 'val connectionInfo: WifiInfo!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:221:78 'val connectionInfo: WifiInfo!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:225:68 'val connectionInfo: WifiInfo!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:322:59 'var isWifiEnabled: Boolean' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:396:13 'static fun shadowOf(p0: WifiP2pGroup!): ShadowWifiP2pGroup!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:397:13 'static fun shadowOf(p0: WifiP2pGroup!): ShadowWifiP2pGroup!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:398:13 'static fun shadowOf(p0: WifiP2pGroup!): ShadowWifiP2pGroup!' is deprecated. Deprecated in Java.
+w: file:///F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10/common/src/test/java/com/shilapi/xcertplay/WifiP2pGroupManagerTest.kt:399:13 'static fun shadowOf(p0: WifiP2pGroup!): ShadowWifiP2pGroup!' is deprecated. Deprecated in Java.
+
+> Task :common:javaPreCompileDebugUnitTest UP-TO-DATE
+> Task :common:compileDebugUnitTestJavaWithJavac NO-SOURCE
+> Task :common:generateDebugUnitTestAssets UP-TO-DATE
+> Task :common:generateDebugAssets UP-TO-DATE
+> Task :common:mergeDebugAssets UP-TO-DATE
+> Task :shared:generateDebugAssets UP-TO-DATE
+> Task :shared:mergeDebugAssets UP-TO-DATE
+> Task :common:mergeDebugUnitTestAssets UP-TO-DATE
+> Task :common:packageDebugUnitTestForUnitTest
+> Task :common:generateDebugUnitTestConfig
+> Task :common:processDebugJavaRes UP-TO-DATE
+> Task :common:processDebugUnitTestJavaRes UP-TO-DATE
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.conscrypt.NativeLibraryUtil in an unnamed module (file:/C:/Users/XIKAI-PC/.gradle/caches/modules-2/files-2.1/org.conscrypt/conscrypt-openjdk-uber/2.6.2/65c5977595ee9cc12e6017b9d43b1d2e3d1bab63/conscrypt-openjdk-uber-2.6.2.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+> Task :common:testDebugUnitTest
+
+BUILD SUCCESSFUL in 1m 27s
+54 actionable tasks: 6 executed, 48 up-to-date

@@ -1,0 +1,24 @@
+plugins {
+    id 'java-library'
+}
+
+// Java 8 keeps the module consumable by Android's D8 and by the JVM unit tests alike.
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+// JmDNS 3.6.3 vendored from the official sources jar (Apache License 2.0, retained under
+// src/main/resources/META-INF/LICENSE) so a single, reviewable change can be applied to the
+// Android socket creation. See src/main/java/javax/jmdns/impl/JmDNSImpl.java:openMulticastSocket.
+//
+// See README.md for the full, enumerated list of modifications and why each is required for
+// Android 4.3 (API 18). Nothing else in the library's behaviour is changed: mDNS record parsing,
+// service registration, group selection, joinGroup, TTL, close and error recovery are untouched.
+dependencies {
+    api libs.slf4j
+}
+
+sourceSets {
+    main.java.srcDirs = ['src/main/java']
+}

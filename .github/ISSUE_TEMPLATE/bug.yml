@@ -1,0 +1,36 @@
+name: Connection, display or audio problem
+description: Help us reproduce an issue on your head unit.
+title: '[Bug] '
+body:
+  - type: markdown
+    attributes:
+      value: 'Test while parked. Reports are public: review diagnostic files and remove personal information before attaching them. Never post credentials.'
+  - type: input
+    id: version
+    attributes: {label: DiPlay version, placeholder: '0.1.0'}
+    validations: {required: true}
+  - type: input
+    id: car
+    attributes: {label: Car and head-unit model, placeholder: 'Car model/year, DiLink version, Android version'}
+    validations: {required: true}
+  - type: input
+    id: phone
+    attributes: {label: iPhone model and exact iOS version}
+    validations: {required: true}
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Connection
+      options: [Wireless, USB, Both]
+    validations: {required: true}
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: What happened and how to reproduce it
+      description: 'Include expected behavior, steps, display settings and whether the car is also connected to a Wi-Fi network. For wireless, include the band/channel if the report shows it.'
+    validations: {required: true}
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostic report or recording
+      description: 'Settings → Save diagnostic report; Android 10+ saves to Downloads/DiPlay. Attach the reviewed file here. If export fails, describe exactly when.'

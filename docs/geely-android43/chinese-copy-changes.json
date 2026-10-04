@@ -1,0 +1,367 @@
+[
+  {
+    "key": "built_in_car_hotspot",
+    "before": "车载热点",
+    "after": "车机热点"
+  },
+  {
+    "key": "wifi_direct",
+    "before": "Wi-Fi Direct",
+    "after": "Wi-Fi 直连"
+  },
+  {
+    "key": "hotspot_hint_manual",
+    "before": "车载热点 · 保持车载热点、蓝牙和 iPhone 的 Wi-Fi 开启。",
+    "after": "车机热点 · 保持车机热点、蓝牙和 iPhone 的 Wi-Fi 开启。"
+  },
+  {
+    "key": "hotspot_hint_local",
+    "before": "打开“连接设置”以保存车载热点信息。",
+    "after": "打开“连接设置”以保存车机热点信息。"
+  },
+  {
+    "key": "hotspot_hint_p2p",
+    "before": "Wi-Fi Direct · 保持车机 Wi-Fi 开关、蓝牙和 iPhone 的 Wi-Fi 开启。",
+    "after": "Wi-Fi 直连 · 车机创建网络，iPhone 自动加入。请保持车机 Wi-Fi、蓝牙和 iPhone Wi-Fi 开启。"
+  },
+  {
+    "key": "hotspot_mode_manual_desc",
+    "before": "使用车輄自带热点。若车机支持，请在车机设置中选择 5 GHz。",
+    "after": "使用车机自带的热点。若车机支持，请在热点设置中选择 5 GHz。"
+  },
+  {
+    "key": "hotspot_mode_p2p_desc",
+    "before": "备选方案。需要打开车机 Wi-Fi 开关；2.4 GHz 连接可能会卡顿。",
+    "after": "由车机创建无线网络，iPhone 自动加入。请开启车机 Wi-Fi；使用 2.4 GHz 时可能出现卡顿。"
+  },
+  {
+    "key": "hotspot_details_saved",
+    "before": "详情已保存 · 连接前请确认车载热点已开启。",
+    "after": "详情已保存 · 连接前请确认车机热点已开启。"
+  },
+  {
+    "key": "setup_error_auth",
+    "before": "无法加载 CarPlay 认证。请在本应用之上覆盖安装完整的 DiPlay 构建。无需卸载或更改热点设置。",
+    "after": "无法加载 CarPlay 认证资料。请覆盖安装完整的 DiPlay 安装包，无需卸载或更改热点设置。"
+  },
+  {
+    "key": "hotspot_backend_prefix",
+    "before": "\\n后端：",
+    "after": "\\n连接方式："
+  },
+  {
+    "key": "preview_oem_label",
+    "before": "OEM 标签：",
+    "after": "厂商标签："
+  },
+  {
+    "key": "basis_widest_width",
+    "before": "最宽宽度",
+    "after": "屏幕宽度"
+  },
+  {
+    "key": "basis_longest_height",
+    "before": "最长高度",
+    "after": "屏幕高度"
+  },
+  {
+    "key": "preview_driving_side",
+    "before": "驾驶位：",
+    "after": "驾驶位位置："
+  },
+  {
+    "key": "status_waiting_reenumeration",
+    "before": "等待 iPhone 重新枚举",
+    "after": "正在等待 iPhone 重新识别为 USB 设备"
+  },
+  {
+    "key": "settings_android9_compat",
+    "before": "以下设置在 Android 9（API 28）上不可用且已隐藏：\\n• Wi-Fi P2P（5 GHz）— 将改用 LocalOnlyHotspot。\\n• HEVC 软解码器 — 将改用硬件解码。",
+    "after": "以下功能在 Android 9（API 28）上不可用，已隐藏：\\n• Wi-Fi 直连（5 GHz）：改用本地热点。\\n• HEVC 软件解码：改用硬件解码。"
+  },
+  {
+    "key": "settings_mfi_address_hint",
+    "before": "地址必须以 http:// 或 https:// 开头。令牌为可选项，将作为 Authorization bearer token 发送。",
+    "after": "服务器地址必须以 http:// 或 https:// 开头。访问令牌可留空；填写后会作为 Bearer 令牌随请求发送。"
+  },
+  {
+    "key": "a_previous_wi_fi_direct_connection_is_still_running_reset",
+    "before": "之前的 Wi-Fi Direct 连接仍在运行。请重置后再连接。",
+    "after": "之前的 Wi-Fi 直连 连接仍在运行。请重置后再连接。"
+  },
+  {
+    "key": "advanced_audio_channel_mapping",
+    "before": "高级音频通道映射",
+    "after": "高级音频声道映射"
+  },
+  {
+    "key": "car_hotspot_details",
+    "before": "车机热点详情",
+    "after": "车机热点信息"
+  },
+  {
+    "key": "carplay_map_on_instrument_cluster_experimental",
+    "before": "仪表盘上的CarPlay地图 · 实验性",
+    "after": "仪表盘 CarPlay 地图 · 实验功能"
+  },
+  {
+    "key": "carplay_size",
+    "before": "CarPlay 尺寸",
+    "after": "CarPlay 界面缩放"
+  },
+  {
+    "key": "could_not_reset_wi_fi_direct_close_the_other_projection_ap",
+    "before": "无法重置 Wi-Fi Direct。请关闭其他投屏应用后重试。",
+    "after": "无法重置 Wi-Fi 直连。请关闭其他投屏应用后重试。"
+  },
+  {
+    "key": "driving_side",
+    "before": "驾驶方向",
+    "after": "驾驶位位置"
+  },
+  {
+    "key": "efficient_video",
+    "before": "高效视频",
+    "after": "高效视频编码"
+  },
+  {
+    "key": "hotspot_password_contains_u_0000",
+    "before": "热点密码包含 U+0000",
+    "after": "热点密码包含无效的空字符"
+  },
+  {
+    "key": "hotspot_ssid",
+    "before": "热点 SSID",
+    "after": "热点名称（SSID）"
+  },
+  {
+    "key": "hotspot_ssid_contains_u_0000",
+    "before": "热点 SSID 包含 U+0000",
+    "after": "热点名称包含无效的空字符"
+  },
+  {
+    "key": "hotspot_ssid_is_required",
+    "before": "必须填写热点 SSID",
+    "after": "请输入热点名称"
+  },
+  {
+    "key": "hotspot_ssid_must_be_at_most_32_utf_8_bytes",
+    "before": "热点 SSID 最多为 32 个 UTF-8 字节",
+    "after": "热点名称不能超过 32 个 UTF-8 字节（中文字符占多个字节）"
+  },
+  {
+    "key": "identity_appearance",
+    "before": "身份与外观",
+    "after": "设备信息与外观"
+  },
+  {
+    "key": "left_hand_drive",
+    "before": "左舵",
+    "after": "左侧驾驶位（左舵）"
+  },
+  {
+    "key": "localonlyhotspot",
+    "before": "LocalOnlyHotspot",
+    "after": "本地热点"
+  },
+  {
+    "key": "longest_height",
+    "before": "较长边",
+    "after": "按屏幕高度"
+  },
+  {
+    "key": "manual_hotspot",
+    "before": "手动热点",
+    "after": "车机热点（手动配置）"
+  },
+  {
+    "key": "manual_mode_match_the_cluster_theme_here_the_map_cannot_fo",
+    "before": "手动模式：在此匹配仪表盘主题。没有使用访问权限时，地图无法跟随卡片显示状态。",
+    "after": "手动模式：在此匹配仪表盘主题。没有使用情况访问权限时，地图无法跟随卡片显示状态。"
+  },
+  {
+    "key": "mfi_certificate_signing_target",
+    "before": "MFi 证书与签名目标",
+    "after": "MFi 认证证书与签名方式"
+  },
+  {
+    "key": "navigation_on_hud_and_instrument_cluster",
+    "before": "HUD和仪表盘导航",
+    "after": "抬头显示（HUD）与仪表盘导航"
+  },
+  {
+    "key": "oem_label",
+    "before": "OEM 标签",
+    "after": "厂商标签（OEM）"
+  },
+  {
+    "key": "open",
+    "before": "开放",
+    "after": "不加密"
+  },
+  {
+    "key": "password_must_be_empty_when_security_is_open",
+    "before": "安全类型为“开放”时，密码必须留空",
+    "after": "安全类型为“不加密”时，请将密码留空"
+  },
+  {
+    "key": "physical_length",
+    "before": "物理长度",
+    "after": "屏幕参考长度"
+  },
+  {
+    "key": "physical_size_basis",
+    "before": "物理尺寸依据",
+    "after": "物理尺寸计算基准"
+  },
+  {
+    "key": "right_hand_drive",
+    "before": "右舵",
+    "after": "右侧驾驶位（右舵）"
+  },
+  {
+    "key": "s_1_connect_a_computer_with_adb_installed_to_the_car_using",
+    "before": "1. 用装有 ADB 的电脑，通过现有的 USB 或无线调试连接连接到车机。如有调试授权提示请批准。\\n\\n2. 在电脑终端中运行此命令：",
+    "after": "1. 在电脑上安装 ADB，通过 USB 或无线调试连接车机。出现调试授权提示时，请允许连接。\\n\\n2. 在电脑终端中运行以下命令："
+  },
+  {
+    "key": "safe_area_waiting_for_activity_size",
+    "before": "安全区域：正在等待活动窗口尺寸",
+    "after": "安全区域：正在等待窗口尺寸"
+  },
+  {
+    "key": "save_details",
+    "before": "保存详情",
+    "after": "保存热点信息"
+  },
+  {
+    "key": "setup_needs_attention",
+    "before": "设置需要处理",
+    "after": "请完成连接设置"
+  },
+  {
+    "key": "still_waiting_for_usage_access_check_that_the_command_ran",
+    "before": "仍在等待使用访问权限。请确认命令已在本车机上成功运行，然后重试。",
+    "after": "仍在等待使用情况访问权限。请确认命令已在本车机上成功运行，然后重试。"
+  },
+  {
+    "key": "this_ends_the_existing_wi_fi_direct_connection_including_o",
+    "before": "这会结束现有的 Wi-Fi Direct 连接，包括重新安装后遗留的连接。请先关闭其他投屏应用。车机的互联网 Wi-Fi 不受影响。",
+    "after": "这会结束现有的 Wi-Fi 直连 连接，包括重新安装后遗留的连接。请先关闭其他投屏应用。车机的互联网 Wi-Fi 不受影响。"
+  },
+  {
+    "key": "this_head_unit_does_not_support_wi_fi_direct",
+    "before": "此车机不支持 Wi-Fi Direct。",
+    "after": "此车机不支持 Wi-Fi 直连。"
+  },
+  {
+    "key": "usage_access_enabled",
+    "before": "使用访问权限：已启用",
+    "after": "使用情况访问权限：已启用"
+  },
+  {
+    "key": "usage_access_lets_diplay_follow_the_instrument_theme_and_m",
+    "before": "使用访问权限让 DiPlay 跟随仪表盘主题和地图卡片。仅在本地处理 BYD 仪表盘活动事件。本车机没有可用的权限设置页面。",
+    "after": "使用情况访问权限让 DiPlay 跟随仪表盘主题和地图卡片。仅在本地处理 BYD 仪表盘活动事件。本车机没有可用的权限设置页面。"
+  },
+  {
+    "key": "usage_access_setup_needed_for_automatic_mode",
+    "before": "使用访问权限：自动模式需要设置",
+    "after": "自动模式需要使用情况访问权限"
+  },
+  {
+    "key": "use_usage_content_type_routing_instead_of_stream_type",
+    "before": "使用 usage / content-type 路由代替流类型",
+    "after": "按音频用途和内容类型选择输出，代替传统音频流类型"
+  },
+  {
+    "key": "wi_fi_direct_is_still_busy_close_the_other_projection_app",
+    "before": "Wi-Fi Direct 仍被占用。请关闭其他投屏应用后重试。",
+    "after": "Wi-Fi 直连 仍被占用。请关闭其他投屏应用后重试。"
+  },
+  {
+    "key": "wi_fi_p2p_5_ghz",
+    "before": "Wi-Fi P2P（5 GHz）",
+    "after": "Wi-Fi 直连（5 GHz）"
+  },
+  {
+    "key": "widest_width",
+    "before": "较宽边",
+    "after": "按屏幕宽度"
+  },
+  {
+    "key": "hotspot_error_empty_name",
+    "before": "请输入车载热点名称",
+    "after": "请输入车机热点名称"
+  },
+  {
+    "key": "hotspot_error_long_name",
+    "before": "热点名称不能超过32字节",
+    "after": "热点名称不能超过 32 个 UTF-8 字节（中文字符占多个字节）"
+  },
+  {
+    "key": "hotspot_error_password_length",
+    "before": "热点密码长度必须为8至63个字符",
+    "after": "热点密码长度必须为 8 至 63 个字符"
+  },
+  {
+    "key": "dashboard_content_turn_card",
+    "before": "转向提示卡",
+    "after": "转弯提示卡"
+  },
+  {
+    "key": "dashboard_content_map_with_turn_card",
+    "before": "地图和转向提示卡",
+    "after": "地图和转弯提示卡"
+  },
+  {
+    "key": "turn_card_size",
+    "before": "转向提示卡大小",
+    "after": "转弯提示卡大小"
+  },
+  {
+    "key": "turn_card_horizontal",
+    "before": "转向提示卡 · 水平位置",
+    "after": "转弯提示卡 · 水平位置"
+  },
+  {
+    "key": "turn_card_vertical",
+    "before": "转向提示卡 · 垂直位置",
+    "after": "转弯提示卡 · 垂直位置"
+  },
+  {
+    "key": "reset_turn_card_to_centre",
+    "before": "将转向提示卡重置到中央",
+    "after": "将转弯提示卡重置到中央"
+  },
+  {
+    "key": "video_requires_android_6",
+    "before": null,
+    "after": "驻车视频播放需要 Android 6.0 或更高版本。"
+  },
+  {
+    "key": "center_map_card",
+    "before": "中控屏上的仪表盘地图",
+    "after": "中控屏悬浮地图"
+  },
+  {
+    "key": "center_map_follows_dashboard",
+    "before": "主屏幕地图与仪表盘同步",
+    "after": "显示仪表盘地图镜像"
+  },
+  {
+    "key": "center_map_follows_dashboard_description",
+    "before": "开启：主屏幕卡片镜像仪表盘地图，两边画面一致。关闭：主屏幕不显示该卡片，仪表盘地图只出现在仪表盘上。",
+    "after": "开启后，在中控主屏幕显示与仪表盘相同的地图。关闭后隐藏该悬浮卡片，不影响仪表盘地图。"
+  },
+  {
+    "key": "center_map_usage_missing",
+    "before": "使用情况访问权限：未允许，因此卡片会显示在所有应用上层。通过 ADB：adb shell appops set %1$s GET_USAGE_STATS allow",
+    "after": "使用情况访问权限：未允许，卡片会显示在其他应用上方。可通过 ADB 授权：adb shell appops set %1$s GET_USAGE_STATS allow"
+  },
+  {
+    "key": "launcher_map_sharing_description",
+    "before": "支持 DiPlay 的启动器可以在自己的主屏幕中显示实时仪表盘地图。默认关闭，因为开启后车机上的任何应用都可以请求该地图。详见 docs/LAUNCHER_INTEGRATION.md。",
+    "after": "兼容 DiPlay 的桌面应用可以在主屏幕中显示实时仪表盘地图。默认关闭；开启后，车机上的其他应用也能请求地图画面。"
+  }
+]

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Media3 is optional parked-video playback. That path stays disabled below API 23. -->
+    <uses-sdk tools:overrideLibrary="androidx.media3.common,androidx.media3.container,androidx.media3.database,androidx.media3.datasource,androidx.media3.decoder,androidx.media3.exoplayer,androidx.media3.exoplayer.hls,androidx.media3.extractor,androidx.media3.ui" />
+
+    <application
+        android:name="androidx.multidex.MultiDexApplication"
+        android:allowBackup="false"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@drawable/ic_carplay"
+        android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
+        android:roundIcon="@drawable/ic_carplay"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Xcertplay">
+
+        <receiver
+            android:name="com.shilapi.xcertplay.BootReceiver"
+            android:enabled="true"
+            tools:replace="android:enabled" />
+
+    </application>
+
+</manifest>

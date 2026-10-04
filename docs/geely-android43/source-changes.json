@@ -1,0 +1,662 @@
+[
+  {
+    "file": "automotive/build.gradle.kts",
+    "status": "modified"
+  },
+  {
+    "file": "automotive/src/main/AndroidManifest.xml",
+    "status": "modified"
+  },
+  {
+    "file": "automotive/src/main/java/com/shilapi/xcertplay/MainActivity.kt",
+    "status": "added"
+  },
+  {
+    "file": "automotive/src/main/java/com/shilapi/xcertplay/shared/MyCarAppScreen.kt",
+    "status": "added"
+  },
+  {
+    "file": "automotive/src/main/java/com/shilapi/xcertplay/shared/MyCarAppService.kt",
+    "status": "added"
+  },
+  {
+    "file": "automotive/src/main/java/com/shilapi/xcertplay/shared/MyCarAppSession.kt",
+    "status": "added"
+  },
+  {
+    "file": "automotive/src/main/java/com/shilapi/xcertplay/ui/theme/Color.kt",
+    "status": "added"
+  },
+  {
+    "file": "automotive/src/main/java/com/shilapi/xcertplay/ui/theme/Theme.kt",
+    "status": "added"
+  },
+  {
+    "file": "automotive/src/main/java/com/shilapi/xcertplay/ui/theme/Type.kt",
+    "status": "added"
+  },
+  {
+    "file": "common/build.gradle.kts",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/AndroidManifest.xml",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/AudioChannelPreview.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/CarPlayVideo.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/CarPlayVideoActivity.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/CarPlayVideoActivityBridge.kt",
+    "status": "added"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/CenterMapOverlay.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/ClusterMapPresentation.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/DiLink51ClusterMonitor.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/DiPlayBluetooth.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/DiPlayBootstrap.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/DiPlaySessionService.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/HomeScreenMonitor.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/HotspotUiLabels.kt",
+    "status": "added"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/MapEmbedService.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/ModernSession.kt",
+    "status": "added"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/NavigationWidget.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/RoundedClipCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "common/src/main/res/values/bools.xml",
+    "status": "added"
+  },
+  {
+    "file": "common/src/main/res/values/strings.xml",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/res/values/themes.xml",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/res/values-v21/themes.xml",
+    "status": "added"
+  },
+  {
+    "file": "common/src/main/res/values-v23/bools.xml",
+    "status": "added"
+  },
+  {
+    "file": "common/src/main/res/values-v23/themes.xml",
+    "status": "added"
+  },
+  {
+    "file": "common/src/main/res/values-zh-rCN/strings.xml",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/test/java/com/shilapi/xcertplay/CarPlayMediaCallbackTest.kt",
+    "status": "modified"
+  },
+  {
+    "file": "gradle/libs.versions.toml",
+    "status": "modified"
+  },
+  {
+    "file": "mobile/build.gradle.kts",
+    "status": "modified"
+  },
+  {
+    "file": "mobile/src/debug/AndroidManifest.xml",
+    "status": "modified"
+  },
+  {
+    "file": "mobile/src/debug/assets/compat-probe/device-public-test.txt",
+    "status": "added"
+  },
+  {
+    "file": "mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt",
+    "status": "added"
+  },
+  {
+    "file": "mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18VpnProbeService.kt",
+    "status": "added"
+  },
+  {
+    "file": "mobile/src/debug/java/com/shilapi/xcertplay/compat/LegacyNetworkProbe.kt",
+    "status": "added"
+  },
+  {
+    "file": "mobile/src/debug/java/com/shilapi/xcertplay/compat/LegacyUsbProbe.kt",
+    "status": "added"
+  },
+  {
+    "file": "mobile/src/debug/java/com/shilapi/xcertplay/hud/StandaloneHudDemoActivity.kt",
+    "status": "modified"
+  },
+  {
+    "file": "mobile/src/main/AndroidManifest.xml",
+    "status": "modified"
+  },
+  {
+    "file": "settings.gradle.kts",
+    "status": "modified"
+  },
+  {
+    "file": "shared/build.gradle",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/AndroidManifest.xml",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/adb/AdbKeys.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/airplay/AirPlaySession.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/airplay/AudioStream.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/airplay/CarPlayMediaEngine.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/airplay/IapTunnel.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/airplay/NtpClock.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/airplay/ScreenStream.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/airplay/VideoInCar.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/Base64Compat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/CharsetsCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/ConcurrentHashMapCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/ContextCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/NetworkInterfaceCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/PendingIntentCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/SystemServices.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/UsbCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/WildcardBind.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/hud/BydClusterSong.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/iap2/session/Iap2Session.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/location/AndroidCarPlayLocationProvider.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/media/AndroidMediaSink.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/media/CodecCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/media/MicrophoneUplink.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/media/ModernAudio.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/media/OpusEncoder.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/media/PortableAudio.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/media/VideoDecodeQueue.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/mfi/RemoteMfiAuthenticationClient.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/network/CarHotspotStatus.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/network/CarPlayBonjour.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/network/CarPlayVpnService.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/network/Ipv6NcmBridge.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/network/LocalOnlyHotspotManager.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/network/ManualHotspotManager.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/network/VpnTunnelCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/network/WifiP2pGroupManager.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/orchestration/CarPlayController.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/Ch341UsbHost.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/ConfigurationDescriptorScanner.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/Iap2CsmChannel.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/Iap2LinkChannel.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/Iap2LocationClient.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/IphoneCarPlayConfiguration.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/IphoneUsbHost.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/LegacyUsbTransfer.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/LockdownPairRecord.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/LockdownPlistChannel.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/LockdownTlsEngineFactory.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/NcmFunctionDiscovery.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/NcmUsbBridge.kt",
+    "status": "modified"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/transport/UsbDeviceLayout.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/test/java/com/shilapi/xcertplay/transport/ConfigurationDescriptorScannerTest.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/test/java/com/shilapi/xcertplay/transport/LegacyUsbTransferTest.kt",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/build.gradle",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/README.md",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSConstants.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSLabel.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSOperationCode.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSOptionCode.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSRecordClass.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSRecordType.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSResultCode.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSState.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/constants/package-info.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSCache.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSEntry.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSIncoming.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSListener.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSMessage.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSOutgoing.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSQuestion.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSRecord.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSStatefulObject.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/DNSTaskStarter.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/HostInfo.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/JmDNSImpl.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/JmmDNSImpl.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/ListenerStatus.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/NameRegister.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/NetworkTopologyDiscoveryImpl.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/NetworkTopologyEventImpl.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/package-info.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/ServiceEventImpl.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/ServiceInfoImpl.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/ServiceTypeDecoder.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/SocketListener.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/DNSTask.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/package-info.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/RecordReaper.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/resolver/DNSResolverTask.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/resolver/package-info.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/resolver/ServiceInfoResolver.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/resolver/ServiceResolver.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/resolver/TypeResolver.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/Responder.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/state/Announcer.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/state/Canceler.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/state/DNSStateTask.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/state/package-info.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/state/Prober.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/state/Renewer.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/util/ByteWrangler.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/util/NamedThreadFactory.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/impl/util/SimpleLockManager.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/JmDNS.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/JmmDNS.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/NetworkTopologyDiscovery.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/NetworkTopologyEvent.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/NetworkTopologyListener.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/package-info.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/ServiceEvent.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/ServiceInfo.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/ServiceListener.java",
+    "status": "added"
+  },
+  {
+    "file": "vendor/jmdns/src/main/java/javax/jmdns/ServiceTypeListener.java",
+    "status": "added"
+  }
+]

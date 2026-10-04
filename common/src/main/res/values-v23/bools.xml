@@ -1,0 +1,3 @@
+<resources>
+    <bool name="carplay_video_player_enabled">true</bool>
+</resources>

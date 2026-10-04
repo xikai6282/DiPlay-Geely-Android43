@@ -1,0 +1,10 @@
+{
+  "full": true,
+  "usb_transfer": true,
+  "optional": true,
+  "map_embed": true,
+  "overlay": true,
+  "media_api18": true,
+  "media_keys": true,
+  "foreground_service": true
+}

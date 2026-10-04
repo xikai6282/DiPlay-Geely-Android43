@@ -1,0 +1,939 @@
+--------- beginning of /dev/log/main
+
+
+10-04 03:47:30.661  3733  3733 D AndroidRuntime: 
+
+
+10-04 03:47:30.661  3733  3733 D AndroidRuntime: >>>>>> AndroidRuntime START com.android.internal.os.RuntimeInit <<<<<<
+
+
+10-04 03:47:30.661  3733  3733 D AndroidRuntime: CheckJNI is ON
+
+
+10-04 03:47:30.661  3733  3733 D dalvikvm: Trying to load lib libjavacore.so 0x0
+
+
+10-04 03:47:30.661  3733  3733 D dalvikvm: Added shared lib libjavacore.so 0x0
+
+
+10-04 03:47:30.661  3733  3733 D dalvikvm: Trying to load lib libnativehelper.so 0x0
+
+
+10-04 03:47:30.661  3733  3733 D dalvikvm: Added shared lib libnativehelper.so 0x0
+
+
+10-04 03:47:30.701  3733  3733 D AndroidRuntime: Calling main entry com.android.commands.am.Am
+
+
+10-04 03:47:30.701  3733  3733 D dalvikvm: Note: class Landroid/app/ActivityManagerNative; has 163 unimplemented (abstract) methods
+
+
+10-04 03:47:30.711  3733  3733 D AndroidRuntime: Shutting down VM
+
+
+10-04 03:47:30.711  3733  3738 D dalvikvm: GC_CONCURRENT freed 90K, 16% free 502K/596K, paused 0ms+0ms, total 1ms
+
+
+10-04 03:47:30.711  3745  3745 D dalvikvm: Not late-enabling CheckJNI (already on)
+
+
+--------- beginning of /dev/log/system
+
+
+10-04 03:47:30.711  1480  1585 I ActivityManager: START u0 {flg=0x10000000 cmp=com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity (has extras)} from pid 3733
+
+
+10-04 03:47:30.721  1164  1164 D dalvikvm: GC_EXPLICIT freed 38K, 7% free 2514K/2700K, paused 1ms+0ms, total 2ms
+
+
+10-04 03:47:30.721  1164  1164 D dalvikvm: GC_EXPLICIT freed <1K, 7% free 2514K/2700K, paused 0ms+0ms, total 1ms
+
+
+10-04 03:47:30.721  1164  1164 D dalvikvm: GC_EXPLICIT freed <1K, 7% free 2514K/2700K, paused 0ms+0ms, total 1ms
+
+
+10-04 03:47:30.721  1480  1480 I ActivityManager: Start proc com.shihab.diplay.hudtest for activity com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity: pid=3745 uid=10046 gids={50046, 3003, 3002, 3001, 1028}
+
+
+10-04 03:47:30.731  1620  1620 D EGL_emulation: eglMakeCurrent: 0xb8c0fe90: ver 2 0
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: VM with version 1.6.0 does not have multidex support
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Installing application
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: MultiDexExtractor(/data/app/com.shihab.diplay.hudtest-1.apk, /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes)
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Blocking on lock /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/MultiDex.lock
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/MultiDex.lock locked
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: MultiDexExtractor.load(/data/app/com.shihab.diplay.hudtest-1.apk, false, )
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Detected that extraction must be performed.
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Trying to delete old file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-2.apk.classes2.dex of size 12459560
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Deleted old file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-2.apk.classes2.dex
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Trying to delete old file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-2.apk.classes2.zip of size 4516690
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Deleted old file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-2.apk.classes2.zip
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Trying to delete old file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-2.apk.classes3.zip of size 1844124
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Deleted old file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-2.apk.classes3.zip
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Trying to delete old file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-2.apk.classes3.dex of size 5661832
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Deleted old file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-2.apk.classes3.dex
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Extraction is needed for file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-1.apk.classes2.zip
+
+
+10-04 03:47:30.741  3745  3745 I MultiDex: Extracting /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/tmp-com.shihab.diplay.hudtest-1.apk.classes-133996796.zip
+
+
+10-04 03:47:30.741  1163  1163 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 1536000
+
+
+10-04 03:47:30.761  1620  1620 D EGL_emulation: eglMakeCurrent: 0xb8c0fe90: ver 2 0
+
+
+10-04 03:47:31.371  3745  3745 I MultiDex: Renaming to /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-1.apk.classes2.zip
+
+
+10-04 03:47:31.381  3745  3745 I MultiDex: Extraction succeeded '/data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-1.apk.classes2.zip': length 4517684 - crc: 3680727013
+
+
+10-04 03:47:31.381  3745  3745 I MultiDex: Extraction is needed for file /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-1.apk.classes3.zip
+
+
+10-04 03:47:31.381  3745  3745 I MultiDex: Extracting /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/tmp-com.shihab.diplay.hudtest-1.apk.classes1499632324.zip
+
+
+10-04 03:47:31.381  3745  3747 D dalvikvm: GC_CONCURRENT freed 239K, 13% free 2664K/3060K, paused 0ms+1ms, total 3ms
+
+
+10-04 03:47:31.611  3745  3745 I MultiDex: Renaming to /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-1.apk.classes3.zip
+
+
+10-04 03:47:31.611  3745  3745 I MultiDex: Extraction succeeded '/data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-1.apk.classes3.zip': length 1844124 - crc: 3326864291
+
+
+10-04 03:47:31.611  3745  3745 I MultiDex: load found 2 secondary dex files
+
+
+10-04 03:47:31.661  3745  3745 D dalvikvm: DexOpt: --- BEGIN 'com.shihab.diplay.hudtest-1.apk.classes2.zip' (bootstrap=0) ---
+
+
+10-04 03:47:31.791  3763  3763 D dalvikvm: DexOpt: couldn't find field Landroid/view/inputmethod/EditorInfo;.contentMimeTypes
+
+
+10-04 03:47:31.801  3763  3763 W dalvikvm: DexOpt: method is in an interface
+
+
+10-04 03:47:31.821  3763  3763 W dalvikvm: DexOpt: method is in an interface
+
+
+10-04 03:47:31.831  3763  3763 E cutils-trace: Error opening trace file: Permission denied (13)
+
+
+10-04 03:47:31.831  3763  3763 D dalvikvm: GC_FOR_ALLOC freed 240K, 12% free 1806K/2048K, paused 1ms, total 1ms
+
+
+10-04 03:47:31.861  3763  3763 D dalvikvm: DexOpt: couldn't find field Landroid/os/Message;.sendingUid
+
+
+10-04 03:47:31.871  3763  3763 D dalvikvm: DexOpt: couldn't find field Landroid/content/pm/PackageInfo;.signingInfo
+
+
+10-04 03:47:31.921  3763  3763 D dalvikvm: DexOpt: load 35ms, verify+opt 149ms, 5654636 bytes
+
+
+10-04 03:47:31.941  3745  3745 D dalvikvm: DexOpt: --- END 'com.shihab.diplay.hudtest-1.apk.classes2.zip' (success) ---
+
+
+10-04 03:47:31.941  3745  3745 D dalvikvm: DEX prep '/data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-1.apk.classes2.zip': unzip in 55ms, rewrite 280ms
+
+
+10-04 03:47:31.961  3745  3745 D dalvikvm: DexOpt: --- BEGIN 'com.shihab.diplay.hudtest-1.apk.classes3.zip' (bootstrap=0) ---
+
+
+10-04 03:47:32.191  3764  3764 D dalvikvm: DexOpt: load 14ms, verify+opt 184ms, 2514740 bytes
+
+
+10-04 03:47:32.201  3745  3745 D dalvikvm: DexOpt: --- END 'com.shihab.diplay.hudtest-1.apk.classes3.zip' (success) ---
+
+
+10-04 03:47:32.201  3745  3745 D dalvikvm: DEX prep '/data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/com.shihab.diplay.hudtest-1.apk.classes3.zip': unzip in 21ms, rewrite 238ms
+
+
+10-04 03:47:32.201  3745  3745 I MultiDex: install done
+
+
+10-04 03:47:32.201  3745  3745 I dalvikvm: Could not find method android.os.Trace.isEnabled, referenced from method androidx.tracing.Trace.isEnabled
+
+
+10-04 03:47:32.201  3745  3745 W dalvikvm: VFY: unable to resolve static method 2217: Landroid/os/Trace;.isEnabled ()Z
+
+
+10-04 03:47:32.201  3745  3745 D dalvikvm: VFY: replacing opcode 0x71 at 0x0004
+
+
+10-04 03:47:32.211  3745  3745 I dalvikvm: Could not find method com.shilapi.xcertplay.compat.Api18CompatProbeActivity.registerReceiver, referenced from method com.shilapi.xcertplay.compat.Api18CompatProbeActivity.onCreate
+
+
+10-04 03:47:32.211  3745  3745 W dalvikvm: VFY: unable to resolve virtual method 44906: Lcom/shilapi/xcertplay/compat/Api18CompatProbeActivity;.registerReceiver (Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;I)Landroid/content/Intent;
+
+
+10-04 03:47:32.211  3745  3745 D dalvikvm: VFY: replacing opcode 0x6e at 0x008c
+
+
+10-04 03:47:32.211  3745  3745 D dalvikvm: GC_FOR_ALLOC freed 170K, 13% free 2730K/3116K, paused 1ms, total 1ms
+
+
+10-04 03:47:32.211  3745  3745 I dalvikvm-heap: Grow heap (frag case) to 3.412MB for 635808-byte allocation
+
+
+10-04 03:47:32.221  3745  3747 D dalvikvm: GC_CONCURRENT freed <1K, 11% free 3350K/3740K, paused 2ms+0ms, total 4ms
+
+
+10-04 03:47:32.221  3745  3754 D dalvikvm: WAIT_FOR_CONCURRENT_GC blocked 2ms
+
+
+10-04 03:47:32.221  3745  3745 I CodexApi18Probe: START sdk=18 probe=full
+
+
+10-04 03:47:32.251  3745  3745 D libEGL  : loaded /system/lib/egl/libEGL_emulation.so
+
+
+10-04 03:47:32.251  3745  3745 D libEGL  : loaded /system/lib/egl/libGLESv1_CM_emulation.so
+
+
+10-04 03:47:32.251  3745  3745 D libEGL  : loaded /system/lib/egl/libGLESv2_emulation.so
+
+
+10-04 03:47:32.251  3745  3745 D         : HostConnection::get() New Host Connection established 0xb8a6c7f0, tid 3745
+
+
+10-04 03:47:32.251  3745  3745 D EGL_emulation: eglCreateContext: 0xb8a6e660: maj 2 min 0 rcv 2
+
+
+10-04 03:47:32.261  3745  3745 D EGL_emulation: eglMakeCurrent: 0xb8a6e660: ver 2 0
+
+
+10-04 03:47:32.261  3745  3745 D OpenGLRenderer: Enabling debug mode 0
+
+
+10-04 03:47:32.281  3745  3767 I CodexApi18Probe: PASS BASE64 roundtrip=180 mimeLineWidth=64
+
+
+10-04 03:47:32.281  3745  3767 I dalvikvm: Could not find method android.media.MediaCodecList.<init>, referenced from method com.shilapi.xcertplay.media.CodecCompat.decoders
+
+
+10-04 03:47:32.281  3745  3767 W dalvikvm: VFY: unable to resolve direct method 1567: Landroid/media/MediaCodecList;.<init> (I)V
+
+
+10-04 03:47:32.281  3745  3767 D dalvikvm: VFY: replacing opcode 0x70 at 0x0009
+
+
+10-04 03:47:32.281  3745  3767 I CodexApi18Probe: PASS CODEC_ENUMERATION count=22 avc=true
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 E dalvikvm: Could not find class 'android.hardware.usb.UsbConfiguration', referenced from method com.shilapi.xcertplay.transport.UsbDeviceLayoutReader.read
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to resolve check-cast 243 (Landroid/hardware/usb/UsbConfiguration;) in Lcom/shilapi/xcertplay/transport/UsbDeviceLayoutReader;
+
+
+10-04 03:47:32.291  3745  3767 D dalvikvm: VFY: replacing opcode 0x1f at 0x006d
+
+
+10-04 03:47:32.291  3745  3767 E dalvikvm: Could not find class 'android.hardware.usb.UsbConfiguration', referenced from method com.shilapi.xcertplay.transport.UsbDeviceLayoutReader.read
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to resolve check-cast 243 (Landroid/hardware/usb/UsbConfiguration;) in Lcom/shilapi/xcertplay/transport/UsbDeviceLayoutReader;
+
+
+10-04 03:47:32.291  3745  3767 D dalvikvm: VFY: replacing opcode 0x1f at 0x0087
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 W dalvikvm: VFY: unable to find class referenced in signature (Landroid/hardware/usb/UsbConfiguration;)
+
+
+10-04 03:47:32.291  3745  3767 I CodexApi18Probe: PASS LEGACY_USB_LAYOUT configurations=2 ncmAlternates=0/1 selectedConfiguration=true zeroConfigurationRefused=true
+
+
+10-04 03:47:32.301  3745  3747 D dalvikvm: GC_CONCURRENT freed 400K, 15% free 3357K/3908K, paused 2ms+2ms, total 6ms
+
+
+10-04 03:47:32.301  3745  3768 I xcertplay-usb: video codec config codec=H264 body=37 data=37
+
+
+10-04 03:47:32.341  3745  3767 I CodexApi18Probe: PASS IPV6_PRODUCTION_LISTENERS ipv6Udp=true screenConfigReceived=true timingRequestReceived=true
+
+
+10-04 03:47:32.341  3745  3767 I dalvikvm: Could not find method android.net.nsd.NsdServiceInfo.getAttributes, referenced from method com.shilapi.xcertplay.network.CarPlayBonjour.handleService
+
+
+10-04 03:47:32.341  3745  3767 W dalvikvm: VFY: unable to resolve virtual method 1804: Landroid/net/nsd/NsdServiceInfo;.getAttributes ()Ljava/util/Map;
+
+
+10-04 03:47:32.341  3745  3767 D dalvikvm: VFY: replacing opcode 0x6e at 0x0035
+
+
+10-04 03:47:32.341  3745  3767 I dalvikvm: Could not find method android.net.nsd.NsdServiceInfo.getHostAddresses, referenced from method com.shilapi.xcertplay.network.CarPlayBonjour.preferredAddress
+
+
+10-04 03:47:32.341  3745  3767 W dalvikvm: VFY: unable to resolve virtual method 1806: Landroid/net/nsd/NsdServiceInfo;.getHostAddresses ()Ljava/util/List;
+
+
+10-04 03:47:32.341  3745  3767 D dalvikvm: VFY: replacing opcode 0x6e at 0x0006
+
+
+10-04 03:47:32.341  3745  3767 I dalvikvm: Could not find method android.net.nsd.NsdServiceInfo.setAttribute, referenced from method com.shilapi.xcertplay.network.CarPlayBonjour.registerAirPlay
+
+
+10-04 03:47:32.341  3745  3767 W dalvikvm: VFY: unable to resolve virtual method 1810: Landroid/net/nsd/NsdServiceInfo;.setAttribute (Ljava/lang/String;Ljava/lang/String;)V
+
+
+10-04 03:47:32.341  3745  3767 D dalvikvm: VFY: replacing opcode 0x6e at 0x004a
+
+
+10-04 03:47:32.361  3745  3747 D dalvikvm: GC_CONCURRENT freed 359K, 14% free 3445K/3984K, paused 0ms+0ms, total 2ms
+
+
+10-04 03:47:32.361  1160  1472 D MDnsDS  : Starting MDNSD
+
+
+10-04 03:47:32.361  1480  1529 D NsdService: startMDnsDaemon
+
+
+10-04 03:47:32.451  1480  1496 I ActivityManager: Displayed com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity: +1s746ms
+
+
+10-04 03:47:32.561  3745  3767 I dalvikvm: Could not find method android.content.Context.getNoBackupFilesDir, referenced from method com.shilapi.xcertplay.compat.SystemServicesKt.appPrivateDir
+
+
+10-04 03:47:32.561  3745  3767 W dalvikvm: VFY: unable to resolve virtual method 527: Landroid/content/Context;.getNoBackupFilesDir ()Ljava/io/File;
+
+
+10-04 03:47:32.561  3745  3767 D dalvikvm: VFY: replacing opcode 0x6e at 0x000b
+
+
+10-04 03:47:32.561  3745  3767 I dalvikvm: Could not find method android.content.Context.getSystemService, referenced from method com.shilapi.xcertplay.compat.SystemServicesKt.systemService
+
+
+10-04 03:47:32.561  3745  3767 W dalvikvm: VFY: unable to resolve virtual method 537: Landroid/content/Context;.getSystemService (Ljava/lang/Class;)Ljava/lang/Object;
+
+
+10-04 03:47:32.561  3745  3767 D dalvikvm: VFY: replacing opcode 0x6e at 0x0017
+
+
+10-04 03:47:32.561  1480  1529 D NsdService: New client listening to asynchronous messages
+
+
+10-04 03:47:32.561  1480  1529 D NsdService: New client, channel: com.android.internal.util.AsyncChannel@ad575998 messenger: android.os.Messenger@ad5758c8
+
+
+10-04 03:47:32.571  1480  1523 E WifiStateMachine: Error! unhandled message{ what=131157 when=-1ms }
+
+
+10-04 03:47:32.591  3745  3767 I dalvikvm: Could not find method org.slf4j.impl.StaticLoggerBinder.getSingleton, referenced from method org.slf4j.LoggerFactory.bind
+
+
+10-04 03:47:32.591  3745  3767 W dalvikvm: VFY: unable to resolve static method 28788: Lorg/slf4j/impl/StaticLoggerBinder;.getSingleton ()Lorg/slf4j/impl/StaticLoggerBinder;
+
+
+10-04 03:47:32.591  3745  3767 D dalvikvm: VFY: replacing opcode 0x71 at 0x000f
+
+
+10-04 03:47:32.591  3745  3767 I dalvikvm: Could not find method org.slf4j.impl.StaticLoggerBinder.getSingleton, referenced from method org.slf4j.LoggerFactory.getILoggerFactory
+
+
+10-04 03:47:32.591  3745  3767 W dalvikvm: VFY: unable to resolve static method 28788: Lorg/slf4j/impl/StaticLoggerBinder;.getSingleton ()Lorg/slf4j/impl/StaticLoggerBinder;
+
+
+10-04 03:47:32.591  3745  3767 D dalvikvm: VFY: replacing opcode 0x71 at 0x0026
+
+
+10-04 03:47:32.591  3745  3767 I dalvikvm: Could not find method org.slf4j.impl.StaticLoggerBinder.getSingleton, referenced from method org.slf4j.LoggerFactory.reportActualBinding
+
+
+10-04 03:47:32.591  3745  3767 W dalvikvm: VFY: unable to resolve static method 28788: Lorg/slf4j/impl/StaticLoggerBinder;.getSingleton ()Lorg/slf4j/impl/StaticLoggerBinder;
+
+
+10-04 03:47:32.591  3745  3767 D dalvikvm: VFY: replacing opcode 0x71 at 0x0013
+
+
+10-04 03:47:32.591  3745  3767 W dalvikvm: VFY: unable to resolve static field 12806 (REQUESTED_API_VERSION) in Lorg/slf4j/impl/StaticLoggerBinder;
+
+
+10-04 03:47:32.591  3745  3767 D dalvikvm: VFY: replacing opcode 0x62 at 0x0000
+
+
+10-04 03:47:32.591  3745  3767 W System.err: SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+
+
+10-04 03:47:32.591  3745  3767 W System.err: SLF4J: Defaulting to no-operation (NOP) logger implementation
+
+
+10-04 03:47:32.591  3745  3767 W System.err: SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+
+
+10-04 03:47:32.621  3745  3747 D dalvikvm: GC_CONCURRENT freed 304K, 12% free 3620K/4072K, paused 0ms+2ms, total 6ms
+
+
+10-04 03:47:34.631  3745  3747 D dalvikvm: GC_CONCURRENT freed 295K, 11% free 3729K/4164K, paused 1ms+1ms, total 6ms
+
+
+10-04 03:47:37.951  1480  1523 E WifiStateMachine: Error! unhandled message{ what=131156 when=0 }
+
+
+10-04 03:47:37.951  3745  3747 D dalvikvm: GC_CONCURRENT freed 411K, 13% free 3735K/4292K, paused 0ms+2ms, total 5ms
+
+
+10-04 03:47:39.971  3745  3767 I CodexApi18Probe: PASS BONJOUR_REQUIRED_TXT airPlayService=true deviceIdTxt=true featuresTxt=true
+
+
+10-04 03:47:40.381  3745  3767 I dalvikvm: Could not find method javax.net.ssl.SSLParameters.setEndpointIdentificationAlgorithm, referenced from method com.shilapi.xcertplay.transport.LockdownTlsEngineFactory.create
+
+
+10-04 03:47:40.381  3745  3767 W dalvikvm: VFY: unable to resolve virtual method 53723: Ljavax/net/ssl/SSLParameters;.setEndpointIdentificationAlgorithm (Ljava/lang/String;)V
+
+
+10-04 03:47:40.381  3745  3767 D dalvikvm: VFY: replacing opcode 0x6e at 0x00ae
+
+
+10-04 03:47:40.431  3745  3747 D dalvikvm: GC_CONCURRENT freed 428K, 14% free 3692K/4292K, paused 4ms+3ms, total 9ms
+
+
+10-04 03:47:40.431  3745  3767 I CodexApi18Probe: PASS LOCKDOWN_PAIR_RECORD_AND_TLS certificatesGenerated=true clientHelloBytes=78 (phone trust not tested)
+
+
+10-04 03:47:40.461  3745  3747 D dalvikvm: GC_CONCURRENT freed 285K, 11% free 3824K/4292K, paused 1ms+4ms, total 8ms
+
+
+10-04 03:47:40.521  3745  3747 D dalvikvm: GC_CONCURRENT freed 327K, 11% free 3886K/4360K, paused 3ms+2ms, total 6ms
+
+
+10-04 03:47:40.531  3745  3747 D dalvikvm: GC_CONCURRENT freed 313K, 11% free 4010K/4468K, paused 0ms+1ms, total 5ms
+
+
+10-04 03:47:40.561  3745  3747 D dalvikvm: GC_CONCURRENT freed 346K, 11% free 4097K/4588K, paused 3ms+3ms, total 9ms
+
+
+10-04 03:47:40.581  3745  3747 D dalvikvm: GC_CONCURRENT freed 348K, 11% free 4206K/4700K, paused 2ms+3ms, total 7ms
+
+
+10-04 03:47:40.611  3745  3747 D dalvikvm: GC_CONCURRENT freed 376K, 11% free 4322K/4844K, paused 2ms+3ms, total 8ms
+
+
+10-04 03:47:40.631  3745  3747 D dalvikvm: GC_CONCURRENT freed 402K, 11% free 4452K/5000K, paused 3ms+3ms, total 9ms
+
+
+10-04 03:47:40.631  3745  3767 I CodexApi18Probe: PASS MFI_IDENTITY keyConsistency=true signatureBytes=64 (iPhone trust not tested)
+
+
+10-04 03:47:40.631  3745  3767 I dalvikvm: Could not find method android.media.MediaCodec.setOutputSurface, referenced from method com.shilapi.xcertplay.media.VideoDecoder.changeSurface
+
+
+10-04 03:47:40.631  3745  3767 W dalvikvm: VFY: unable to resolve virtual method 1536: Landroid/media/MediaCodec;.setOutputSurface (Landroid/view/Surface;)V
+
+
+10-04 03:47:40.631  3745  3767 D dalvikvm: VFY: replacing opcode 0x6e at 0x0021
+
+
+10-04 03:47:40.631  3745  3767 I dalvikvm: Could not find method android.media.MediaCodecList.<init>, referenced from method com.shilapi.xcertplay.media.VideoDecoder.createDecoder
+
+
+10-04 03:47:40.631  3745  3767 W dalvikvm: VFY: unable to resolve direct method 1567: Landroid/media/MediaCodecList;.<init> (I)V
+
+
+10-04 03:47:40.631  3745  3767 D dalvikvm: VFY: replacing opcode 0x70 at 0x0016
+
+
+10-04 03:47:40.631  3745  3767 I dalvikvm: Could not find method android.media.MediaCodecList.<init>, referenced from method com.shilapi.xcertplay.media.VideoDecoder.softwareDecoderName
+
+
+10-04 03:47:40.631  3745  3767 W dalvikvm: VFY: unable to resolve direct method 1567: Landroid/media/MediaCodecList;.<init> (I)V
+
+
+10-04 03:47:40.631  3745  3767 D dalvikvm: VFY: replacing opcode 0x70 at 0x000c
+
+
+10-04 03:47:40.631  3745  3767 I dalvikvm: Could not find method android.media.MediaCodecInfo$CodecCapabilities.isFeatureSupported, referenced from method com.shilapi.xcertplay.media.VideoDecoder.tryConfigure
+
+
+10-04 03:47:40.631  3745  3767 W dalvikvm: VFY: unable to resolve virtual method 1548: Landroid/media/MediaCodecInfo$CodecCapabilities;.isFeatureSupported (Ljava/lang/String;)Z
+
+
+10-04 03:47:40.631  3745  3767 D dalvikvm: VFY: replacing opcode 0x6e at 0x0034
+
+
+10-04 03:47:40.641  3745  3813 I OMXClient: Using client-side OMX mux.
+
+
+10-04 03:47:40.641  3745  3811 I CodexApi18Probe: VIDEO decoder=OMX.google.h264.decoder mime=video/avc size=320x240
+
+
+10-04 03:47:40.641  3745  3811 I xcertplay-usb: video decoder configured name=OMX.google.h264.decoder mime=video/avc size=320x240
+
+
+10-04 03:47:40.651  3745  3811 I xcertplay-usb: video decoder first input avcc=6927 annexB=6927 head=000000010910000000016742c00bda05
+
+
+10-04 03:47:40.651  3745  3811 I dalvikvm: Could not find method android.media.MediaCodec.getInputBuffer, referenced from method com.shilapi.xcertplay.media.AndroidMediaSinkKt.inputBufferAt
+
+
+10-04 03:47:40.651  3745  3811 W dalvikvm: VFY: unable to resolve virtual method 1522: Landroid/media/MediaCodec;.getInputBuffer (I)Ljava/nio/ByteBuffer;
+
+
+10-04 03:47:40.651  3745  3811 D dalvikvm: VFY: replacing opcode 0x6e at 0x0006
+
+
+10-04 03:47:40.651  3745  3811 I dalvikvm: Could not find method android.media.MediaCodec.getOutputBuffer, referenced from method com.shilapi.xcertplay.media.AndroidMediaSinkKt.outputBufferAt
+
+
+10-04 03:47:40.651  3745  3811 W dalvikvm: VFY: unable to resolve virtual method 1526: Landroid/media/MediaCodec;.getOutputBuffer (I)Ljava/nio/ByteBuffer;
+
+
+10-04 03:47:40.651  3745  3811 D dalvikvm: VFY: replacing opcode 0x6e at 0x0006
+
+
+10-04 03:47:40.661  3745  3811 I CodexApi18Probe: VIDEO output format requested=320x240 coded=320x240 crop=0,0,319,239 stride=320 slice=240 color=null/null/null
+
+
+10-04 03:47:40.661  3745  3811 I xcertplay-usb: video decoder output format size=320x240 stride=320 slice=240 standard=null range=null transfer=null
+
+
+10-04 03:47:40.661  1163  1163 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 155648
+
+
+10-04 03:47:40.671  3745  3812 D         : HostConnection::get() New Host Connection established 0xb8c05520, tid 3812
+
+
+10-04 03:47:40.671  3745  3811 I CodexApi18Probe: VIDEO first frame rendered
+
+
+10-04 03:47:40.671  3745  3811 I xcertplay-usb: video decoder rendered first frame bytes=115200
+
+
+10-04 03:47:40.741  1163  1291 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 155648
+
+
+10-04 03:47:40.841  1163  1667 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 155648
+
+
+10-04 03:47:43.171  3745  3811 I xcertplay-usb: video decoder detached from surface
+
+
+10-04 03:47:43.321  3745  3828 I OMXClient: Using client-side OMX mux.
+
+
+10-04 03:47:43.321  3745  3811 I CodexApi18Probe: VIDEO decoder=OMX.google.h264.decoder mime=video/avc size=320x240
+
+
+10-04 03:47:43.321  3745  3811 I xcertplay-usb: video decoder configured name=OMX.google.h264.decoder mime=video/avc size=320x240
+
+
+10-04 03:47:43.461  3745  3811 I xcertplay-usb: video decoder first input avcc=6927 annexB=6927 head=000000010910000000016742c00bda05
+
+
+10-04 03:47:43.471  3745  3811 I CodexApi18Probe: VIDEO output format requested=320x240 coded=320x240 crop=0,0,319,239 stride=320 slice=240 color=null/null/null
+
+
+10-04 03:47:43.471  3745  3811 I xcertplay-usb: video decoder output format size=320x240 stride=320 slice=240 standard=null range=null transfer=null
+
+
+10-04 03:47:43.471  1163  1163 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 155648
+
+
+10-04 03:47:43.471  3745  3827 D         : HostConnection::get() New Host Connection established 0xb8aff0c0, tid 3827
+
+
+10-04 03:47:43.471  3745  3811 I CodexApi18Probe: VIDEO first frame rendered
+
+
+10-04 03:47:43.471  3745  3811 I xcertplay-usb: video decoder rendered first frame bytes=115200
+
+
+10-04 03:47:43.581  1163  1781 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 155648
+
+
+10-04 03:47:43.671  1163  1163 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 155648
+
+
+10-04 03:47:45.651  3745  3811 I DiPlay-VideoStats: video stats rx=8.0fps shown=8.0fps maxGap=906ms kbps=97 recoveries=0 touch2frame avg=-1ms max=0ms n=0 touchSendMax=0ms
+
+
+10-04 03:47:45.651  3745  3811 I CodexApi18Probe: VIDEO video stats rx=8.0fps shown=8.0fps maxGap=906ms kbps=97 recoveries=0 touch2frame avg=-1ms max=0ms n=0 touchSendMax=0ms
+
+
+10-04 03:47:46.001  3745  3767 I CodexApi18Probe: PASS H264_RENDER_AND_SURFACE_REATTACH renderedCycles=2 framesSubmitted=40
+
+
+10-04 03:47:46.011  3745  3841 I dalvikvm: Could not find method android.media.AudioTrack.getBufferSizeInFrames, referenced from method com.shilapi.xcertplay.media.PortableAudio.bufferSizeInFrames
+
+
+10-04 03:47:46.011  3745  3841 W dalvikvm: VFY: unable to resolve virtual method 1447: Landroid/media/AudioTrack;.getBufferSizeInFrames ()I
+
+
+10-04 03:47:46.011  3745  3841 D dalvikvm: VFY: replacing opcode 0x6e at 0x000c
+
+
+10-04 03:47:46.011  3745  3841 I dalvikvm: Could not find method android.media.AudioRecord.read, referenced from method com.shilapi.xcertplay.media.PortableAudio.readBlocking
+
+
+10-04 03:47:46.011  3745  3841 W dalvikvm: VFY: unable to resolve virtual method 1426: Landroid/media/AudioRecord;.read ([BIII)I
+
+
+10-04 03:47:46.011  3745  3841 D dalvikvm: VFY: replacing opcode 0x6e at 0x0012
+
+
+10-04 03:47:46.011  3745  3841 I dalvikvm: Could not find method android.media.AudioTrack.getRoutedDevice, referenced from method com.shilapi.xcertplay.media.PortableAudio.routedDeviceType
+
+
+10-04 03:47:46.011  3745  3841 W dalvikvm: VFY: unable to resolve virtual method 1452: Landroid/media/AudioTrack;.getRoutedDevice ()Landroid/media/AudioDeviceInfo;
+
+
+10-04 03:47:46.011  3745  3841 D dalvikvm: VFY: replacing opcode 0x6e at 0x0013
+
+
+10-04 03:47:46.011  3745  3841 I dalvikvm: Could not find method android.media.AudioTrack.getUnderrunCount, referenced from method com.shilapi.xcertplay.media.PortableAudio.underrunCount
+
+
+10-04 03:47:46.011  3745  3841 W dalvikvm: VFY: unable to resolve virtual method 1456: Landroid/media/AudioTrack;.getUnderrunCount ()I
+
+
+10-04 03:47:46.011  3745  3841 D dalvikvm: VFY: replacing opcode 0x6e at 0x000c
+
+
+10-04 03:47:46.011  3745  3841 I dalvikvm: Could not find method android.media.AudioTrack.write, referenced from method com.shilapi.xcertplay.media.PortableAudio.writeBlocking
+
+
+10-04 03:47:46.011  3745  3841 W dalvikvm: VFY: unable to resolve virtual method 1477: Landroid/media/AudioTrack;.write ([BIII)I
+
+
+10-04 03:47:46.011  3745  3841 D dalvikvm: VFY: replacing opcode 0x6e at 0x0012
+
+
+10-04 03:47:46.011  3745  3841 I CodexApi18Probe: AUDIO Audio: ready audioType=media codec=LPCM rate=44100 channels=2 route=streamType=3(legacy) bufferMs=46 startMs=34
+
+
+10-04 03:47:46.011  3745  3841 I xcertplay-usb: audio track prepared type=96 audioType=media codec=LPCM rate=44100 channels=2 route=streamType=3(legacy) buffer=46ms start=34
+
+
+10-04 03:47:46.011  3745  3841 I xcertplay-usb: audio route type=96 audioType=media mode=MOBILE_COMPATIBLE channel=MEDIA usage=1 contentType=2 streamOverride=0 focus=on
+
+
+10-04 03:47:46.011  1480  1492 I AudioService:  AudioFocus  requestAudioFocus() from android.media.AudioManager@ad41da18com.shilapi.xcertplay.media.AudioFocusCoordinator$$ExternalSyntheticLambda1@ad4065c0
+
+
+10-04 03:47:46.011  3745  3841 I xcertplay-usb: audio first PCM type=96 bytes=3528 head=00000000fa00fa00f401f401eb02eb02
+
+
+10-04 03:47:46.031  3745  3841 D dalvikvm: GC_FOR_ALLOC freed 1115K, 28% free 3813K/5248K, paused 4ms, total 5ms
+
+
+10-04 03:47:46.031  3745  3841 I xcertplay-usb: audio playback started type=96
+
+
+10-04 03:47:47.171  3745  3747 D dalvikvm: GC_CONCURRENT freed 390K, 28% free 3811K/5248K, paused 2ms+0ms, total 3ms
+
+
+10-04 03:47:48.841  3745  3841 I DiPlay-AudioStats: audio stats audioType=media channel=MEDIA routeType=-1 codec=LPCM trackState=1 playState=3 sampleRate=44100 trackBufferFrames=-1 rx=100 dropped=0 underruns=+0 queue=0 playing=true maxGapMs=24 sinceRxMs=723 maxWriteMs=0 writtenFrames=88200 totalWrittenFrames=88200 playbackHeadFrames=88200 playbackAdvanceFrames=-1 estimatedQueuedFrames=0 writeErrors=0 lastWriteError=none zeroWrites=0 partialWrites=0 decoderDroppedTotal=0 outputBuffersTotal=0 rebuffers=0 ended=true
+
+
+10-04 03:47:48.841  3745  3841 I CodexApi18Probe: AUDIO audio stats audioType=media channel=MEDIA routeType=-1 codec=LPCM trackState=1 playState=3 sampleRate=44100 trackBufferFrames=-1 rx=100 dropped=0 underruns=+0 queue=0 playing=true maxGapMs=24 sinceRxMs=723 maxWriteMs=0 writtenFrames=88200 totalWrittenFrames=88200 playbackHeadFrames=88200 playbackAdvanceFrames=-1 estimatedQueuedFrames=0 writeErrors=0 lastWriteError=none zeroWrites=0 partialWrites=0 decoderDroppedTotal=0 outputBuffersTotal=0 rebuffers=0 ended=true
+
+
+10-04 03:47:48.841  1480  1646 I AudioService:  AudioFocus  abandonAudioFocus() from android.media.AudioManager@ad41da18com.shilapi.xcertplay.media.AudioFocusCoordinator$$ExternalSyntheticLambda1@ad4065c0
+
+
+10-04 03:47:49.251  3745  3767 I CodexApi18Probe: PASS PCM_PLAYBACK writtenFrames=88200 playbackHead=88200 decodedBuffers=0
+
+
+10-04 03:47:49.251  3745  3855 I xcertplay-usb: audio AAC config rate=44100 channels=2 csd0=1210
+
+
+10-04 03:47:49.251  3745  3856 I OMXClient: Using client-side OMX mux.
+
+
+10-04 03:47:49.251  3745  3747 D dalvikvm: GC_CONCURRENT freed 451K, 27% free 3854K/5248K, paused 0ms+2ms, total 6ms
+
+
+10-04 03:47:49.251  3745  3855 I xcertplay-usb: audio decoder configured mime=audio/mp4a-latm name=OMX.google.aac.decoder
+
+
+10-04 03:47:49.261  3745  3855 I CodexApi18Probe: AUDIO Audio: ready audioType=media codec=AAC_LC rate=44100 channels=2 route=streamType=3(legacy) bufferMs=46 startMs=34
+
+
+10-04 03:47:49.261  3745  3855 I xcertplay-usb: audio track prepared type=96 audioType=media codec=AAC_LC rate=44100 channels=2 route=streamType=3(legacy) buffer=46ms start=34
+
+
+10-04 03:47:49.261  3745  3855 I xcertplay-usb: audio route type=96 audioType=media mode=MOBILE_COMPATIBLE channel=MEDIA usage=1 contentType=2 streamOverride=0 focus=on
+
+
+10-04 03:47:49.261  1480  1492 I AudioService:  AudioFocus  requestAudioFocus() from android.media.AudioManager@ad41da18com.shilapi.xcertplay.media.AudioFocusCoordinator$$ExternalSyntheticLambda1@ad2f2d70
+
+
+10-04 03:47:49.261  3745  3855 I xcertplay-usb: audio AAC access unit bytes=338 head=de02004c61766336312e31392e313030
+
+
+10-04 03:47:49.261  3745  3855 I xcertplay-usb: audio decoder first input codec=AAC_LC bytes=345 head=fff150802b3ffcde02004c6176633631
+
+
+10-04 03:47:49.261  3745  3857 I SoftAAC2: Reconfiguring decoder: 0->44100 Hz, 0->2 channels
+
+
+10-04 03:47:49.271  3745  3855 I xcertplay-usb: audio decoder output codec=AAC_LC buffers=1 bytes=4096 queued=2 dropped=0
+
+
+10-04 03:47:49.271  3745  3855 I xcertplay-usb: audio first PCM type=96 bytes=4096 head=00000000000000000000000000000000
+
+
+10-04 03:47:49.301  3745  3855 I xcertplay-usb: audio playback started type=96
+
+
+10-04 03:47:50.451  3745  3855 I xcertplay-usb: audio decoder output codec=AAC_LC buffers=50 bytes=4096 queued=51 dropped=0
+
+
+10-04 03:47:52.061  3745  3855 I DiPlay-AudioStats: audio stats audioType=media channel=MEDIA routeType=-1 codec=AAC_LC trackState=1 playState=3 sampleRate=44100 trackBufferFrames=-1 rx=88 dropped=0 underruns=+0 queue=0 playing=true maxGapMs=25 sinceRxMs=725 maxWriteMs=32 writtenFrames=89088 totalWrittenFrames=89088 playbackHeadFrames=89088 playbackAdvanceFrames=-1 estimatedQueuedFrames=0 writeErrors=0 lastWriteError=none zeroWrites=0 partialWrites=0 decoderDroppedTotal=0 outputBuffersTotal=87 rebuffers=0 ended=true
+
+
+10-04 03:47:52.061  3745  3855 I CodexApi18Probe: AUDIO audio stats audioType=media channel=MEDIA routeType=-1 codec=AAC_LC trackState=1 playState=3 sampleRate=44100 trackBufferFrames=-1 rx=88 dropped=0 underruns=+0 queue=0 playing=true maxGapMs=25 sinceRxMs=725 maxWriteMs=32 writtenFrames=89088 totalWrittenFrames=89088 playbackHeadFrames=89088 playbackAdvanceFrames=-1 estimatedQueuedFrames=0 writeErrors=0 lastWriteError=none zeroWrites=0 partialWrites=0 decoderDroppedTotal=0 outputBuffersTotal=87 rebuffers=0 ended=true
+
+
+10-04 03:47:52.061  1480  1646 I AudioService:  AudioFocus  abandonAudioFocus() from android.media.AudioManager@ad41da18com.shilapi.xcertplay.media.AudioFocusCoordinator$$ExternalSyntheticLambda1@ad2f2d70
+
+
+10-04 03:47:52.471  3745  3767 I CodexApi18Probe: PASS AAC_PLAYBACK writtenFrames=89088 playbackHead=89088 decodedBuffers=87
+
+
+10-04 03:47:52.471  1166  1166 E audio_hw_generic: Error opening input stream format 1, channel_mask 0010, sample_rate 16000
+
+
+10-04 03:47:52.471  1166  3873 W AudioFlinger: RecordThread: buffer overflow
+
+
+10-04 03:47:52.471  3745  3767 I xcertplay-usb: Microphone: start type=speechrecognition source=VOICE_RECOGNITION codec=LPCM rate=16000 channels=1 frameMs=20 routedDeviceType=unknown
+
+
+10-04 03:47:52.471  3745  3747 D dalvikvm: GC_CONCURRENT freed 465K, 29% free 3774K/5248K, paused 1ms+0ms, total 2ms
+
+
+10-04 03:47:52.471  3745  3875 I xcertplay-usb: Microphone: stats type=speechrecognition source=VOICE_RECOGNITION codec=LPCM rate=16000 channels=1 frameMs=20 routedDeviceType=unknown captureBytes=2048 reads=1 zeroReads=0 readErrors=0 readMaxMs=0 encodedFrames=2 emptyEncodedFrames=0 udpSent=2 sendErrors=0 sendGapMaxMs=0 ended=true
+
+
+10-04 03:47:52.481  3745  3767 I CodexApi18Probe: PASS MICROPHONE_RTP receivedSealedRtpBytes=676
+
+
+10-04 03:47:52.481  3745  3767 D dalvikvm: Trying to load lib /data/app-lib/com.shihab.diplay.hudtest-1/libxcertplay_i2c.so 0xad1e9730
+
+
+10-04 03:47:52.481  3745  3767 D dalvikvm: Added shared lib /data/app-lib/com.shihab.diplay.hudtest-1/libxcertplay_i2c.so 0xad1e9730
+
+
+10-04 03:47:52.481  3745  3767 D dalvikvm: No JNI_OnLoad found in /data/app-lib/com.shihab.diplay.hudtest-1/libxcertplay_i2c.so 0xad1e9730, skipping init
+
+
+10-04 03:47:52.481  3745  3767 I CodexApi18Probe: PASS NATIVE_LOAD_xcertplay_i2c loaded=true
+
+
+10-04 03:47:52.481  3745  3767 D dalvikvm: Trying to load lib /data/app-lib/com.shihab.diplay.hudtest-1/liblocal_hotspot_radio.so 0xad1e9730
+
+
+10-04 03:47:52.481  3745  3767 D dalvikvm: Added shared lib /data/app-lib/com.shihab.diplay.hudtest-1/liblocal_hotspot_radio.so 0xad1e9730
+
+
+10-04 03:47:52.481  3745  3767 D dalvikvm: No JNI_OnLoad found in /data/app-lib/com.shihab.diplay.hudtest-1/liblocal_hotspot_radio.so 0xad1e9730, skipping init
+
+
+10-04 03:47:52.481  3745  3767 I CodexApi18Probe: PASS NATIVE_LOAD_local_hotspot_radio loaded=true
+
+
+10-04 03:47:52.521  3745  3878 I dalvikvm: Could not find method android.net.VpnService$Builder.setBlocking, referenced from method com.shilapi.xcertplay.network.VpnTunnelCompat.configureBlocking
+
+
+10-04 03:47:52.521  3745  3878 W dalvikvm: VFY: unable to resolve virtual method 1769: Landroid/net/VpnService$Builder;.setBlocking (Z)Landroid/net/VpnService$Builder;
+
+
+10-04 03:47:52.521  3745  3878 D dalvikvm: VFY: replacing opcode 0x6e at 0x0014
+
+
+10-04 03:47:52.521  1480  1491 D dalvikvm: GC_FOR_ALLOC freed 1062K, 23% free 6834K/8764K, paused 3ms, total 3ms
+
+
+10-04 03:47:52.541  1480  1491 D Vpn     : setting state=CONNECTING, reason=establish
+
+
+10-04 03:47:52.541  1480  1491 D VpnJni  : Address added on tun0: fe80::d1/64
+
+
+10-04 03:47:52.541  1480  1491 D VpnJni  : Route added on tun0: fe80::/64
+
+
+10-04 03:47:52.541  1480  1491 I Vpn     : Established by com.shilapi.xcertplay.compat.Api18VpnProbeService on tun0
+
+
+10-04 03:47:52.541  1480  1491 D Vpn     : setting state=AUTHENTICATING, reason=establish
+
+
+10-04 03:47:52.541  1480  1491 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:1439 com.android.server.connectivity.Vpn.establish:310 com.android.server.ConnectivityService.establishVpn:3459 android.net.IConnectivityManager$Stub.onTransact:518 android.os.Binder.execTransact:388 
+
+
+10-04 03:47:52.561  1541  1542 D dalvikvm: GC_CONCURRENT freed 124K, 69% free 4721K/15052K, paused 1ms+0ms, total 2ms
+
+
+10-04 03:47:52.561  1541  1541 D dalvikvm: WAIT_FOR_CONCURRENT_GC blocked 2ms
+
+
+10-04 03:47:52.581  1541  1541 D EGL_emulation: eglMakeCurrent: 0xb8ac96c0: ver 2 0
+
+
+10-04 03:47:54.561  1160  1468 W Netd    : No subsystem found in netlink event
+
+
+10-04 03:47:54.561  1480  1519 D Vpn     : setting state=DISCONNECTED, reason=interfaceRemoved
+
+
+10-04 03:47:54.561  1160  1468 D NetlinkEvent: Unexpected netlink message. type=0x11
+
+
+10-04 03:47:54.611  3745  3878 I CodexApi18Probe: VPN cycle=1 idleMs=2000 cpuMs=56 packets=3 stopped=true
+
+
+10-04 03:47:54.611  1480  1491 D Vpn     : setting state=CONNECTING, reason=establish
+
+
+10-04 03:47:54.611  1480  1491 D VpnJni  : Address added on tun0: fe80::d1/64
+
+
+10-04 03:47:54.611  1480  1491 D VpnJni  : Route added on tun0: fe80::/64
+
+
+10-04 03:47:54.611  1480  1491 I Vpn     : Established by com.shilapi.xcertplay.compat.Api18VpnProbeService on tun0
+
+
+10-04 03:47:54.611  1480  1491 D dalvikvm: GC_FOR_ALLOC freed 412K, 20% free 7062K/8764K, paused 7ms, total 7ms
+
+
+10-04 03:47:54.611  1480  1491 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:1439 com.android.server.connectivity.Vpn.establish:310 com.android.server.ConnectivityService.establishVpn:3459 android.net.IConnectivityManager$Stub.onTransact:518 android.os.Binder.execTransact:388 
+
+
+10-04 03:47:54.621  1480  1491 D Vpn     : setting state=AUTHENTICATING, reason=establish
+
+
+10-04 03:47:54.621  1541  1542 D dalvikvm: GC_CONCURRENT freed 181K, 66% free 5172K/15052K, paused 0ms+1ms, total 3ms
+
+
+10-04 03:47:56.621  1160  1468 W Netd    : No subsystem found in netlink event
+
+
+10-04 03:47:56.621  1160  1468 D NetlinkEvent: Unexpected netlink message. type=0x11
+
+
+10-04 03:47:56.631  1480  1519 D Vpn     : setting state=DISCONNECTED, reason=interfaceRemoved
+
+
+10-04 03:47:56.661  3745  3878 I CodexApi18Probe: VPN cycle=2 idleMs=2000 cpuMs=70 packets=3 stopped=true
+
+
+10-04 03:47:56.661  1480  1491 D Vpn     : setting state=CONNECTING, reason=establish
+
+
+10-04 03:47:56.661  1480  1491 D VpnJni  : Address added on tun0: fe80::d1/64
+
+
+10-04 03:47:56.661  1480  1491 D VpnJni  : Route added on tun0: fe80::/64
+
+
+10-04 03:47:56.661  1480  1491 I Vpn     : Established by com.shilapi.xcertplay.compat.Api18VpnProbeService on tun0
+
+
+10-04 03:47:56.661  1480  1491 D Vpn     : setting state=AUTHENTICATING, reason=establish
+
+
+10-04 03:47:56.661  1480  1491 W ContextImpl: Calling a method in the system process without a qualified user: android.app.ContextImpl.bindService:1439 com.android.server.connectivity.Vpn.establish:310 com.android.server.ConnectivityService.establishVpn:3459 android.net.IConnectivityManager$Stub.onTransact:518 android.os.Binder.execTransact:388 
+
+
+10-04 03:47:56.681  1541  1542 D dalvikvm: GC_CONCURRENT freed 185K, 62% free 5853K/15052K, paused 2ms+2ms, total 7ms
+
+
+10-04 03:47:58.171  3745  3747 D dalvikvm: GC_CONCURRENT freed 381K, 28% free 3776K/5236K, paused 2ms+0ms, total 4ms
+
+
+10-04 03:47:58.671  1160  1468 W Netd    : No subsystem found in netlink event
+
+
+10-04 03:47:58.671  1480  1519 D Vpn     : setting state=DISCONNECTED, reason=interfaceRemoved
+
+
+10-04 03:47:58.671  1160  1468 D NetlinkEvent: Unexpected netlink message. type=0x11
+
+
+10-04 03:47:58.701  3745  3878 I CodexApi18Probe: VPN cycle=3 idleMs=2000 cpuMs=72 packets=3 stopped=true
+
+
+10-04 03:47:58.701  3745  3878 I CodexApi18Probe: PASS VPN establishIdleCloseCycles=3
+
+
+10-04 03:47:58.701  3745  3745 I CodexApi18Probe: PASS VPN establishIdleCloseCycles=3
+
+
+10-04 03:47:58.701  3745  3745 I CodexApi18Probe: COMPLETE failures=0
+
+
