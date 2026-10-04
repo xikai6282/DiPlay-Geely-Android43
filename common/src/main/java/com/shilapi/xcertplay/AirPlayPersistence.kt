@@ -155,6 +155,31 @@ object AirPlayPersistence {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_AUDIO_FOCUS_ENABLED, false)
 
+    fun loadGeelyAudioRouting(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("geely_h52_audio_routing", false)
+
+    fun saveGeelyAudioRouting(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean("geely_h52_audio_routing", enabled).apply()
+    }
+
+    fun loadGeelyNavigationAlert(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("geely_h52_navigation_alert", false)
+
+    fun saveGeelyNavigationAlert(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean("geely_h52_navigation_alert", enabled).apply()
+    }
+
+    fun loadGeelyBluetoothDiagnosticsEnabled(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getBoolean("geely_h52_bluetooth_diagnostics_enabled", false)
+
+    fun saveGeelyBluetoothDiagnosticsEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putBoolean("geely_h52_bluetooth_diagnostics_enabled", enabled).apply()
+    }
+
     fun saveAudioFocusEnabled(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
             .putBoolean(KEY_AUDIO_FOCUS_ENABLED, enabled)

@@ -88,3 +88,29 @@ internal object AudioChannelMapper {
             AudioChannelSelection(AudioChannel.NAVIGATION, AudioContentType.SPEECH, navigationStreamType)
         }
 }
+
+/** Keeps the user-facing zero/automatic preference separate from AudioManager's real stream 0. */
+internal object AudioStreamRouting {
+    const val LEGACY_STREAM_MUSIC = 3
+    const val LEGACY_STREAM_VOICE_CALL = 0
+
+    fun override(
+        channel: AudioChannel,
+        audioType: String,
+        geelyAudio: GeelyAudioCapabilities?,
+        separateGeelyAlerts: Boolean,
+        mediaChannel: Int,
+        navigationChannel: Int,
+    ): Int? = when (channel) {
+        AudioChannel.MEDIA -> geelyAudio?.carPlay ?: mediaChannel.takeIf { it != 0 }
+        AudioChannel.NAVIGATION -> geelyAudio?.navigationStream(audioType, separateGeelyAlerts)
+            ?: navigationChannel.takeIf { it != 0 }
+        AudioChannel.PHONE, AudioChannel.ASSISTANT -> null
+    }
+
+    fun legacyStreamType(channel: AudioChannel, streamOverride: Int?): Int =
+        streamOverride ?: when (channel) {
+            AudioChannel.MEDIA, AudioChannel.NAVIGATION -> LEGACY_STREAM_MUSIC
+            AudioChannel.PHONE, AudioChannel.ASSISTANT -> LEGACY_STREAM_VOICE_CALL
+        }
+}

@@ -1,18 +1,16 @@
 # 上游 v0.2.10 → API18 源码与方法索引
 
-基线提交：`3e43e25c55921bdf5149f5f92851acf202ed353a`。行号对应本仓库源码；精确变更见同目录补丁。
+基线提交：`3e43e25c55921bdf5149f5f92851acf202ed353a`。行号对应本仓库源码。
 
 ## automotive/build.gradle.kts
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## automotive/src/main/AndroidManifest.xml
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## automotive/src/main/java/com/shilapi/xcertplay/MainActivity.kt
 
@@ -55,7 +53,6 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## automotive/src/main/java/com/shilapi/xcertplay/ui/theme/Theme.kt
 
@@ -67,28 +64,146 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## common/build.gradle.kts
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## common/src/main/AndroidManifest.xml
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
+
+## common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt
+
+状态：modified
+
+- L22: `object AirPlayPersistence {`
+- L91: `fun loadDisplayScaleTenths(context: Context): Int {`
+- L98: `fun saveDisplayScaleTenths(context: Context, tenths: Int) {`
+- L104: `fun loadHevcEnabled(context: Context): Boolean =`
+- L108: `fun loadUiScalePercent(context: Context): Int = CarPlayUiScale.sanitize(`
+- L113: `fun saveUiScalePercent(context: Context, percent: Int) {`
+- L118: `fun saveHevcEnabled(context: Context, enabled: Boolean) {`
+- L124: `fun loadHevcSoftwareDecoderEnabled(context: Context): Boolean =`
+- L128: `fun saveHevcSoftwareDecoderEnabled(context: Context, enabled: Boolean) {`
+- L134: `fun loadAdvancedAudioChannelMapping(context: Context): Boolean =`
+- L138: `fun saveAdvancedAudioChannelMapping(context: Context, enabled: Boolean) {`
+- L144: `fun loadNavigationStreamType(context: Context): Int =`
+- L148: `fun saveNavigationStreamType(context: Context, streamType: Int) {`
+- L154: `fun loadAudioFocusEnabled(context: Context): Boolean =`
+- L158: `fun loadGeelyAudioRouting(context: Context): Boolean =`
+- L161: `fun saveGeelyAudioRouting(context: Context, enabled: Boolean) {`
+- L166: `fun loadGeelyNavigationAlert(context: Context): Boolean =`
+- L169: `fun saveGeelyNavigationAlert(context: Context, enabled: Boolean) {`
+- L174: `fun loadGeelyBluetoothDiagnosticsEnabled(context: Context): Boolean =`
+- L178: `fun saveGeelyBluetoothDiagnosticsEnabled(context: Context, enabled: Boolean) {`
+- L183: `fun saveAudioFocusEnabled(context: Context, enabled: Boolean) {`
+- L189: `fun loadMediaAudioChannel(context: Context): Int =`
+- L194: `fun saveMediaAudioChannel(context: Context, channel: Int) {`
+- L200: `fun loadNavigationAudioChannel(context: Context): Int {`
+- L207: `fun saveNavigationAudioChannel(context: Context, channel: Int) {`
+- L213: `fun loadWirelessEnabled(context: Context): Boolean =`
+- L217: `fun saveWirelessEnabled(context: Context, enabled: Boolean) {`
+- L223: `fun loadMfiTarget(context: Context): MfiTarget {`
+- L229: `fun saveMfiTarget(context: Context, target: MfiTarget) {`
+- L235: `fun loadMfiI2cPath(context: Context): String =`
+- L241: `fun saveMfiI2cPath(context: Context, path: String) {`
+- L247: `fun loadRemoteMfiServer(context: Context): String =`
+- L252: `fun saveRemoteMfiServer(context: Context, server: String) {`
+- L258: `fun loadRemoteMfiToken(context: Context): String =`
+- L263: `fun saveRemoteMfiToken(context: Context, token: String) {`
+- L269: `fun loadWirelessHotspotMode(context: Context): WirelessHotspotMode {`
+- L281: `fun saveWirelessHotspotMode(context: Context, mode: WirelessHotspotMode) {`
+- L288: `fun loadManualHotspotSsid(context: Context): String =`
+- L293: `fun saveManualHotspotSsid(context: Context, ssid: String) {`
+- L299: `fun loadManualHotspotPassphrase(context: Context): String =`
+- L304: `fun saveManualHotspotPassphrase(context: Context, passphrase: String) {`
+- L310: `fun loadManualHotspotBand(context: Context): ManualHotspotBand {`
+- L317: `fun saveManualHotspotBand(context: Context, band: ManualHotspotBand) {`
+- L323: `fun loadManualHotspotChannel(context: Context): Int =`
+- L328: `fun saveManualHotspotChannel(context: Context, channel: Int) {`
+- L334: `fun loadManualHotspotSecurity(context: Context): ManualHotspotSecurity {`
+- L345: `fun saveManualHotspotSecurity(context: Context, security: ManualHotspotSecurity) {`
+- L351: `fun loadDebugLogsEnabled(context: Context): Boolean =`
+- L355: `fun saveDebugLogsEnabled(context: Context, enabled: Boolean) {`
+- L361: `fun loadAutoStartOnBoot(context: Context): Boolean =`
+- L365: `fun saveAutoStartOnBoot(context: Context, enabled: Boolean) {`
+- L371: `fun loadLocationReportingEnabled(context: Context): Boolean =`
+- L375: `fun saveLocationReportingEnabled(context: Context, enabled: Boolean) {`
+- L381: `fun loadManufacturer(context: Context): String =`
+- L387: `fun saveManufacturer(context: Context, manufacturer: String) {`
+- L393: `fun loadModel(context: Context): String =`
+- L399: `fun saveModel(context: Context, model: String) {`
+- L405: `fun loadOemLabel(context: Context): String =`
+- L411: `fun saveOemLabel(context: Context, oemLabel: String) {`
+- L417: `fun loadFps(context: Context): Int = AirPlayDisplaySettings.sanitizeFps(`
+- L422: `fun loadMediaBufferMillis(context: Context): Int = com.shilapi.xcertplay.media.MediaAudioBuffer.sanitize(`
+- L427: `fun saveMediaBufferMillis(context: Context, millis: Int) {`
+- L432: `fun saveFps(context: Context, fps: Int) {`
+- L438: `fun loadWidthPhysicalMm(context: Context): Int =`
+- L446: `fun saveWidthPhysicalMm(context: Context, widthPhysicalMm: Int) {`
+- L455: `fun loadPhysicalSizeBasis(context: Context): AirPlayPhysicalSizeBasis {`
+- L462: `fun savePhysicalSizeBasis(context: Context, basis: AirPlayPhysicalSizeBasis) {`
+- L468: `fun loadMaximumDetectedDisplay(context: Context): Pair<Int, Int> {`
+- L474: `fun saveMaximumDetectedDisplay(`
+- L485: `fun loadClusterMapEnabled(context: Context): Boolean =`
+- L488: `fun saveClusterMapEnabled(context: Context, enabled: Boolean) {`
+- L493: `fun loadCenterMapOverlay(context: Context): Boolean =`
+- L497: `fun loadLauncherMapSharing(context: Context): Boolean =`
+- L500: `fun saveLauncherMapSharing(context: Context, enabled: Boolean) {`
+- L505: `internal fun observeLauncherMapSharing(context: Context, changed: (Boolean) -> Unit): () -> Unit {`
+- L514: `fun saveCenterMapOverlay(context: Context, enabled: Boolean) {`
+- L518: `fun loadClusterContent(context: Context): CarPlayClusterDisplay.Content =`
+- L523: `fun saveClusterContent(context: Context, content: CarPlayClusterDisplay.Content) {`
+- L527: `fun loadCenterMapFollowsDashboard(context: Context): Boolean =`
+- L531: `fun saveCenterMapFollowsDashboard(context: Context, enabled: Boolean) {`
+- L536: `fun loadClusterMapScalePercent(context: Context): Int = CarPlayClusterDisplay.STREAM_SCALE_PERCENT.let { default ->`
+- L541: `fun saveClusterMapScalePercent(context: Context, percent: Int) {`
+- L546: `fun loadClusterMarkerHorizontalStep(context: Context): Int =`
+- L550: `fun saveClusterMarkerHorizontalStep(context: Context, step: Int) {`
+- L555: `fun loadClusterMarkerVerticalStep(context: Context): Int =`
+- L559: `fun saveClusterMarkerVerticalStep(context: Context, step: Int) {`
+- L564: `fun loadRightHandDrive(context: Context): Boolean =`
+- L568: `fun saveRightHandDrive(context: Context, rightHandDrive: Boolean) {`
+- L574: `fun loadHideTopBar(context: Context): Boolean =`
+- L578: `fun saveHideTopBar(context: Context, hide: Boolean) {`
+- L584: `fun loadHideBottomBar(context: Context): Boolean =`
+- L588: `fun saveHideBottomBar(context: Context, hide: Boolean) {`
+- L594: `fun loadSafeAreaDrawOutside(context: Context): Boolean =`
+- L598: `fun saveSafeAreaDrawOutside(context: Context, drawOutside: Boolean) {`
+- L604: `fun loadSafeAreaRect(context: Context, widthPixels: Int, heightPixels: Int): SafeAreaRect? {`
+- L612: `fun saveSafeAreaRect(`
+- L630: `fun clearSafeAreaRect(`
+- L644: `fun loadCustomAirPlayIconFile(context: Context): File? =`
+- L647: `fun saveCustomAirPlayIcon(context: Context, encodedImage: ByteArray) {`
+- L654: `fun clearCustomAirPlayIcon(context: Context) {`
+- L658: `fun loadIdentity(context: Context): AirPlayIdentity {`
+- L675: `fun loadPairings(context: Context, onSave: (String, ByteArray) -> Unit): PairingStore {`
+- L684: `fun savePairing(context: Context, identifier: String, longTermPublicKey: ByteArray) {`
+- L694: `fun loadLockdownRecord(context: Context): LockdownPairRecord? {`
+- L722: `fun saveLockdownRecord(context: Context, record: LockdownPairRecord) {`
+- L736: `fun clearLockdownRecord(context: Context) {`
+- L750: `private fun ByteArray.toHex(): String = joinToString("") { "%02x".format(it.toInt() and 0xff) }`
+- L752: `private fun String.decodeHex(): ByteArray {`
+- L759: `private fun safeAreaKey(widthPixels: Int, heightPixels: Int): String =`
+
+## common/src/main/java/com/shilapi/xcertplay/AndroidBluetoothFailureCopy.kt
+
+状态：added
+
+- L6: `internal object AndroidBluetoothFailureCopy {`
+- L7: `fun forControllerMessage(context: Context, message: String): String? = when (message) {`
 
 ## common/src/main/java/com/shilapi/xcertplay/AudioChannelPreview.kt
 
 状态：modified
 
-- L20: `internal class AudioChannelPreview(private val onUnavailable: (Int) -> Unit) : Closeable {`
-- L30: `fun play(channel: Int, navigation: Boolean) {`
-- L95: `override fun close() {`
-- L103: `private fun tone(): ByteArray {`
+- L22: `internal class AudioChannelPreview(private val context: Context? = null, private val onUnavailable: (Int) -> Unit) : Closeable {`
+- L32: `fun play(channel: Int, navigation: Boolean, geelyFocusGain: Int? = null) {`
+- L130: `override fun close() {`
+- L138: `private fun tone(): ByteArray {`
 
 ## common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt
 
@@ -98,166 +213,167 @@
 - L105: `private data class SettingsBaseline(`
 - L117: `override fun attachBaseContext(newBase: Context) {`
 - L122: `private fun createRuntimeConfig(): CarPlayRuntimeConfig = CarPlayRuntimeConfig(`
-- L369: `override fun run() {`
-- L381: `override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {`
-- L402: `override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) {`
-- L407: `override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {`
-- L420: `override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit`
-- L423: `override fun onCreate(savedInstanceState: Bundle?) {`
-- L452: `override fun handleOnBackPressed() {`
-- L479: `private fun loadPersistedSettings() {`
-- L523: `private fun requestStartupPrerequisites() {`
-- L535: `private fun requestLocationPermission() {`
-- L546: `private fun hasFineLocationPermission(): Boolean =`
-- L550: `private fun requestVpnConsent() {`
-- L561: `private fun requestWirelessPermissions() {`
-- L575: `private fun hasRequiredWirelessPermissions(): Boolean =`
-- L581: `private fun startForegroundServiceCompat(intent: Intent) {`
-- L589: `private fun requiredWirelessPermissions(): List<String> = when {`
-- L605: `override fun onNewIntent(intent: Intent) {`
-- L624: `override fun onStart() {`
-- L633: `override fun onResume() {`
-- L662: `private fun syncTransport(): Boolean {`
-- L692: `private fun reloadHotspotSettingsIfChanged(): Boolean {`
-- L713: `private fun effectiveClusterTheme(): DiLink51ClusterLayout.Theme =`
-- L717: `private fun onClusterActivityState(state: ClusterActivityState.Snapshot) {`
-- L724: `private fun ensureClusterPresentation() {`
-- L760: `private fun ensureDiLink51ClusterPresentation(theme: DiLink51ClusterLayout.Theme) {`
-- L797: `private fun dismissClusterPresentation() {`
-- L807: `private fun onClusterSurface(surface: Surface?) {`
-- L819: `private fun clusterDisplayConfig(): AirPlayDisplayConfig? {`
-- L844: `override fun dispatchKeyEvent(event: KeyEvent): Boolean {`
-- L853: `override fun onWindowFocusChanged(hasFocus: Boolean) {`
-- L861: `override fun onStop() {`
-- L869: `private fun showCenterMap() {`
-- L899: `private fun onHomeScreenVisible(visible: Boolean) {`
-- L905: `private fun onCenterMapSurface(surface: Surface?) {`
-- L911: `private fun updateClusterMapShown() {`
-- L915: `override fun onConfigurationChanged(newConfig: Configuration) {`
-- L927: `override fun onDestroy() {`
-- L955: `private fun buildContentView(): View {`
-- L1018: `private fun buildSettingsMenu(): View {`
-- L1255: `override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {`
-- L1262: `override fun onStartTrackingTouch(seekBar: SeekBar) = Unit`
-- L1263: `override fun onStopTrackingTouch(seekBar: SeekBar) = Unit`
-- L1600: `private fun persistMenuSettings() {`
-- L1631: `private fun captureSettingsBaseline(): SettingsBaseline {`
-- L1648: `private fun restoreSettingsBaseline() {`
-- L1688: `private fun buildMfiTargetSection(): View {`
-- L1812: `private fun updateMfiTargetFields() {`
-- L1818: `private fun syncMfiSettingsControls() {`
-- L1838: `private fun mfiTargetLabel(target: MfiTarget): String = when (target) {`
-- L1845: `private fun buildIdentitySettingsSection(): View {`
-- L1882: `private fun settingsCategoryHeader(title: String): TextView =`
-- L1885: `private fun buildLocationReportingSection(): View =`
-- L1932: `private fun onLocationReportingChanged(checked: Boolean) {`
-- L1945: `private fun buildDebugLogsSection(): View =`
-- L1956: `private fun buildStepSliderSection(`
-- L1998: `override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {`
-- L2004: `override fun onStartTrackingTouch(seekBar: SeekBar) = Unit`
-- L2005: `override fun onStopTrackingTouch(seekBar: SeekBar) = Unit`
-- L2019: `private fun buildAirPlayIconSection(): View {`
-- L2106: `private fun buildDrivingSideSection(): View {`
-- L2148: `private fun buildFullscreenSection(): View {`
-- L2192: `private fun buildSafeAreaSection(): View {`
-- L2258: `private fun buildSafeAreaEditor(): View {`
-- L2316: `private fun settingsInputRow(`
-- L2362: `private fun settingsSwitchRow(`
-- L2388: `private fun afterTextChanged(onChanged: (String) -> Unit): TextWatcher =`
-- L2390: `override fun beforeTextChanged(`
-- L2397: `override fun onTextChanged(`
-- L2404: `override fun afterTextChanged(text: Editable?) {`
-- L2409: `private fun buildHotspotModeSection(): View {`
-- L2581: `private fun updateManualHotspotFields() {`
-- L2587: `private fun validateMfiSettings(): Boolean {`
-- L2607: `private fun validateManualHotspotSettings(): Boolean {`
-- L2632: `private fun hotspotModeLabel(mode: WirelessHotspotMode): String = when (mode) {`
-- L2638: `private fun menuText(`
-- L2651: `private fun updateHotspotStatus(status: CarPlayStatus) {`
-- L2678: `private fun updateHotspotStatusBlock() {`
-- L2748: `private fun updateResolutionMenu() {`
-- L2814: `private data class CanvasSupport(val supported: Boolean, val reason: String, val details: String)`
-- L2816: `private fun largerCanvasSupport(display: AirPlayDisplayConfig): CanvasSupport = try {`
-- L2858: `private fun createAirPlayConfig(size: DisplaySize): AirPlayConfig {`
-- L2929: `private fun loadAirPlayIcon(): AirPlayIcon {`
-- L2943: `private fun decodeAirPlayIcon(encoded: ByteArray): AirPlayIcon? {`
-- L2954: `private fun defaultAirPlayIconBytes(): ByteArray =`
-- L2958: `private fun updateAirPlayIconPreview() {`
-- L2974: `private fun currentActivitySize(): DisplaySize? {`
-- L2982: `private fun resolvePhysicalSize(size: DisplaySize): AirPlayPhysicalSizeMm =`
-- L2992: `private fun safeAreaSummary(): String {`
-- L3005: `private fun updateSafeAreaSummary() {`
-- L3009: `private fun openSafeAreaEditor() {`
-- L3030: `private fun closeSafeAreaEditor() {`
-- L3041: `private fun saveSafeAreaEditor() {`
-- L3052: `private fun resetSafeAreaForCurrentSize() {`
-- L3064: `private fun refreshDisplaySizeAfterLayout() {`
-- L3071: `private fun normalizedManufacturer(): String =`
-- L3074: `private fun normalizedModel(): String =`
-- L3077: `private fun createMediaSink(`
-- L3112: `private fun createMediaEngine(sink: AndroidMediaSink): CarPlayMediaEngine =`
-- L3119: `private fun createSessionListener(controllerGeneration: Int): AirPlaySessionListener =`
-- L3123: `override fun onSessionActive(session: AirPlaySession) {`
-- L3137: `override fun onSessionEnded(session: AirPlaySession) {`
-- L3151: `override fun onTransportError(message: String) {`
-- L3163: `override fun onDebugLog(message: String) {`
-- L3185: `private fun createStatusReporter(`
-- L3204: `private fun adoptBackgroundSession(): Boolean {`
-- L3254: `private fun startCarPlay(size: DisplaySize) {`
-- L3348: `private fun refreshConfiguration(newConfig: Configuration = resources.configuration) {`
-- L3359: `private fun syncAirPlayDarkMode() {`
-- L3375: `private fun audioCaptureDirectory(): File? {`
-- L3380: `private fun scheduleDisplaySize(width: Int, height: Int) {`
-- L3393: `private fun applyDisplaySize(size: DisplaySize) {`
-- L3426: `private fun displayRotation(): Int = videoView?.display?.rotation ?: windowManager.defaultDisplay.rotation`
-- L3428: `private fun displayLayoutChanged(): Boolean {`
-- L3435: `private fun contentRect(viewWidth: Int, viewHeight: Int): CarPlayVideoLayout {`
-- L3440: `private fun updateVideoLayout(viewWidth: Int, viewHeight: Int) {`
-- L3450: `private fun recordDetectedMaximum(size: DisplaySize) {`
-- L3459: `private fun maybeStartCarPlay() {`
-- L3483: `private fun reconnectAfterLoss(reason: String) {`
-- L3514: `private fun restartCarPlay(reason: String) {`
-- L3552: `private fun showDiPlayHome(page: String = "home") {`
-- L3558: `private fun openSettingsMenu() = showDiPlayHome("settings")`
-- L3560: `private fun saveSettingsAndReconnect() {`
-- L3569: `private fun cancelSettingsEdits() {`
-- L3575: `private fun finishSettingsMenu(prefix: String) {`
-- L3596: `private fun exitApplication() {`
-- L3603: `private fun shutdown(terminateProcess: Boolean, reason: String, completion: () -> Unit = {}) {`
-- L3631: `private fun attachSurface(surface: Surface) {`
-- L3640: `private fun onHostTouch(view: View, event: MotionEvent): Boolean {`
-- L3716: `private fun pointerCentroid(event: MotionEvent, horizontal: Boolean): Float {`
-- L3724: `private fun onScreenStreamStateChanged(generation: Int, type: Int, active: Boolean) {`
-- L3748: `private fun setStatus(message: String) {`
-- L3756: `private fun motionEventName(action: Int): String =`
-- L3760: `private fun setConnectionStage(message: String) {`
-- L3766: `private fun updateDebugOverlays() {`
-- L3771: `private fun friendlyStage(message: String): String = when {`
-- L3789: `private fun appendLog(message: String) {`
-- L3794: `private fun appendFileLog(message: String) {`
-- L3798: `private fun formattedLogLine(message: String, nowMillis: Long): String =`
-- L3801: `private fun initializeSessionLog() {`
-- L3814: `private fun refreshLogView(nowMillis: Long) {`
-- L3830: `private fun scrollLogsToBottom() {`
-- L3836: `private fun applyFullscreenMode() {`
-- L3856: `private fun Switch.applyMenuSwitchTints() {`
-- L3871: `private fun SeekBar.applyMenuSeekBarTints() {`
-- L3878: `private fun View.tintBackgroundCompat(color: Int) {`
-- L3884: `private fun RadioButton.tintRadioCompat() {`
-- L3893: `private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()`
-- L3895: `private fun CarPlayStatus.describe(): String = when (this) {`
-- L3950: `private data class DisplaySize(val width: Int, val height: Int)`
-- L3951: `private data class LogEntry(val timestampMillis: Long, val text: String)`
-- L3952: `private data class HotspotStatus(`
-- L3961: `internal data class CarPlaySessionDisplay(`
-- L3973: `internal object CarPlayBackgroundSession {`
-- L3978: `@Synchronized fun isOwner(candidate: Any): Boolean = owner === candidate`
-- L3979: `@Synchronized fun hasSession(): Boolean = stopAction != null || stopping`
-- L3982: `fun stop(completion: () -> Unit = {}) {`
-- L3999: `data class Snapshot(`
-- L4014: `fun snapshot(): Snapshot? {`
-- L4022: `fun store(controller: CarPlayController, sink: AndroidMediaSink, width: Int, height: Int,`
-- L4034: `fun clear(expected: CarPlayController? = null, keepOwner: Boolean = false) {`
+- L371: `override fun run() {`
+- L383: `override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {`
+- L404: `override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) {`
+- L409: `override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {`
+- L422: `override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit`
+- L425: `override fun onCreate(savedInstanceState: Bundle?) {`
+- L454: `override fun handleOnBackPressed() {`
+- L481: `private fun loadPersistedSettings() {`
+- L527: `private fun requestStartupPrerequisites() {`
+- L539: `private fun requestLocationPermission() {`
+- L550: `private fun hasFineLocationPermission(): Boolean =`
+- L554: `private fun requestVpnConsent() {`
+- L565: `private fun requestWirelessPermissions() {`
+- L579: `private fun hasRequiredWirelessPermissions(): Boolean =`
+- L585: `private fun startForegroundServiceCompat(intent: Intent) {`
+- L593: `private fun requiredWirelessPermissions(): List<String> = when {`
+- L609: `override fun onNewIntent(intent: Intent) {`
+- L628: `override fun onStart() {`
+- L637: `override fun onResume() {`
+- L666: `private fun syncTransport(): Boolean {`
+- L706: `private fun reloadGeelyAudioSettingsIfChanged(): Boolean {`
+- L715: `private fun reloadHotspotSettingsIfChanged(): Boolean {`
+- L736: `private fun effectiveClusterTheme(): DiLink51ClusterLayout.Theme =`
+- L740: `private fun onClusterActivityState(state: ClusterActivityState.Snapshot) {`
+- L747: `private fun ensureClusterPresentation() {`
+- L783: `private fun ensureDiLink51ClusterPresentation(theme: DiLink51ClusterLayout.Theme) {`
+- L820: `private fun dismissClusterPresentation() {`
+- L830: `private fun onClusterSurface(surface: Surface?) {`
+- L842: `private fun clusterDisplayConfig(): AirPlayDisplayConfig? {`
+- L867: `override fun dispatchKeyEvent(event: KeyEvent): Boolean {`
+- L876: `override fun onWindowFocusChanged(hasFocus: Boolean) {`
+- L884: `override fun onStop() {`
+- L892: `private fun showCenterMap() {`
+- L922: `private fun onHomeScreenVisible(visible: Boolean) {`
+- L928: `private fun onCenterMapSurface(surface: Surface?) {`
+- L934: `private fun updateClusterMapShown() {`
+- L938: `override fun onConfigurationChanged(newConfig: Configuration) {`
+- L950: `override fun onDestroy() {`
+- L978: `private fun buildContentView(): View {`
+- L1041: `private fun buildSettingsMenu(): View {`
+- L1321: `override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {`
+- L1328: `override fun onStartTrackingTouch(seekBar: SeekBar) = Unit`
+- L1329: `override fun onStopTrackingTouch(seekBar: SeekBar) = Unit`
+- L1666: `private fun persistMenuSettings() {`
+- L1699: `private fun captureSettingsBaseline(): SettingsBaseline {`
+- L1716: `private fun restoreSettingsBaseline() {`
+- L1756: `private fun buildMfiTargetSection(): View {`
+- L1880: `private fun updateMfiTargetFields() {`
+- L1886: `private fun syncMfiSettingsControls() {`
+- L1906: `private fun mfiTargetLabel(target: MfiTarget): String = when (target) {`
+- L1913: `private fun buildIdentitySettingsSection(): View {`
+- L1950: `private fun settingsCategoryHeader(title: String): TextView =`
+- L1953: `private fun buildLocationReportingSection(): View =`
+- L2000: `private fun onLocationReportingChanged(checked: Boolean) {`
+- L2013: `private fun buildDebugLogsSection(): View =`
+- L2024: `private fun buildStepSliderSection(`
+- L2066: `override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {`
+- L2072: `override fun onStartTrackingTouch(seekBar: SeekBar) = Unit`
+- L2073: `override fun onStopTrackingTouch(seekBar: SeekBar) = Unit`
+- L2087: `private fun buildAirPlayIconSection(): View {`
+- L2174: `private fun buildDrivingSideSection(): View {`
+- L2216: `private fun buildFullscreenSection(): View {`
+- L2260: `private fun buildSafeAreaSection(): View {`
+- L2326: `private fun buildSafeAreaEditor(): View {`
+- L2384: `private fun settingsInputRow(`
+- L2430: `private fun settingsSwitchRow(`
+- L2456: `private fun afterTextChanged(onChanged: (String) -> Unit): TextWatcher =`
+- L2458: `override fun beforeTextChanged(`
+- L2465: `override fun onTextChanged(`
+- L2472: `override fun afterTextChanged(text: Editable?) {`
+- L2477: `private fun buildHotspotModeSection(): View {`
+- L2649: `private fun updateManualHotspotFields() {`
+- L2655: `private fun validateMfiSettings(): Boolean {`
+- L2675: `private fun validateManualHotspotSettings(): Boolean {`
+- L2700: `private fun hotspotModeLabel(mode: WirelessHotspotMode): String = when (mode) {`
+- L2706: `private fun menuText(`
+- L2719: `private fun updateHotspotStatus(status: CarPlayStatus) {`
+- L2746: `private fun updateHotspotStatusBlock() {`
+- L2816: `private fun updateResolutionMenu() {`
+- L2882: `private data class CanvasSupport(val supported: Boolean, val reason: String, val details: String)`
+- L2884: `private fun largerCanvasSupport(display: AirPlayDisplayConfig): CanvasSupport = try {`
+- L2926: `private fun createAirPlayConfig(size: DisplaySize): AirPlayConfig {`
+- L2997: `private fun loadAirPlayIcon(): AirPlayIcon {`
+- L3011: `private fun decodeAirPlayIcon(encoded: ByteArray): AirPlayIcon? {`
+- L3022: `private fun defaultAirPlayIconBytes(): ByteArray =`
+- L3026: `private fun updateAirPlayIconPreview() {`
+- L3042: `private fun currentActivitySize(): DisplaySize? {`
+- L3050: `private fun resolvePhysicalSize(size: DisplaySize): AirPlayPhysicalSizeMm =`
+- L3060: `private fun safeAreaSummary(): String {`
+- L3073: `private fun updateSafeAreaSummary() {`
+- L3077: `private fun openSafeAreaEditor() {`
+- L3098: `private fun closeSafeAreaEditor() {`
+- L3109: `private fun saveSafeAreaEditor() {`
+- L3120: `private fun resetSafeAreaForCurrentSize() {`
+- L3132: `private fun refreshDisplaySizeAfterLayout() {`
+- L3139: `private fun normalizedManufacturer(): String =`
+- L3142: `private fun normalizedModel(): String =`
+- L3145: `private fun createMediaSink(`
+- L3182: `private fun createMediaEngine(sink: AndroidMediaSink): CarPlayMediaEngine =`
+- L3189: `private fun createSessionListener(controllerGeneration: Int): AirPlaySessionListener =`
+- L3193: `override fun onSessionActive(session: AirPlaySession) {`
+- L3207: `override fun onSessionEnded(session: AirPlaySession) {`
+- L3221: `override fun onTransportError(message: String) {`
+- L3233: `override fun onDebugLog(message: String) {`
+- L3255: `private fun createStatusReporter(`
+- L3274: `private fun adoptBackgroundSession(): Boolean {`
+- L3324: `private fun startCarPlay(size: DisplaySize) {`
+- L3418: `private fun refreshConfiguration(newConfig: Configuration = resources.configuration) {`
+- L3429: `private fun syncAirPlayDarkMode() {`
+- L3445: `private fun audioCaptureDirectory(): File? {`
+- L3450: `private fun scheduleDisplaySize(width: Int, height: Int) {`
+- L3463: `private fun applyDisplaySize(size: DisplaySize) {`
+- L3496: `private fun displayRotation(): Int = videoView?.display?.rotation ?: windowManager.defaultDisplay.rotation`
+- L3498: `private fun displayLayoutChanged(): Boolean {`
+- L3505: `private fun contentRect(viewWidth: Int, viewHeight: Int): CarPlayVideoLayout {`
+- L3510: `private fun updateVideoLayout(viewWidth: Int, viewHeight: Int) {`
+- L3520: `private fun recordDetectedMaximum(size: DisplaySize) {`
+- L3529: `private fun maybeStartCarPlay() {`
+- L3553: `private fun reconnectAfterLoss(reason: String) {`
+- L3584: `private fun restartCarPlay(reason: String) {`
+- L3622: `private fun showDiPlayHome(page: String = "home") {`
+- L3628: `private fun openSettingsMenu() = showDiPlayHome("settings")`
+- L3630: `private fun saveSettingsAndReconnect() {`
+- L3642: `private fun cancelSettingsEdits() {`
+- L3648: `private fun finishSettingsMenu(prefix: String, restartForAudioChange: Boolean = false) {`
+- L3672: `private fun exitApplication() {`
+- L3679: `private fun shutdown(terminateProcess: Boolean, reason: String, completion: () -> Unit = {}) {`
+- L3707: `private fun attachSurface(surface: Surface) {`
+- L3716: `private fun onHostTouch(view: View, event: MotionEvent): Boolean {`
+- L3792: `private fun pointerCentroid(event: MotionEvent, horizontal: Boolean): Float {`
+- L3800: `private fun onScreenStreamStateChanged(generation: Int, type: Int, active: Boolean) {`
+- L3824: `private fun setStatus(message: String) {`
+- L3832: `private fun motionEventName(action: Int): String =`
+- L3836: `private fun setConnectionStage(message: String) {`
+- L3842: `private fun updateDebugOverlays() {`
+- L3847: `private fun friendlyStage(message: String): String = when {`
+- L3865: `private fun appendLog(message: String) {`
+- L3870: `private fun appendFileLog(message: String) {`
+- L3874: `private fun formattedLogLine(message: String, nowMillis: Long): String =`
+- L3877: `private fun initializeSessionLog() {`
+- L3890: `private fun refreshLogView(nowMillis: Long) {`
+- L3906: `private fun scrollLogsToBottom() {`
+- L3912: `private fun applyFullscreenMode() {`
+- L3932: `private fun Switch.applyMenuSwitchTints() {`
+- L3947: `private fun SeekBar.applyMenuSeekBarTints() {`
+- L3954: `private fun View.tintBackgroundCompat(color: Int) {`
+- L3960: `private fun RadioButton.tintRadioCompat() {`
+- L3969: `private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()`
+- L3971: `private fun CarPlayStatus.describe(): String = when (this) {`
+- L4029: `private data class DisplaySize(val width: Int, val height: Int)`
+- L4030: `private data class LogEntry(val timestampMillis: Long, val text: String)`
+- L4031: `private data class HotspotStatus(`
+- L4040: `internal data class CarPlaySessionDisplay(`
+- L4052: `internal object CarPlayBackgroundSession {`
+- L4057: `@Synchronized fun isOwner(candidate: Any): Boolean = owner === candidate`
+- L4058: `@Synchronized fun hasSession(): Boolean = stopAction != null || stopping`
+- L4061: `fun stop(completion: () -> Unit = {}) {`
+- L4078: `data class Snapshot(`
+- L4093: `fun snapshot(): Snapshot? {`
+- L4101: `fun store(controller: CarPlayController, sink: AndroidMediaSink, width: Int, height: Int,`
+- L4113: `fun clear(expected: CarPlayController? = null, keepOwner: Boolean = false) {`
 
 ## common/src/main/java/com/shilapi/xcertplay/CarPlayMediaKeys.kt
 
@@ -418,90 +534,97 @@
 
 状态：modified
 
-- L50: `class DiPlayActivity : ComponentActivity() {`
-- L73: `override fun run() { refreshStatus(); handler.postDelayed(this, 1000) }`
-- L90: `override fun attachBaseContext(newBase: Context) {`
-- L94: `override fun onCreate(savedInstanceState: Bundle?) {`
-- L116: `override fun handleOnBackPressed() {`
-- L123: `override fun onNewIntent(intent: Intent) {`
-- L128: `override fun onSaveInstanceState(outState: Bundle) { outState.putString("page", page); outState.putBoolean("pending_car_hotspot", pendingCarHotspotSetup); super.onSaveInstanceState(outState) }`
-- L129: `override fun onConfigurationChanged(newConfig: Configuration) { super.onConfigurationChanged(newConfig); render() }`
-- L130: `private fun openOverlayPermission() {`
-- L137: `override fun onStart() {`
-- L142: `override fun onStop() {`
-- L147: `override fun onResume() {`
-- L164: `override fun onPause() { handler.removeCallbacks(tick); super.onPause() }`
-- L166: `private fun render() {`
-- L190: `private fun home(content: LinearLayout) {`
-- L240: `fun columns(first: View, second: View, stretchSecond: Boolean = false) = row().apply {`
-- L262: `private fun settings(content: LinearLayout) {`
-- L496: `private fun about(content: LinearLayout) {`
-- L508: `private fun carHotspotOff(): Boolean =`
-- L512: `private fun carHotspotOffDialog() {`
-- L523: `private fun openCarWifiSettings() {`
-- L537: `private fun openCarClientWifiSettings() {`
-- L545: `private fun connectionSetup(content: LinearLayout) {`
-- L566: `private fun wirelessLinkControls(parent: LinearLayout) {`
-- L611: `private fun mediaChannelControl(parent: LinearLayout) {`
-- L628: `private fun navigationChannelControl(parent: LinearLayout) {`
-- L648: `private fun showChannelDialog(title: String, current: Int, navigation: Boolean, onApply: (Int) -> Unit) {`
-- L668: `private fun applyMediaChannel(value: Int, previous: Int, control: Button, summary: (Int) -> String) {`
-- L675: `private fun applyNavigationChannel(value: Int, previous: Int, control: Button, summary: (Int) -> String) {`
-- L682: `private fun channelLabel(value: Int): String = value.toString()`
-- L684: `private fun storedSsid() = AirPlayPersistence.loadManualHotspotSsid(this)`
-- L685: `private fun storedPassword() = AirPlayPersistence.loadManualHotspotPassphrase(this)`
-- L686: `private fun hotspotError(ssid: String, password: String) =`
-- L689: `private fun saveHotspotCredentials(ssid: String, password: String) {`
-- L698: `private fun askHotspotCredentials(done: (String, String) -> Unit) {`
-- L708: `fun hideKeyboard() {`
-- L752: `private fun markerStepLabel(step: Int, negative: String, positive: String): String = when {`
-- L758: `private fun showClusterAccessSetup() {`
-- L800: `private fun checkAdbAccess(mayAsk: Boolean, reconnectWhenReady: Boolean = false) {`
-- L819: `private fun adbStatusText(result: BydAdbAccess.Status?): String = when (result?.state) {`
-- L838: `private fun hasPreciseLocation() =`
-- L842: `private fun reconnectForLocation() {`
-- L848: `private fun reconnectForClusterMap() {`
-- L852: `private fun applyWirelessLink(mode: WirelessHotspotMode) {`
-- L858: `private fun textInput(title: String, current: String, secret: Boolean, save: (String) -> Unit) {`
-- L873: `private fun carPlaySizeControl(parent: LinearLayout) {`
-- L884: `private fun connect(wireless: Boolean) {`
-- L913: `private fun openProjection(wireless: Boolean = AirPlayPersistence.loadWirelessEnabled(this)) {`
-- L920: `private fun choosePhone() {`
-- L952: `private fun wirelessHelp() {`
-- L961: `private fun handleWirelessRecovery() {`
-- L967: `private fun confirmWirelessReset() {`
-- L976: `private fun closeP2pChannel(channel: android.net.wifi.p2p.WifiP2pManager.Channel?) {`
-- L981: `private fun resetWirelessGroup() {`
-- L989: `override fun onSuccess() {`
-- L991: `fun waitUntilRemoved() {`
-- L1004: `override fun onFailure(reason: Int) { closeP2pChannel(channel); toast(getString(R.string.could_not_reset_wi_fi_direct_close_the_other_projection_ap)) }`
-- L1012: `private fun refreshStatus() {`
-- L1029: `private fun reportFileName() = "DiPlay-${SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date())}.txt"`
-- L1031: `private fun chooseReportDestination() {`
-- L1050: `private fun exportDiagnostics(uri: Uri? = null) {`
-- L1119: `private fun permissionHelp(title: String, body: String) {`
-- L1124: `private fun openSystem(intent: Intent) { runCatching { startActivity(intent) }.onFailure { toast(getString(R.string.open_this_setting_from_your_car_s_settings_app)) } }`
-- L1125: `private fun toast(message: String) { Toast.makeText(this, message, Toast.LENGTH_LONG).show() }`
-- L1127: `private fun playTestTone(streamType: Int) {`
-- L1164: `private fun ImageView.tintCompat(color: Int) {`
-- L1168: `private fun Switch.tintButtonCompat(color: Int) {`
-- L1172: `private fun paintChannel(index: Int, selected: Boolean) {`
-- L1179: `private fun channelSelector(): ViewGroup {`
-- L1219: `private fun version() = packageManager.getPackageInfo(packageName, 0).versionName ?: "0.1.0-beta.1"`
-- L1220: `private fun languageSettings(content: LinearLayout) {`
-- L1230: `private fun section(parent: LinearLayout, title: String, icon: Int? = null, build: (LinearLayout) -> Unit) {`
-- L1242: `private fun toggle(parent: LinearLayout, title: String, description: String, value: Boolean, save: (Boolean) -> Unit) {`
-- L1249: `private fun choice(parent: LinearLayout, title: String, options: List<String>, current: Int, reconnects: Boolean = true, save: (Int) -> Unit) {`
-- L1269: `private fun card() = column().apply { background = rounded(SURFACE, BORDER); setPadding(dp(24), dp(24), dp(24), dp(24)) }`
-- L1270: `private fun column() = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; layoutParams = LinearLayout.LayoutParams(-1, -2) }`
-- L1271: `private fun row() = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; layoutParams = LinearLayout.LayoutParams(-1, -2) }`
-- L1275: `private fun ripple(content: android.graphics.drawable.Drawable): android.graphics.drawable.Drawable =`
-- L1281: `private fun label(value: String, size: Int, color: Int, bold: Boolean = false) = TextView(this).apply {`
-- L1286: `private fun button(title: String, primary: Boolean, click: () -> Unit) = Button(this).apply {`
-- L1294: `private fun rounded(color: Int, stroke: Int) = GradientDrawable().apply { setColor(color); cornerRadius = dp(20).toFloat(); setStroke(dp(1), stroke) }`
-- L1295: `private fun matchButton(top: Int = 0, height: Int = 68) = LinearLayout.LayoutParams(-1, dp(height)).apply { topMargin = dp(top) }`
-- L1296: `private fun space(height: Int) = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }`
-- L1297: `private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()`
+- L55: `class DiPlayActivity : ComponentActivity() {`
+- L80: `override fun run() { refreshStatus(); handler.postDelayed(this, 1000) }`
+- L97: `override fun attachBaseContext(newBase: Context) {`
+- L101: `override fun onCreate(savedInstanceState: Bundle?) {`
+- L123: `override fun handleOnBackPressed() {`
+- L130: `override fun onNewIntent(intent: Intent) {`
+- L135: `override fun onSaveInstanceState(outState: Bundle) { outState.putString("page", page); outState.putBoolean("pending_car_hotspot", pendingCarHotspotSetup); super.onSaveInstanceState(outState) }`
+- L136: `override fun onConfigurationChanged(newConfig: Configuration) { super.onConfigurationChanged(newConfig); render() }`
+- L137: `private fun openOverlayPermission() {`
+- L144: `override fun onStart() {`
+- L149: `override fun onStop() {`
+- L154: `override fun onResume() {`
+- L171: `override fun onPause() { handler.removeCallbacks(tick); super.onPause() }`
+- L173: `override fun onDestroy() {`
+- L178: `private fun render() {`
+- L202: `private fun home(content: LinearLayout) {`
+- L252: `fun columns(first: View, second: View, stretchSecond: Boolean = false) = row().apply {`
+- L274: `private fun settings(content: LinearLayout) {`
+- L530: `private fun about(content: LinearLayout) {`
+- L542: `private fun carHotspotOff(): Boolean =`
+- L546: `private fun carHotspotOffDialog() {`
+- L557: `private fun openCarWifiSettings() {`
+- L571: `private fun openCarClientWifiSettings() {`
+- L579: `private fun connectionSetup(content: LinearLayout) {`
+- L600: `private fun wirelessLinkControls(parent: LinearLayout) {`
+- L645: `private fun mediaChannelControl(parent: LinearLayout) {`
+- L662: `private fun geelyAudioControl(parent: LinearLayout) {`
+- L666: `fun summary(): String = getString(R.string.geely_audio_profile) + " · " + getString(`
+- L709: `private fun navigationChannelControl(parent: LinearLayout) {`
+- L729: `private fun showChannelDialog(title: String, current: Int, navigation: Boolean, onApply: (Int) -> Unit) {`
+- L749: `private fun applyMediaChannel(value: Int, previous: Int, control: Button, summary: (Int) -> String) {`
+- L756: `private fun applyNavigationChannel(value: Int, previous: Int, control: Button, summary: (Int) -> String) {`
+- L763: `private fun channelLabel(value: Int): String = value.toString()`
+- L765: `private fun storedSsid() = AirPlayPersistence.loadManualHotspotSsid(this)`
+- L766: `private fun storedPassword() = AirPlayPersistence.loadManualHotspotPassphrase(this)`
+- L767: `private fun hotspotError(ssid: String, password: String) =`
+- L770: `private fun saveHotspotCredentials(ssid: String, password: String) {`
+- L779: `private fun askHotspotCredentials(done: (String, String) -> Unit) {`
+- L789: `fun hideKeyboard() {`
+- L833: `private fun markerStepLabel(step: Int, negative: String, positive: String): String = when {`
+- L839: `private fun showClusterAccessSetup() {`
+- L881: `private fun checkAdbAccess(mayAsk: Boolean, reconnectWhenReady: Boolean = false) {`
+- L900: `private fun adbStatusText(result: BydAdbAccess.Status?): String = when (result?.state) {`
+- L919: `private fun hasPreciseLocation() =`
+- L923: `private fun reconnectForLocation() {`
+- L929: `private fun reconnectForClusterMap() {`
+- L933: `private fun applyWirelessLink(mode: WirelessHotspotMode) {`
+- L939: `private fun textInput(title: String, current: String, secret: Boolean, save: (String) -> Unit) {`
+- L954: `private fun carPlaySizeControl(parent: LinearLayout) {`
+- L965: `private fun connect(wireless: Boolean) {`
+- L994: `private fun openProjection(wireless: Boolean = AirPlayPersistence.loadWirelessEnabled(this)) {`
+- L1001: `private fun choosePhone() {`
+- L1031: `private fun showBluetoothStackStatus(adapterPresent: Boolean, adapterEnabled: Boolean, manual: Boolean = false) {`
+- L1145: `private fun showAndroidBluetoothUnavailable(adapterPresent: Boolean) {`
+- L1159: `private fun cancelBluetoothStatusProbe() {`
+- L1168: `private fun copyBluetoothDiagnosticSummary() {`
+- L1182: `private fun wirelessHelp() {`
+- L1191: `private fun handleWirelessRecovery() {`
+- L1197: `private fun confirmWirelessReset() {`
+- L1206: `private fun closeP2pChannel(channel: android.net.wifi.p2p.WifiP2pManager.Channel?) {`
+- L1211: `private fun resetWirelessGroup() {`
+- L1219: `override fun onSuccess() {`
+- L1221: `fun waitUntilRemoved() {`
+- L1234: `override fun onFailure(reason: Int) { closeP2pChannel(channel); toast(getString(R.string.could_not_reset_wi_fi_direct_close_the_other_projection_ap)) }`
+- L1242: `private fun refreshStatus() {`
+- L1259: `private fun reportFileName() = "DiPlay-${SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date())}.txt"`
+- L1261: `private fun chooseReportDestination() {`
+- L1280: `private fun exportDiagnostics(uri: Uri? = null) {`
+- L1355: `private fun permissionHelp(title: String, body: String) {`
+- L1360: `private fun openSystem(intent: Intent) { runCatching { startActivity(intent) }.onFailure { toast(getString(R.string.open_this_setting_from_your_car_s_settings_app)) } }`
+- L1361: `private fun toast(message: String) { Toast.makeText(this, message, Toast.LENGTH_LONG).show() }`
+- L1363: `private fun playTestTone(streamType: Int) {`
+- L1400: `private fun ImageView.tintCompat(color: Int) {`
+- L1404: `private fun Switch.tintButtonCompat(color: Int) {`
+- L1408: `private fun paintChannel(index: Int, selected: Boolean) {`
+- L1415: `private fun channelSelector(): ViewGroup {`
+- L1455: `private fun version() = packageManager.getPackageInfo(packageName, 0).versionName ?: "0.1.0-beta.1"`
+- L1456: `private fun languageSettings(content: LinearLayout) {`
+- L1466: `private fun section(parent: LinearLayout, title: String, icon: Int? = null, build: (LinearLayout) -> Unit) {`
+- L1478: `private fun toggle(parent: LinearLayout, title: String, description: String, value: Boolean, save: (Boolean) -> Unit) {`
+- L1485: `private fun choice(parent: LinearLayout, title: String, options: List<String>, current: Int, reconnects: Boolean = true, save: (Int) -> Unit) {`
+- L1505: `private fun card() = column().apply { background = rounded(SURFACE, BORDER); setPadding(dp(24), dp(24), dp(24), dp(24)) }`
+- L1506: `private fun column() = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; layoutParams = LinearLayout.LayoutParams(-1, -2) }`
+- L1507: `private fun row() = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; layoutParams = LinearLayout.LayoutParams(-1, -2) }`
+- L1511: `private fun ripple(content: android.graphics.drawable.Drawable): android.graphics.drawable.Drawable =`
+- L1517: `private fun label(value: String, size: Int, color: Int, bold: Boolean = false) = TextView(this).apply {`
+- L1522: `private fun button(title: String, primary: Boolean, click: () -> Unit) = Button(this).apply {`
+- L1530: `private fun rounded(color: Int, stroke: Int) = GradientDrawable().apply { setColor(color); cornerRadius = dp(20).toFloat(); setStroke(dp(1), stroke) }`
+- L1531: `private fun matchButton(top: Int = 0, height: Int = 68) = LinearLayout.LayoutParams(-1, dp(height)).apply { topMargin = dp(top) }`
+- L1532: `private fun space(height: Int) = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }`
+- L1533: `private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()`
 
 ## common/src/main/java/com/shilapi/xcertplay/DiPlayBluetooth.kt
 
@@ -534,6 +657,21 @@
 - L20: `override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {`
 - L53: `override fun onTaskRemoved(rootIntent: Intent?) {`
 - L60: `private fun notificationBuilder(manager: NotificationManager): Notification.Builder {`
+
+## common/src/main/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticSnapshotStore.kt
+
+状态：added
+
+- L9: `internal object GeelyBluetoothDiagnosticSnapshotStore {`
+- L12: `fun save(context: Context, androidAdapterState: String, snapshot: GeelyBluetoothSnapshot) {`
+- L32: `fun report(context: Context, optInEnabled: Boolean): String {`
+
+## common/src/main/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticsOptIn.kt
+
+状态：added
+
+- L6: `internal object GeelyBluetoothDiagnosticsOptIn {`
+- L7: `fun enabled(context: Context): Boolean = AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(context)`
 
 ## common/src/main/java/com/shilapi/xcertplay/HomeScreenMonitor.kt
 
@@ -627,7 +765,6 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## common/src/main/res/values/strings.xml
 
@@ -639,31 +776,26 @@
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## common/src/main/res/values-v21/themes.xml
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## common/src/main/res/values-v23/bools.xml
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## common/src/main/res/values-v23/themes.xml
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## common/src/main/res/values-zh-rCN/strings.xml
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## common/src/test/java/com/shilapi/xcertplay/CarPlayMediaCallbackTest.kt
 
@@ -677,54 +809,69 @@
 - L76: `private fun press(keyCode: Int, repeat: Int = 0) {`
 - L82: `private fun button(event: KeyEvent) = Intent(Intent.ACTION_MEDIA_BUTTON).putExtra(Intent.EXTRA_KEY_EVENT, event)`
 
+## common/src/test/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticsOptInTest.kt
+
+状态：added
+
+- L16: `class GeelyBluetoothDiagnosticsOptInTest {`
+- L19: `@Before fun clearPreferences() {`
+- L24: `@Test fun vendorCallsAreGatedByPersistedOptInAndDefaultOff() {`
+- L41: `@Test fun strictControllerAdapterFailuresHaveLocalizedTransportCopyOnly() {`
+
 ## gradle/libs.versions.toml
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## mobile/build.gradle.kts
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## mobile/src/debug/AndroidManifest.xml
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## mobile/src/debug/assets/compat-probe/device-public-test.txt
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt
 
 状态：added
 
-- L44: `class Api18CompatProbeActivity : Activity(), SurfaceHolder.Callback {`
-- L50: `override fun onReceive(context: Context?, intent: Intent?) {`
-- L58: `override fun onCreate(savedInstanceState: Bundle?) {`
-- L76: `override fun surfaceCreated(holder: SurfaceHolder) {`
-- L80: `override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) = Unit`
-- L81: `override fun surfaceDestroyed(holder: SurfaceHolder) = Unit`
-- L83: `private fun runProbes(surface: Surface) {`
-- L97: `fun finishCase(message: android.os.Message?) {`
-- L113: `override fun onServiceConnected(name: android.content.ComponentName, binder: android.os.IBinder) {`
-- L117: `override fun onServiceDisconnected(name: android.content.ComponentName) = Unit`
-- L370: `private fun video(surface: Surface): String {`
-- L407: `private fun audio(kind: AudioCodecKind): String {`
-- L461: `private fun microphone(): String {`
-- L477: `private fun beginVpn() {`
-- L481: `override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {`
-- L489: `private fun startVpn() { startService(Intent(this, Api18VpnProbeService::class.java)) }`
-- L491: `private fun checkCase(name: String, action: () -> String) {`
-- L499: `private fun line(message: String) {`
-- L503: `private fun complete() { line("COMPLETE failures=${failures.get()}") }`
-- L504: `override fun onDestroy() {`
+- L47: `class Api18CompatProbeActivity : Activity(), SurfaceHolder.Callback {`
+- L53: `override fun onReceive(context: Context?, intent: Intent?) {`
+- L61: `override fun onCreate(savedInstanceState: Bundle?) {`
+- L79: `override fun surfaceCreated(holder: SurfaceHolder) {`
+- L83: `override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) = Unit`
+- L84: `override fun surfaceDestroyed(holder: SurfaceHolder) = Unit`
+- L86: `private fun runProbes(surface: Surface) {`
+- L136: `fun finishCase(message: android.os.Message?) {`
+- L152: `override fun onServiceConnected(name: android.content.ComponentName, binder: android.os.IBinder) {`
+- L156: `override fun onServiceDisconnected(name: android.content.ComponentName) = Unit`
+- L409: `private fun video(surface: Surface): String {`
+- L446: `private fun audio(kind: AudioCodecKind): String {`
+- L500: `private fun microphone(): String {`
+- L516: `private fun beginVpn() {`
+- L520: `override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {`
+- L528: `private fun geelyFocus(): String {`
+- L540: `fun count() = (listeners.get(coordinator) as Map<*, *>).size`
+- L546: `fun keyedEntry(stream: Int): Map.Entry<*, *> =`
+- L551: `fun callbackFor(entry: Map.Entry<*, *>): android.media.AudioManager.OnAudioFocusChangeListener =`
+- L554: `fun volumeFor(stream: Int): Float {`
+- L595: `private fun startVpn() { startService(Intent(this, Api18VpnProbeService::class.java)) }`
+- L597: `private fun geelyAnwParcelMock(): String {`
+- L603: `override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {`
+- L631: `fun value(getter: String): Any? = result.javaClass.getMethod(getter).invoke(result)`
+- L643: `private fun geelyEcarxParcelMock(): String {`
+- L648: `override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {`
+- L669: `private fun checkCase(name: String, action: () -> String) {`
+- L677: `private fun line(message: String) {`
+- L681: `private fun complete() { line("COMPLETE failures=${failures.get()}") }`
+- L682: `override fun onDestroy() {`
 
 ## mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18VpnProbeService.kt
 
@@ -779,25 +926,21 @@
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## settings.gradle.kts
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## shared/build.gradle
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## shared/src/main/AndroidManifest.xml
 
 状态：modified
 
-资源、配置或文档变更，详见补丁。
 
 ## shared/src/main/java/com/shilapi/xcertplay/adb/AdbKeys.kt
 
@@ -1068,7 +1211,6 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## shared/src/main/java/com/shilapi/xcertplay/compat/ContextCompat.kt
 
@@ -1079,11 +1221,52 @@
 - L31: `fun signatures(context: Context, packageName: String): Array<Signature> {`
 - L57: `fun hasSigningInfo(info: PackageInfo): Boolean =`
 
+## shared/src/main/java/com/shilapi/xcertplay/compat/GeelyBluetoothDiagnostics.kt
+
+状态：added
+
+- L20: `class GeelyBluetoothDiagnostics(context: Context) {`
+- L41: `fun query(timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS, callback: (GeelyBluetoothSnapshot) -> Unit): Request {`
+- L81: `private fun serviceIntent() = Intent().setComponent(SERVICE_COMPONENT)`
+- L83: `private fun startRead(pending: Pending, binder: IBinder) {`
+- L92: `private fun startEcarxOnly(pending: Pending, bindingState: BindingState) {`
+- L103: `private fun startReadTask(pending: Pending, read: () -> GeelyBluetoothSnapshot) {`
+- L144: `private fun finish(pending: Pending, snapshot: GeelyBluetoothSnapshot, notify: Boolean = true) {`
+- L162: `private fun release(pending: Pending) {`
+- L166: `private inner class Pending(callback: (GeelyBluetoothSnapshot) -> Unit) {`
+- L178: `override fun onServiceConnected(name: ComponentName?, service: IBinder?) {`
+- L186: `override fun onServiceDisconnected(name: ComponentName?) {`
+- L194: `fun deliver(snapshot: GeelyBluetoothSnapshot) {`
+- L204: `class Request internal constructor(private val cancelRequest: () -> Unit) {`
+- L205: `fun cancel() = cancelRequest()`
+- L208: `internal interface ServiceBinding {`
+- L209: `fun bind(context: Context, intent: Intent, connection: ServiceConnection): Boolean`
+- L210: `fun unbind(context: Context, connection: ServiceConnection)`
+- L213: `private object AndroidServiceBinding : ServiceBinding {`
+- L214: `override fun bind(context: Context, intent: Intent, connection: ServiceConnection): Boolean =`
+- L217: `override fun unbind(context: Context, connection: ServiceConnection) = context.unbindService(connection)`
+- L236: `enum class BindingState {`
+- L250: `enum class ReadState { OK, UNSUPPORTED, FAILED }`
+- L252: `enum class ReadFailure { DESCRIPTOR_MISMATCH, INVALID_RESPONSE, REMOTE_FAILURE, SERVICE_UNAVAILABLE, PERMISSION_DENIED, TIMEOUT }`
+- L254: `enum class AnwPowerState { OFF, ON, TURNING_ON, TURNING_OFF, UNKNOWN }`
+- L256: `data class ReadValue<T>(val state: ReadState, val value: T? = null, val failure: ReadFailure? = null)`
+- L258: `data class GeelyBluetoothSnapshot(`
+- L266: `fun unavailable(state: BindingState) = GeelyBluetoothSnapshot(`
+- L277: `internal object GeelyBluetoothReadOnlyProtocol {`
+- L284: `fun read(binder: IBinder): GeelyBluetoothSnapshot {`
+- L312: `private fun readPower(binder: IBinder): ReadValue<AnwPowerState> = transact(binder, TRANSACTION_POWER) { _, reply ->`
+- L324: `private fun readPairedCount(binder: IBinder): ReadValue<Int> = transact(`
+- L344: `private fun readSppInitialized(binder: IBinder): ReadValue<Boolean> = transact(binder, TRANSACTION_SPP_INITIALIZED) { _, reply ->`
+- L352: `private fun readExactIntArray(parcel: Parcel, expectedLength: Int): IntArray {`
+- L360: `private fun skipExactStringArray(parcel: Parcel, expectedLength: Int) {`
+- L405: `internal object EcarxBluetoothReadOnlyProtocol {`
+- L410: `fun read(): ReadValue<Boolean> {`
+- L428: `fun readBinder(binder: IBinder): ReadValue<Boolean> {`
+
 ## shared/src/main/java/com/shilapi/xcertplay/compat/NetworkInterfaceCompat.kt
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## shared/src/main/java/com/shilapi/xcertplay/compat/PendingIntentCompat.kt
 
@@ -1196,94 +1379,117 @@
 - L34: `private fun inputBufferAt(codec: MediaCodec, index: Int): ByteBuffer? =`
 - L38: `private fun outputBufferAt(codec: MediaCodec, index: Int): ByteBuffer? =`
 - L43: `internal class AudioFocusCoordinator(`
-- L49: `private data class Entry(val channel: AudioChannel, val attributes: Any)`
-- L72: `fun acquire(track: AudioTrack, channel: AudioChannel, attributes: Any?, legacyStreamType: Int) {`
-- L81: `fun acquireLegacy(track: AudioTrack, channel: AudioChannel, streamType: Int) {`
-- L89: `fun release(track: AudioTrack) {`
-- L95: `private fun requestAudioFocusLegacy(streamType: Int): Int = manager`
-- L99: `private fun refreshLegacyFocus() {`
-- L111: `private fun abandonFocus() {`
-- L135: `private fun refreshRequest() {`
-- L177: `private fun setVolume(volume: Float) {`
-- L181: `private fun AudioChannel.focusPriority(): Int = when (this) {`
-- L202: `class AndroidMediaSink(`
-- L251: `override fun setVideoRecoveryHandler(type: Int, handler: () -> Unit) {`
-- L255: `override fun setVideoDiagnosticHandler(type: Int, handler: (String) -> Unit) {`
-- L259: `private fun requestVideoRecovery(type: Int) {`
-- L270: `fun setSurface(type: Int, surface: Surface) {`
-- L275: `fun clearSurface(type: Int, surface: Surface) {`
-- L283: `fun setMirrorSurface(type: Int, key: String, surface: Surface?) {`
-- L296: `private fun mirrorDecoders(type: Int): List<VideoDecoder> = synchronized(mirrorLock) {`
-- L303: `fun setScreenStreamActiveChangedListener(listener: ((Int, Boolean) -> Unit)?) {`
-- L310: `override fun onVideoCodec(type: Int, codec: VideoCodec) {`
-- L314: `override fun onVideoConfig(type: Int, codecData: ByteArray) {`
-- L321: `override fun onVideoFrame(type: Int, naluBytes: ByteArray) {`
-- L326: `override fun onScreenStreamActive(type: Int, active: Boolean) {`
-- L343: `override fun onAudioStarted(id: AudioStreamId, format: AudioFormat, firstSample: Int) {`
-- L348: `override fun onAudioRtp(id: AudioStreamId, format: AudioFormat, rtp: ByteArray, sample: Int) {`
-- L352: `override fun onAudioStopped(id: AudioStreamId) {`
-- L357: `private fun updateMediaAudio(id: AudioStreamId, active: Boolean) {`
-- L366: `override fun onMicrophoneStarted(id: AudioStreamId, config: MicrophoneConfig) {`
-- L382: `override fun onMicrophoneStopped(id: AudioStreamId) {`
-- L390: `private fun enterCommunicationMode(id: AudioStreamId) {`
-- L402: `private fun restoreAudioMode(id: AudioStreamId?) {`
-- L417: `fun close() {`
-- L445: `private fun videoDecoder(type: Int): VideoDecoder =`
-- L448: `private fun newVideoDecoder(type: Int, surface: Surface?, statsLabel: String? = null) = VideoDecoder(`
-- L460: `private fun audioRenderer(id: AudioStreamId, format: AudioFormat): AudioRenderer {`
-- L479: `private class VideoDecoder(`
-- L503: `fun configure(codec: VideoCodec, codecData: ByteArray) {`
-- L507: `fun submit(nalus: ByteArray) {`
-- L512: `fun setSurface(surface: Surface?) {`
-- L516: `override fun close() {`
-- L521: `private fun run() {`
-- L556: `private fun configureDecoder(config: VideoJob.Config) {`
-- L614: `private data class DecoderAttempt(val codecName: String?, val tuned: Boolean)`
-- L616: `private fun buildFormat(mime: String, csd: List<ByteArray>, tuned: Boolean): MediaFormat =`
-- L625: `private fun tryConfigure(`
-- L655: `private fun softwareDecoderName(mime: String): String? {`
-- L662: `private fun createDecoder(mime: String): MediaCodec {`
-- L681: `private fun changeSurface(surface: Surface?) {`
-- L703: `private fun feed(nalus: ByteArray) {`
-- L740: `private fun recover(reason: String) {`
-- L750: `private fun requestKeyFrameIfDue() {`
-- L757: `private fun drainOutput(codec: MediaCodec) {`
-- L781: `private fun logOutputFormat(format: MediaFormat) {`
-- L802: `private fun releaseDecoder() {`
-- L828: `private fun MediaFormat.intOrNull(key: String): Int? =`
-- L840: `private class AudioRenderer(`
-- L851: `private data class AudioPacket(val rtp: ByteArray, val sample: Int)`
-- L897: `fun start() {`
-- L903: `fun submit(rtp: ByteArray, sample: Int) {`
-- L927: `override fun close() {`
-- L932: `private fun run() {`
-- L962: `private fun configureCodec(mime: String) {`
-- L996: `private fun createTrack() {`
-- L1076: `private fun channelOverride(channel: AudioChannel): Int = when (channel) {`
-- L1083: `private fun audioAttributesFor(`
-- L1088: `private fun legacyStreamTypeFor(selection: AudioChannelSelection, streamOverride: Int): Int {`
-- L1096: `private fun mappedSelection(): AudioChannelSelection {`
-- L1110: `private fun buildUsageTrack(`
-- L1127: `private fun requestAudioFocus() {`
-- L1142: `private fun abandonAudioFocus() {`
-- L1146: `private fun streamType(): Int {`
-- L1160: `private fun aacAudioSpecificConfig(): ByteArray {`
-- L1168: `private fun usageFor(channel: AudioChannel): Int = when (channel) {`
-- L1175: `private fun contentTypeFor(contentType: AudioContentType): Int = when (contentType) {`
-- L1181: `private fun opusHead(): ByteArray {`
-- L1195: `private fun opusCodecDelay(): ByteArray =`
-- L1201: `private fun opusSeekPreRoll(): ByteArray =`
-- L1207: `private fun handle(packet: AudioPacket) {`
-- L1247: `private fun sampleTimestampUs(sample: Int): Long =`
-- L1250: `private fun feedCodec(payload: ByteArray, presentationTimeUs: Long) {`
-- L1285: `private fun drainCodec(codec: MediaCodec) {`
-- L1324: `private fun writePcm(data: ByteArray, offset: Int = 0, length: Int = data.size) {`
-- L1375: `private fun startPlayback(track: AudioTrack) {`
-- L1381: `private fun maintainPlaybackBuffer() {`
-- L1400: `private fun logStatsIfDue(force: Boolean = false) {`
-- L1442: `private fun applyFadeIn(data: ByteArray, offset: Int, length: Int) {`
-- L1454: `private fun byteSwapS16(source: ByteArray): ByteArray {`
-- L1464: `private fun release() {`
+- L50: `private data class Entry(val channel: AudioChannel, val attributes: Any)`
+- L51: `private data class GeelyFocusKey(val channel: AudioChannel, val streamType: Int)`
+- L52: `private class GeelyFocusLease(`
+- L82: `fun acquire(track: AudioTrack, channel: AudioChannel, attributes: Any?, legacyStreamType: Int) {`
+- L95: `fun acquireLegacy(track: AudioTrack, channel: AudioChannel, streamType: Int) {`
+- L107: `fun release(track: AudioTrack) {`
+- L123: `private fun acquireGeely(track: AudioTrack, channel: AudioChannel, streamType: Int) {`
+- L174: `private fun handleGeelyFocusChange(`
+- L199: `private fun setGeelyChannelVolume(key: GeelyFocusKey, volume: Float) {`
+- L207: `private fun requestAudioFocusLegacy(streamType: Int): Int = manager`
+- L211: `private fun refreshLegacyFocus() {`
+- L223: `private fun abandonFocus() {`
+- L247: `private fun refreshRequest() {`
+- L289: `private fun setVolume(volume: Float) {`
+- L293: `private fun AudioChannel.focusPriority(): Int = when (this) {`
+- L315: `class AndroidMediaSink(`
+- L368: `override fun setVideoRecoveryHandler(type: Int, handler: () -> Unit) {`
+- L372: `override fun setVideoDiagnosticHandler(type: Int, handler: (String) -> Unit) {`
+- L376: `private fun requestVideoRecovery(type: Int) {`
+- L387: `fun setSurface(type: Int, surface: Surface) {`
+- L392: `fun clearSurface(type: Int, surface: Surface) {`
+- L400: `fun setMirrorSurface(type: Int, key: String, surface: Surface?) {`
+- L413: `private fun mirrorDecoders(type: Int): List<VideoDecoder> = synchronized(mirrorLock) {`
+- L420: `fun setScreenStreamActiveChangedListener(listener: ((Int, Boolean) -> Unit)?) {`
+- L427: `override fun onVideoCodec(type: Int, codec: VideoCodec) {`
+- L431: `override fun onVideoConfig(type: Int, codecData: ByteArray) {`
+- L438: `override fun onVideoFrame(type: Int, naluBytes: ByteArray) {`
+- L443: `override fun onScreenStreamActive(type: Int, active: Boolean) {`
+- L460: `override fun onAudioStarted(id: AudioStreamId, format: AudioFormat, firstSample: Int) {`
+- L465: `override fun onAudioRtp(id: AudioStreamId, format: AudioFormat, rtp: ByteArray, sample: Int) {`
+- L469: `override fun onAudioStopped(id: AudioStreamId) {`
+- L474: `private fun updateMediaAudio(id: AudioStreamId, active: Boolean) {`
+- L483: `override fun onMicrophoneStarted(id: AudioStreamId, config: MicrophoneConfig) {`
+- L499: `override fun onMicrophoneStopped(id: AudioStreamId) {`
+- L507: `private fun enterCommunicationMode(id: AudioStreamId) {`
+- L519: `private fun restoreAudioMode(id: AudioStreamId?) {`
+- L534: `fun close() {`
+- L562: `private fun videoDecoder(type: Int): VideoDecoder =`
+- L565: `private fun newVideoDecoder(type: Int, surface: Surface?, statsLabel: String? = null) = VideoDecoder(`
+- L577: `private fun audioRenderer(id: AudioStreamId, format: AudioFormat): AudioRenderer {`
+- L598: `private class VideoDecoder(`
+- L622: `fun configure(codec: VideoCodec, codecData: ByteArray) {`
+- L626: `fun submit(nalus: ByteArray) {`
+- L631: `fun setSurface(surface: Surface?) {`
+- L635: `override fun close() {`
+- L640: `private fun run() {`
+- L675: `private fun configureDecoder(config: VideoJob.Config) {`
+- L733: `private data class DecoderAttempt(val codecName: String?, val tuned: Boolean)`
+- L735: `private fun buildFormat(mime: String, csd: List<ByteArray>, tuned: Boolean): MediaFormat =`
+- L744: `private fun tryConfigure(`
+- L774: `private fun softwareDecoderName(mime: String): String? {`
+- L781: `private fun createDecoder(mime: String): MediaCodec {`
+- L800: `private fun changeSurface(surface: Surface?) {`
+- L822: `private fun feed(nalus: ByteArray) {`
+- L859: `private fun recover(reason: String) {`
+- L869: `private fun requestKeyFrameIfDue() {`
+- L876: `private fun drainOutput(codec: MediaCodec) {`
+- L900: `private fun logOutputFormat(format: MediaFormat) {`
+- L921: `private fun releaseDecoder() {`
+- L947: `private fun MediaFormat.intOrNull(key: String): Int? =`
+- L959: `private class AudioRenderer(`
+- L972: `private data class AudioPacket(val rtp: ByteArray, val sample: Int)`
+- L1018: `fun start() {`
+- L1024: `fun submit(rtp: ByteArray, sample: Int) {`
+- L1048: `override fun close() {`
+- L1053: `private fun run() {`
+- L1083: `private fun configureCodec(mime: String) {`
+- L1117: `private fun createTrack() {`
+- L1143: `fun legacyTrack() = AudioTrack(legacyTrackStreamType, format.sampleRate, channelMask,`
+- L1205: `private fun channelOverride(channel: AudioChannel, audioType: String): Int? = AudioStreamRouting.override(`
+- L1215: `private fun audioAttributesFor(`
+- L1220: `private fun mappedSelection(): AudioChannelSelection {`
+- L1234: `private fun buildUsageTrack(`
+- L1251: `private fun requestAudioFocus() {`
+- L1266: `private fun abandonAudioFocus() {`
+- L1270: `private fun streamType(): Int {`
+- L1284: `private fun aacAudioSpecificConfig(): ByteArray {`
+- L1292: `private fun usageFor(channel: AudioChannel): Int = when (channel) {`
+- L1299: `private fun contentTypeFor(contentType: AudioContentType): Int = when (contentType) {`
+- L1305: `private fun opusHead(): ByteArray {`
+- L1319: `private fun opusCodecDelay(): ByteArray =`
+- L1325: `private fun opusSeekPreRoll(): ByteArray =`
+- L1331: `private fun handle(packet: AudioPacket) {`
+- L1371: `private fun sampleTimestampUs(sample: Int): Long =`
+- L1374: `private fun feedCodec(payload: ByteArray, presentationTimeUs: Long) {`
+- L1409: `private fun drainCodec(codec: MediaCodec) {`
+- L1448: `private fun writePcm(data: ByteArray, offset: Int = 0, length: Int = data.size) {`
+- L1499: `private fun startPlayback(track: AudioTrack) {`
+- L1505: `private fun maintainPlaybackBuffer() {`
+- L1524: `private fun logStatsIfDue(force: Boolean = false) {`
+- L1566: `private fun applyFadeIn(data: ByteArray, offset: Int, length: Int) {`
+- L1578: `private fun byteSwapS16(source: ByteArray): ByteArray {`
+- L1588: `private fun release() {`
+
+## shared/src/main/java/com/shilapi/xcertplay/media/AudioChannelMapping.kt
+
+状态：modified
+
+- L5: `internal enum class AudioChannelMappingMode {`
+- L10: `internal enum class AudioChannel {`
+- L17: `internal enum class AudioContentType {`
+- L22: `internal data class AudioChannelSelection(`
+- L36: `internal object AudioChannelMapper {`
+- L40: `fun map(`
+- L53: `fun usesNavigationStream(audioType: String, payloadType: Int, advanced: Boolean): Boolean =`
+- L56: `private fun mapMobileCompatible(`
+- L70: `private fun mapAutomotiveBus(`
+- L84: `private fun mainHighAudioOrNavigation(payloadType: Int, navigationStreamType: Int): AudioChannelSelection =`
+- L93: `internal object AudioStreamRouting {`
+- L97: `fun override(`
+- L111: `fun legacyStreamType(channel: AudioChannel, streamOverride: Int?): Int =`
 
 ## shared/src/main/java/com/shilapi/xcertplay/media/CodecCompat.kt
 
@@ -1292,6 +1498,15 @@
 - L12: `object CodecCompat {`
 - L13: `fun decoders(): List<MediaCodecInfo> =`
 - L22: `fun videoDecoderFor(mime: String): MediaCodecInfo? = decoders().firstOrNull { info ->`
+
+## shared/src/main/java/com/shilapi/xcertplay/media/GeelyAudioCapabilities.kt
+
+状态：added
+
+- L6: `data class GeelyAudioCapabilities(val carPlay: Int, val navigationSpeech: Int, val navigationAlert: Int?) {`
+- L8: `fun navigationStream(audioType: String, separateAlerts: Boolean): Int =`
+- L16: `fun detect(): GeelyAudioCapabilities? = fromFields { name ->`
+- L20: `internal fun fromFields(read: (String) -> Int?): GeelyAudioCapabilities? {`
 
 ## shared/src/main/java/com/shilapi/xcertplay/media/MicrophoneUplink.kt
 
@@ -1314,10 +1529,10 @@
 状态：added
 
 - L19: `object ModernAudio {`
-- L20: `fun attributes(usage: Int, contentType: Int, legacyStreamType: Int): Any {`
-- L30: `fun usageTrack(`
-- L50: `fun microphoneRecorder(`
-- L69: `fun legacyStreamType(attributes: Any): Int = runCatching {`
+- L20: `fun attributes(usage: Int, contentType: Int, legacyStreamType: Int?): Any {`
+- L32: `fun usageTrack(`
+- L52: `fun microphoneRecorder(`
+- L71: `fun legacyStreamType(attributes: Any): Int = runCatching {`
 
 ## shared/src/main/java/com/shilapi/xcertplay/media/OpusEncoder.kt
 
@@ -1833,6 +2048,7 @@
 - L76: `// Endpoint descriptors belong to the interface descriptor that precedes them.`
 - L98: `/** Alternate setting currently selected for each interface index, keyed 0-based. */`
 - L99: `fun alternateSettingsByIndex(descriptors: ByteArray): Map<Int, Int> {`
+- L106: `// bound the walk: interface 2 may contribute alt 0 and alt 1 entries. Walk every descriptor`
 - L108: `// descriptors that sit between interface entries.`
 - L117: `// ordered by interface number, so index and bInterfaceNumber coincide, but reading`
 - L131: `fun findConfiguration(descriptors: ByteArray, selectedConfigurationId: Int? = null): Int? {`
@@ -1975,6 +2191,7 @@
 - L240: `private fun runTransition(`
 - L263: `private fun openIap2UsbSession(device: UsbDevice): Iap2UsbSession {`
 - L295: `?: throw IphoneUsbException.Protocol("USBMUX interface exposes no bulk endpoint pair")`
+- L305: `throw IphoneUsbException.DeviceUnavailable("Android could not claim USBMUX interface 1")`
 - L316: `private fun requireConfiguredDevice(device: UsbDevice) {`
 - L322: `private fun permissionPendingIntent(): PendingIntent {`
 - L332: `private fun registerReceiver(filter: IntentFilter, onReceive: (Intent) -> Unit): Closeable {`
@@ -2164,21 +2381,69 @@
 - L110: `// so the endpoint set identifies which alternate the platform object represents.`
 - L131: `fun activeConfigurationId(connection: UsbDeviceConnection): Int? {`
 
+## shared/src/test/java/com/shilapi/xcertplay/compat/GeelyBluetoothDiagnosticsTest.kt
+
+状态：added
+
+- L26: `class GeelyBluetoothDiagnosticsTest {`
+- L27: `@Test fun anwGettersUse10500DescriptorCodesAndExactOutputCapacities() {`
+- L40: `@Test fun unsupportedTransactionIsNotReportedAsOffOrFalse() {`
+- L49: `@Test fun unknownPowerCodeAndTruncatedRepliesRemainUnknown() {`
+- L63: `@Test fun malformedPairedArrayCapacitiesAndReturnCodeDoNotBecomeEmptyList() {`
+- L77: `@Test fun wrongAnwDescriptorStopsBeforeAnyTransaction() {`
+- L85: `@Test fun ecarxGetterUsesItsOwnDescriptorAndTransactionAndRejectsNonBooleanValues() {`
+- L102: `@Test fun bindTimeoutUnbindsAndLateServiceCallbackCannotStartBinderReads() {`
+- L119: `@Test fun serviceDisconnectProducesUnknownAnwStateAndIndependentEcarxRead() {`
+- L135: `@Test fun disconnectDuringBinderReadMarksAnwUnknownButKeepsEcarxResultSeparate() {`
+- L159: `@Test fun busyCallbackCanBeCancelledBeforeMainQueueDelivery() {`
+- L173: `private fun client(`
+- L185: `private fun mainLooper() = shadowOf(Looper.getMainLooper())`
+- L187: `private class ManualExecutor : Executor {`
+- L189: `override fun execute(command: Runnable) { task = command }`
+- L190: `fun runPending() { task?.run(); task = null }`
+- L193: `private class FakeBinding : GeelyBluetoothDiagnostics.ServiceBinding {`
+- L198: `override fun bind(context: Context, intent: Intent, connection: ServiceConnection): Boolean {`
+- L205: `override fun unbind(context: Context, connection: ServiceConnection) {`
+- L210: `private class FakeAnwBinder(`
+- L226: `override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {`
+- L259: `private class FakeEcarxBinder(`
+- L269: `override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {`
+
+## shared/src/test/java/com/shilapi/xcertplay/media/GeelyAudioCapabilitiesTest.kt
+
+状态：added
+
+- L6: `class GeelyAudioCapabilitiesTest {`
+- L10: `@Test fun h52ProvidesSeparateMediaSpeechAndAlertRoutes() {`
+- L19: `@Test fun stockAndroidDoesNotEnableVendorRouting() {`
+- L23: `@Test fun h41NavigationConstantAloneIsInsufficient() {`
+- L27: `@Test fun differingVendorMediaNumberIsRejected() {`
+- L31: `@Test fun missingOrWrongModeDoesNotEnableProfile() {`
+- L36: `@Test fun missingAlertExtensionFallsBackToSpeech() {`
+- L42: `@Test fun unrelatedAlertNumberIsNotExposed() {`
+- L46: `@Test fun alertStreamIsUsedOnlyForAlertAudioType() {`
+- L54: `@Test fun automaticRouteAndRealVoiceCallStreamZeroAreDistinct() {`
+
 ## shared/src/test/java/com/shilapi/xcertplay/transport/ConfigurationDescriptorScannerTest.kt
 
 状态：added
 
+- L9: `* a device descriptor, more than one configuration, interface 0 with an endpoint, interface 2 with`
 - L12: `class ConfigurationDescriptorScannerTest {`
 - L14: `private fun deviceDescriptor(length: Int = 18) = ByteArray(length).also {`
 - L19: `private fun configDescriptor(configurationId: Int, totalLength: Int, interfaceCount: Int) =`
 - L26: `private fun interfaceDescriptor(number: Int, alternate: Int, ifaceClass: Int, subclass: Int = 0, protocol: Int = 0) =`
+- L32: `/** Endpoint descriptor: 7 bytes, class 0xff/0xfe/0x03/0x01/0x01 and 8 endpoints. */`
 - L33: `private fun endpointDescriptor(address: Int, attributes: Int) =`
 - L40: `private fun classSpecificDescriptor(subtype: Int, length: Int = 5) =`
 - L43: `private fun concat(vararg parts: ByteArray): ByteArray =`
 - L46: `@Test fun readsConfigurationIdAndAlternateSettingsKeyedByInterfaceNumber() {`
 - L55: `// Keyed by bInterfaceNumber, not by descriptor ordinal: the first interface here is 0 and`
+- L56: `// the second is 2, because interface 1 does not exist on this configuration.`
 - L63: `@Test fun scanContinuesPastShortEndpointAndClassSpecificDescriptors() {`
+- L73: `// never reach interface 2.`
 - L80: `@Test fun keepsTheHighestAlternateSettingForAnInterface() {`
+- L90: `// alt 1 is the selected alternate and must win over alt 0 for interface 2.`
 - L97: `@Test fun selectsTheConfigurationWithTheMostInterfaces() {`
 - L115: `@Test fun emptyAndTruncatedDescriptorsDoNotThrow() {`
 - L130: `@Test fun interfaceRecordsKeepEveryAlternateWithItsEndpoints() {`
@@ -2210,14 +2475,13 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/README.md
 
 状态：added
 
-- L16: `| 'impl/JmDNSImpl.openMulticastSocket' | 'MulticastSocket' is created unbound, 'setReuseAddress(true)' is applied, then it is bound | 'new MulticastSocket(SocketAddress)' binds *before* address reuse can be enabled, so the bind fails with 'EADDRINUSE' whenever Android's own 'mdnsd' already holds UDP 5353. Group selection, interface binding, 'joinGroup', TTL, 'closeMulticastSocket' and error recovery are unchanged. |`
-- L32: `'ConcurrentMap.putIfAbsent' / 'replace' are *not* touched: they are original interface methods`
+- L16: `| impl/JmDNSImpl.openMulticastSocket | MulticastSocket is created unbound, setReuseAddress(true) is applied, then it is bound | new MulticastSocket(SocketAddress) binds *before* address reuse can be enabled, so the bind fails with EADDRINUSE whenever Android's own mdnsd already holds UDP 5353. Group selection, interface binding, joinGroup, TTL, closeMulticastSocket and error recovery are unchanged. |`
+- L32: `ConcurrentMap.putIfAbsent / replace are *not* touched: they are original interface methods`
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSConstants.java
 
@@ -2229,19 +2493,16 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSOperationCode.java
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSOptionCode.java
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSRecordClass.java
 
@@ -2258,25 +2519,21 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSResultCode.java
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/constants/DNSState.java
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/constants/package-info.java
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/DNSCache.java
 
@@ -2460,7 +2717,6 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/ServiceEventImpl.java
 
@@ -2503,7 +2759,6 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/RecordReaper.java
 
@@ -2522,7 +2777,6 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/resolver/ServiceInfoResolver.java
 
@@ -2573,7 +2827,6 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/tasks/state/Prober.java
 
@@ -2688,7 +2941,6 @@
 
 状态：added
 
-资源、配置或文档变更，详见补丁。
 
 ## vendor/jmdns/src/main/java/javax/jmdns/ServiceEvent.java
 

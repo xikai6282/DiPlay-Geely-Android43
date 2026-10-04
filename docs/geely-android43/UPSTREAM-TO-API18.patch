@@ -337,7 +337,15 @@
      implementation(libs.androidx.media3.exoplayer)
 --- a/common/src/main/AndroidManifest.xml
 +++ b/common/src/main/AndroidManifest.xml
-@@ -52,11 +52,7 @@
+@@ -14,6 +14,7 @@
+     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" tools:ignore="ProtectedPermissions" />
+     <!-- The centre card also follows whichever launcher is the default home. -->
+     <queries>
++        <package android:name="com.anwsdk.service" />
+         <intent>
+             <action android:name="android.intent.action.MAIN" />
+             <category android:name="android.intent.category.HOME" />
+@@ -52,11 +53,7 @@
          <activity
              android:name="com.shilapi.xcertplay.CarPlayVideoActivity"
              android:configChanges="density|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
@@ -350,12 +358,63 @@
              android:exported="false"
              android:theme="@style/Theme.Xcertplay" />
  
+--- a/common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt
++++ b/common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt
+@@ -155,6 +155,31 @@
+         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+             .getBoolean(KEY_AUDIO_FOCUS_ENABLED, false)
+ 
++    fun loadGeelyAudioRouting(context: Context): Boolean =
++        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("geely_h52_audio_routing", false)
++
++    fun saveGeelyAudioRouting(context: Context, enabled: Boolean) {
++        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
++            .putBoolean("geely_h52_audio_routing", enabled).apply()
++    }
++
++    fun loadGeelyNavigationAlert(context: Context): Boolean =
++        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean("geely_h52_navigation_alert", false)
++
++    fun saveGeelyNavigationAlert(context: Context, enabled: Boolean) {
++        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
++            .putBoolean("geely_h52_navigation_alert", enabled).apply()
++    }
++
++    fun loadGeelyBluetoothDiagnosticsEnabled(context: Context): Boolean =
++        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
++            .getBoolean("geely_h52_bluetooth_diagnostics_enabled", false)
++
++    fun saveGeelyBluetoothDiagnosticsEnabled(context: Context, enabled: Boolean) {
++        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
++            .putBoolean("geely_h52_bluetooth_diagnostics_enabled", enabled).apply()
++    }
++
+     fun saveAudioFocusEnabled(context: Context, enabled: Boolean) {
+         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+             .putBoolean(KEY_AUDIO_FOCUS_ENABLED, enabled)
+--- a/common/src/main/java/com/shilapi/xcertplay/AndroidBluetoothFailureCopy.kt
++++ b/common/src/main/java/com/shilapi/xcertplay/AndroidBluetoothFailureCopy.kt
+@@ -0,0 +1,12 @@
++package com.shilapi.xcertplay
++
++import android.content.Context
++
++/** Localized copy for the controller's unchanged, strict Android RFCOMM preflight failures. */
++internal object AndroidBluetoothFailureCopy {
++    fun forControllerMessage(context: Context, message: String): String? = when (message) {
++        "Bluetooth adapter is unavailable", "Bluetooth is not enabled" ->
++            context.getString(com.shilapi.xcertplay.host.R.string.android_bluetooth_transport_unavailable)
++        else -> null
++    }
++}
 --- a/common/src/main/java/com/shilapi/xcertplay/AudioChannelPreview.kt
 +++ b/common/src/main/java/com/shilapi/xcertplay/AudioChannelPreview.kt
-@@ -1,11 +1,14 @@
+@@ -1,11 +1,16 @@
  package com.shilapi.xcertplay
  
 -import android.media.AudioAttributes
++import android.content.Context
++
  import android.media.AudioFormat
 +import android.media.AudioManager
  import android.media.AudioTrack
@@ -368,7 +427,51 @@
  import java.io.Closeable
  import java.util.concurrent.Executors
  import java.util.concurrent.Future
-@@ -40,43 +43,34 @@
+@@ -14,7 +19,7 @@
+ import kotlin.math.sin
+ 
+ /** Plays one short tone through the same legacy stream route used by CarPlay audio. */
+-internal class AudioChannelPreview(private val onUnavailable: (Int) -> Unit) : Closeable {
++internal class AudioChannelPreview(private val context: Context? = null, private val onUnavailable: (Int) -> Unit) : Closeable {
+     private val mainHandler = Handler(Looper.getMainLooper())
+     private val worker = Executors.newSingleThreadExecutor { task ->
+         Thread(task, "diplay-channel-preview").apply { isDaemon = true }
+@@ -24,14 +29,32 @@
+     private var pending: Future<*>? = null
+     @Volatile private var closed = false
+ 
+-    fun play(channel: Int, navigation: Boolean) {
++    fun play(channel: Int, navigation: Boolean, geelyFocusGain: Int? = null) {
+         if (closed) return
+-        require(channel in AirPlayPersistence.AUDIO_CHANNELS)
++        require(channel in AirPlayPersistence.AUDIO_CHANNELS ||
++            (geelyFocusGain != null && channel in listOf(11, 23, 25)))
+         val request = generation.incrementAndGet()
+         pending?.cancel(true)
+         activeTrack.get()?.let { runCatching { it.stop() } }
+         pending = worker.submit {
+             var track: AudioTrack? = null
++            val manager = context?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
++            val callbackVersion = AtomicInteger()
++            val focusTrack = AtomicReference<AudioTrack?>()
++            val listener = AudioManager.OnAudioFocusChangeListener { change ->
++                if (!closed && generation.get() == request) {
++                    callbackVersion.incrementAndGet()
++                    val volume = when (change) {
++                        AudioManager.AUDIOFOCUS_GAIN -> PREVIEW_VOLUME
++                        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> PREVIEW_VOLUME * 0.2f
++                        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
++                        AudioManager.AUDIOFOCUS_LOSS -> 0f
++                        else -> null
++                    }
++                    volume?.let { focusTrack.get()?.let { current -> PortableAudio.setVolume(current, it) } }
++                }
++            }
++            var focusRequested = false
+             try {
+                 if (closed || generation.get() != request) return@submit
+                 val pcm = tone()
+@@ -40,43 +63,47 @@
                  )
                  check(minimum > 0) { "No PCM output buffer is available" }
                  val bufferBytes = maxOf(minimum, SAMPLE_RATE / 10 * 2)
@@ -397,7 +500,7 @@
 +                        attributes = ModernAudio.attributes(
 +                            usage = if (navigation) 12 else 1,
 +                            contentType = if (navigation) 1 else 2,
-+                            legacyStreamType = 0,
++                            legacyStreamType = null,
 +                        ),
 +                        encoding = AudioFormat.ENCODING_PCM_16BIT,
 +                        sampleRate = SAMPLE_RATE,
@@ -413,11 +516,24 @@
                          AudioFormat.ENCODING_PCM_16BIT, bufferBytes, AudioTrack.MODE_STREAM)
                  }
                  track = built
++                focusTrack.set(built)
                  check(built.state == AudioTrack.STATE_INITIALIZED) { "Audio output did not initialize" }
++                if (geelyFocusGain != null) {
++                    check(manager != null) { "Audio focus service unavailable" }
++                    PortableAudio.setVolume(built, 0f)
++                    val versionBeforeRequest = callbackVersion.get()
++                    @Suppress("DEPRECATION")
++                    val result = manager.requestAudioFocus(listener, channel, geelyFocusGain)
++                    focusRequested = true
++                    check(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) { "Audio focus denied" }
++                    if (callbackVersion.get() == versionBeforeRequest) {
++                        PortableAudio.setVolume(built, PREVIEW_VOLUME)
++                    }
++                }
                  if (closed || generation.get() != request) return@submit
                  activeTrack.set(built)
 -                built.setVolume(0.6f)
-+                PortableAudio.setVolume(built, 0.6f)
++                if (geelyFocusGain == null) PortableAudio.setVolume(built, PREVIEW_VOLUME)
                  built.play()
                  var written = 0
                  while (written < pcm.size && !closed && generation.get() == request) {
@@ -428,6 +544,22 @@
                      check(count > 0) { "Could not write preview tone" }
                      written += count
                  }
+@@ -92,6 +119,8 @@
+                     if (!closed && generation.get() == request) onUnavailable(channel)
+                 }
+             } finally {
++                focusTrack.set(null)
++                if (focusRequested) runCatching { manager?.abandonAudioFocus(listener) }
+                 activeTrack.compareAndSet(track, null)
+                 track?.let { runCatching { it.stop() }; it.release() }
+             }
+@@ -125,5 +154,6 @@
+         private const val TAG = "DiPlayAudioPreview"
+         private const val SAMPLE_RATE = 48_000
+         private const val TONE_MILLIS = 600
++        private const val PREVIEW_VOLUME = 0.6f
+     }
+ }
 --- a/common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt
 +++ b/common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt
 @@ -13,7 +13,6 @@
@@ -447,7 +579,16 @@
  /**
   * Full-screen CarPlay host. It renders decoded video through a [TextureView], forwards touch to
   * the active AirPlay session, and drives the complete wired or wireless bring-up through
-@@ -323,6 +324,8 @@
+@@ -303,6 +304,8 @@
+     private var hevcSoftwareDecoderEnabled = false
+     private var advancedAudioChannelMappingSupported = false
+     private var advancedAudioChannelMapping = false
++    private var geelyAudioRouting = false
++    private var geelyNavigationAlert = false
+     private var navigationStreamType = 14
+     private var debugLogsEnabled = false
+     private var autoStartOnBoot = false
+@@ -323,6 +326,8 @@
      private var microphoneAvailable = false
      private var microphonePermissionResolved = false
      private var wirelessEnabled = false
@@ -456,7 +597,7 @@
      private var mfiTarget = MfiTarget.USB_CH341
      private var mfiI2cPath = AirPlayPersistence.DEFAULT_MFI_I2C_PATH
      private var remoteMfiServer = ""
-@@ -426,6 +429,7 @@
+@@ -426,6 +431,7 @@
          languagePreferenceAtCreate = AppLocale.preference(this)
          if (intent.action == "android.hardware.usb.action.USB_DEVICE_ATTACHED") {
              AirPlayPersistence.saveWirelessEnabled(this, false)
@@ -464,7 +605,7 @@
          }
          if (runCatching { DiPlayBootstrap.ensure(this) }.isFailure) {
              startActivity(Intent(this, DiPlayActivity::class.java))
-@@ -461,7 +465,7 @@
+@@ -461,7 +467,7 @@
          )
          val reusedBackgroundSession = adoptBackgroundSession()
          microphoneAvailable =
@@ -473,7 +614,16 @@
          microphonePermissionResolved = microphoneAvailable
          if (reusedBackgroundSession) {
              updateDebugOverlays()
-@@ -540,7 +544,7 @@
+@@ -483,6 +489,8 @@
+         advancedAudioChannelMapping =
+             advancedAudioChannelMappingSupported &&
+                 AirPlayPersistence.loadAdvancedAudioChannelMapping(this)
++        geelyAudioRouting = AirPlayPersistence.loadGeelyAudioRouting(this)
++        geelyNavigationAlert = AirPlayPersistence.loadGeelyNavigationAlert(this)
+         navigationStreamType = AirPlayPersistence.loadNavigationStreamType(this)
+         debugLogsEnabled = AirPlayPersistence.loadDebugLogsEnabled(this)
+         autoStartOnBoot = AirPlayPersistence.loadAutoStartOnBoot(this)
+@@ -540,7 +548,7 @@
      }
  
      private fun hasFineLocationPermission(): Boolean =
@@ -482,7 +632,7 @@
              PackageManager.PERMISSION_GRANTED
  
      private fun requestVpnConsent() {
-@@ -556,7 +560,7 @@
+@@ -556,7 +564,7 @@
  
      private fun requestWirelessPermissions() {
          val permissions = requiredWirelessPermissions()
@@ -491,7 +641,7 @@
              wirelessPermissionsReady = true
              updateHotspotStatusBlock()
              maybeStartCarPlay()
-@@ -570,8 +574,17 @@
+@@ -570,8 +578,17 @@
  
      private fun hasRequiredWirelessPermissions(): Boolean =
          requiredWirelessPermissions().all {
@@ -511,7 +661,7 @@
  
      private fun requiredWirelessPermissions(): List<String> = when {
          Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> listOf(
-@@ -593,12 +606,19 @@
+@@ -593,12 +610,19 @@
          super.onNewIntent(intent)
          setIntent(intent)
          if (intent.action == "android.hardware.usb.action.USB_DEVICE_ATTACHED" && wirelessEnabled) {
@@ -533,7 +683,7 @@
      }
  
      override fun onStart() {
-@@ -612,6 +632,7 @@
+@@ -612,6 +636,7 @@
  
      override fun onResume() {
          super.onResume()
@@ -541,7 +691,7 @@
          val languagePreference = AppLocale.preference(this)
          if (Build.VERSION.SDK_INT < 33 && languagePreference != languagePreferenceAtCreate) {
              languagePreferenceAtCreate = languagePreference
-@@ -635,6 +656,57 @@
+@@ -635,6 +660,76 @@
          ensureClusterPresentation()
          maybeStartCarPlay()
          applyFullscreenMode()
@@ -575,7 +725,26 @@
 +            }
 +            return true
 +        }
++        if (reloadGeelyAudioSettingsIfChanged()) {
++            switchingTransport = true
++            val restart = { recreate() }
++            if (CarPlayBackgroundSession.hasSession() || controller != null) {
++                shutdown(terminateProcess = false, reason = "H52 audio routing changed", completion = restart)
++            } else {
++                restart()
++            }
++            return true
++        }
 +        return false
++    }
++
++    private fun reloadGeelyAudioSettingsIfChanged(): Boolean {
++        val routing = AirPlayPersistence.loadGeelyAudioRouting(this)
++        val alert = AirPlayPersistence.loadGeelyNavigationAlert(this)
++        if (routing == geelyAudioRouting && alert == geelyNavigationAlert) return false
++        geelyAudioRouting = routing
++        geelyNavigationAlert = alert
++        return true
 +    }
 +
 +    private fun reloadHotspotSettingsIfChanged(): Boolean {
@@ -599,7 +768,7 @@
      }
  
      // Experimental: the CarPlay instrument-cluster stream on the BYD cluster projection display.
-@@ -992,15 +1064,7 @@
+@@ -992,15 +1087,7 @@
          val wirelessSwitch = Switch(this).apply {
              isChecked = wirelessEnabled
              contentDescription = getString(R.string.wireless_carplay_transport)
@@ -616,7 +785,102 @@
              setOnCheckedChangeListener { _, checked ->
                  if (wirelessEnabled == checked) return@setOnCheckedChangeListener
                  wirelessEnabled = checked
-@@ -1185,9 +1249,7 @@
+@@ -1089,7 +1176,8 @@
+             ).apply { topMargin = dp(12) },
+         )
+ 
+-        if (advancedAudioChannelMappingSupported) {
++        val geelyAudioCapabilities = com.shilapi.xcertplay.media.GeelyAudioCapabilities.detect()
++        if (advancedAudioChannelMappingSupported || geelyAudioCapabilities != null) {
+             content.addView(
+                 settingsCategoryHeader(getString(R.string.audio)),
+                 LinearLayout.LayoutParams(
+@@ -1097,24 +1185,66 @@
+                     ViewGroup.LayoutParams.WRAP_CONTENT,
+                 ).apply { topMargin = dp(36) },
+             )
+-            content.addView(
+-                settingsSwitchRow(
+-                    label = getString(R.string.advanced_audio_channel_mapping),
+-                    checked = advancedAudioChannelMapping,
+-                    description = getString(R.string.use_usage_content_type_routing_instead_of_stream_type),
+-                ) { checked ->
+-                    advancedAudioChannelMapping = checked
+-                    appendLog(
+-                        "Advanced audio channel mapping ${if (checked) "enabled" else "disabled"}; " +
+-                            "applies when settings close",
+-                    )
+-                    updateResolutionMenu()
+-                },
+-                LinearLayout.LayoutParams(
+-                    ViewGroup.LayoutParams.MATCH_PARENT,
+-                    ViewGroup.LayoutParams.WRAP_CONTENT,
+-                ).apply { topMargin = dp(12) },
+-            )
++            if (advancedAudioChannelMappingSupported) {
++                content.addView(
++                    settingsSwitchRow(
++                        label = getString(R.string.advanced_audio_channel_mapping),
++                        checked = advancedAudioChannelMapping,
++                        description = getString(R.string.use_usage_content_type_routing_instead_of_stream_type),
++                    ) { checked ->
++                        advancedAudioChannelMapping = checked
++                        appendLog(
++                            "Advanced audio channel mapping ${if (checked) "enabled" else "disabled"}; " +
++                                "applies when settings close",
++                        )
++                        updateResolutionMenu()
++                    },
++                    LinearLayout.LayoutParams(
++                        ViewGroup.LayoutParams.MATCH_PARENT,
++                        ViewGroup.LayoutParams.WRAP_CONTENT,
++                    ).apply { topMargin = dp(12) },
++                )
++            }
++            if (geelyAudioCapabilities != null) {
++                val options = buildList {
++                    add(false to getString(R.string.geely_audio_generic))
++                    add(true to getString(R.string.geely_audio_speech))
++                }
++                val profileOptions = if (geelyAudioCapabilities.navigationAlert != null) {
++                    options + (true to getString(R.string.geely_audio_alert))
++                } else {
++                    options
++                }
++                val selectedProfile = when {
++                    !geelyAudioRouting -> 0
++                    geelyNavigationAlert && geelyAudioCapabilities.navigationAlert != null -> 2
++                    else -> 1
++                }
++                content.addView(
++                    settingsChoiceRow(
++                        label = getString(R.string.geely_audio_profile),
++                        options = profileOptions.mapIndexed { index, (_, label) -> index to label },
++                        selected = selectedProfile,
++                    ) { selected ->
++                        geelyAudioRouting = selected != 0
++                        geelyNavigationAlert = selected == 2
++                        appendLog(
++                            "H52 audio profile changed to ${if (selected == 0) "generic" else if (selected == 2) "speech + alert" else "media + navigation speech"}; applies when settings close",
++                        )
++                    },
++                    LinearLayout.LayoutParams(
++                        ViewGroup.LayoutParams.MATCH_PARENT,
++                        ViewGroup.LayoutParams.WRAP_CONTENT,
++                    ).apply { topMargin = dp(12) },
++                )
++                content.addView(
++                    menuText(getString(R.string.geely_audio_hint), 14f, MENU_SECONDARY),
++                    LinearLayout.LayoutParams(
++                        ViewGroup.LayoutParams.MATCH_PARENT,
++                        ViewGroup.LayoutParams.WRAP_CONTENT,
++                    ).apply { topMargin = dp(6) },
++                )
++            }
+         }
+ 
+         content.addView(
+@@ -1185,9 +1315,7 @@
          val seekBar = SeekBar(this).apply {
              max = CarPlayDisplayScale.MAX_TENTHS - CarPlayDisplayScale.MIN_TENTHS
              progress = displayScaleTenths - CarPlayDisplayScale.MIN_TENTHS
@@ -627,7 +891,7 @@
              setOnSeekBarChangeListener(
                  object : SeekBar.OnSeekBarChangeListener {
                      override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-@@ -1302,15 +1364,7 @@
+@@ -1302,15 +1430,7 @@
          val hevcSwitch = Switch(this).apply {
              isChecked = hevcEnabled
              contentDescription = getString(R.string.hevc_h_265_video_transport)
@@ -644,7 +908,7 @@
              setOnCheckedChangeListener { _, checked ->
                  if (hevcEnabled == checked) return@setOnCheckedChangeListener
                  hevcEnabled = checked
-@@ -1347,15 +1401,7 @@
+@@ -1347,15 +1467,7 @@
          val softwareHevcSwitch = Switch(this).apply {
              isChecked = hevcSoftwareDecoderEnabled
              contentDescription = getString(R.string.use_software_hevc_decoder)
@@ -661,7 +925,7 @@
              setOnCheckedChangeListener { _, checked ->
                  if (hevcSoftwareDecoderEnabled == checked) return@setOnCheckedChangeListener
                  hevcSoftwareDecoderEnabled = checked
-@@ -1456,7 +1502,7 @@
+@@ -1456,7 +1568,7 @@
              isAllCaps = false
              textSize = 17f
              setTextColor(MENU_BUTTON_TEXT)
@@ -670,7 +934,7 @@
              minHeight = dp(52)
              setOnClickListener { saveSettingsAndReconnect() }
          }
-@@ -1473,7 +1519,7 @@
+@@ -1473,7 +1585,7 @@
              isAllCaps = false
              textSize = 17f
              setTextColor(Color.WHITE)
@@ -679,7 +943,7 @@
              minHeight = dp(52)
              setOnClickListener { exitApplication() }
          }
-@@ -1514,7 +1560,7 @@
+@@ -1514,7 +1626,7 @@
                  isAllCaps = false
                  textSize = 22f
                  setTextColor(Color.WHITE)
@@ -688,7 +952,16 @@
                  contentDescription = getString(R.string.discard_changes_and_exit_settings)
                  minWidth = 0
                  minHeight = 0
-@@ -1850,15 +1896,7 @@
+@@ -1566,6 +1678,8 @@
+         AirPlayPersistence.saveLocationReportingEnabled(this, locationReportingEnabled)
+         AirPlayPersistence.saveAutoStartOnBoot(this, autoStartOnBoot)
+         AirPlayPersistence.saveAdvancedAudioChannelMapping(this, advancedAudioChannelMapping)
++        AirPlayPersistence.saveGeelyAudioRouting(this, geelyAudioRouting)
++        AirPlayPersistence.saveGeelyNavigationAlert(this, geelyNavigationAlert)
+         AirPlayPersistence.saveDisplayScaleTenths(this, displayScaleTenths)
+         AirPlayPersistence.saveFps(this, fps)
+         AirPlayPersistence.saveWidthPhysicalMm(this, widthPhysicalMm)
+@@ -1850,15 +1964,7 @@
              val switch = Switch(this@CarPlayHostActivity).apply {
                  isChecked = locationReportingEnabled
                  contentDescription = getString(R.string.report_android_location_to_the_iphone)
@@ -705,7 +978,7 @@
                  setOnCheckedChangeListener { _, checked ->
                      onLocationReportingChanged(checked)
                  }
-@@ -1954,9 +1992,7 @@
+@@ -1954,9 +2060,7 @@
          val seekBar = SeekBar(this).apply {
              max = (values.size - 1).coerceAtLeast(0)
              progress = selectedIndex
@@ -716,7 +989,7 @@
              setOnSeekBarChangeListener(
                  object : SeekBar.OnSeekBarChangeListener {
                      override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-@@ -2302,7 +2338,7 @@
+@@ -2302,7 +2406,7 @@
                  textSize = 18f
                  setTextColor(Color.WHITE)
                  setHintTextColor(MENU_SECONDARY)
@@ -725,7 +998,7 @@
                  minHeight = dp(48)
                  isSingleLine = true
                  inputType = when {
-@@ -2339,15 +2375,7 @@
+@@ -2339,15 +2443,7 @@
              Switch(this@CarPlayHostActivity).apply {
                  isChecked = checked
                  contentDescription = description
@@ -742,7 +1015,7 @@
                  setOnCheckedChangeListener { _, value -> onChanged(value) }
              },
              LinearLayout.LayoutParams(
-@@ -2407,10 +2435,7 @@
+@@ -2407,10 +2503,7 @@
                  text = label
                  textSize = 18f
                  setTextColor(MENU_SECONDARY)
@@ -754,7 +1027,7 @@
                  tag = mode
                  isChecked = wirelessHotspotMode == mode
              }
-@@ -2659,8 +2684,8 @@
+@@ -2659,8 +2752,8 @@
          hotspotStatusView?.text = buildString {
              append(getString(R.string.hotspot_wireless_prefix)).append(status.state)
              status.ssid?.let { append(getString(R.string.hotspot_ssid_prefix)).append(it) }
@@ -765,7 +1038,7 @@
              status.channel?.let {
                  append(getString(R.string.hotspot_channel_prefix)).append(if (it == 0) getString(R.string.auto_label) else it.toString())
              }
-@@ -2693,10 +2718,7 @@
+@@ -2693,10 +2786,7 @@
                  this.text = text
                  textSize = 17f
                  setTextColor(MENU_SECONDARY)
@@ -777,7 +1050,7 @@
                  tag = value
                  isChecked = value == selected
              }
-@@ -2795,32 +2817,38 @@
+@@ -2795,32 +2885,38 @@
          val mime = if (hevcEnabled) MediaFormat.MIMETYPE_VIDEO_HEVC else MediaFormat.MIMETYPE_VIDEO_AVC
          // Match MediaCodec.createDecoderByType's first suitable decoder; do not silently force
          // an enlarged stream through a software decoder on a slower head unit.
@@ -837,7 +1110,16 @@
          }
      } catch (error: Exception) {
          CanvasSupport(false, "capability_query_${error.javaClass.simpleName}",
-@@ -3075,7 +3103,9 @@
+@@ -3062,6 +3158,8 @@
+             audioFocusEnabled = AirPlayPersistence.loadAudioFocusEnabled(this),
+             mediaChannel = AirPlayPersistence.loadMediaAudioChannel(this),
+             navigationChannel = AirPlayPersistence.loadNavigationAudioChannel(this),
++            geelyAudioRouting = geelyAudioRouting,
++            geelyNavigationAlert = geelyNavigationAlert,
+             context = this,
+             navigationStreamType = navigationStreamType,
+             onScreenStreamActiveChanged = { type, active ->
+@@ -3075,7 +3173,9 @@
                      diagnosticLog?.append(formattedLogLine(message, System.currentTimeMillis()))
                  }
              },
@@ -848,7 +1130,7 @@
          )
      }
  
-@@ -3294,7 +3324,7 @@
+@@ -3294,7 +3394,7 @@
          )
          controller = next
          CarPlayMediaKeys.attach(this, next)
@@ -857,7 +1139,7 @@
          val display = CarPlaySessionDisplay(airPlayConfig.main.widthPixels, airPlayConfig.main.heightPixels,
              displayRotation(), hideTopBar, hideBottomBar, size.width, size.height)
          sessionDisplay = display
-@@ -3306,7 +3336,7 @@
+@@ -3306,7 +3406,7 @@
              }
          }
          try {
@@ -866,7 +1148,42 @@
              next.start()
          } catch (error: RuntimeException) {
              appendLog("Connection could not start: ${error.javaClass.simpleName}")
-@@ -3566,7 +3596,7 @@
+@@ -3531,9 +3631,12 @@
+         if (!menuOpen) return
+         if (!validateMfiSettings()) return
+         if (!validateManualHotspotSettings()) return
++        val h52AudioChanged =
++            AirPlayPersistence.loadGeelyAudioRouting(this) != geelyAudioRouting ||
++                AirPlayPersistence.loadGeelyNavigationAlert(this) != geelyNavigationAlert
+         persistMenuSettings()
+         settingsBaseline = null
+-        finishSettingsMenu("Settings saved")
++        finishSettingsMenu("Settings saved", restartForAudioChange = h52AudioChanged)
+     }
+ 
+     private fun cancelSettingsEdits() {
+@@ -3542,7 +3645,7 @@
+         finishSettingsMenu("Settings changes discarded")
+     }
+ 
+-    private fun finishSettingsMenu(prefix: String) {
++    private fun finishSettingsMenu(prefix: String, restartForAudioChange: Boolean = false) {
+         if (!menuOpen) return
+         menuOpen = false
+         settingsMenu?.visibility = View.GONE
+@@ -3556,7 +3659,10 @@
+                 ", MFI ${mfiTargetLabel(mfiTarget)}" +
+                 ", Wi-Fi session ${hotspotModeLabel(wirelessHotspotMode)}",
+         )
+-        if (handshakeResetInProgress) {
++        if (restartForAudioChange && (CarPlayBackgroundSession.hasSession() || controller != null)) {
++            switchingTransport = true
++            shutdown(terminateProcess = false, reason = "H52 audio routing changed") { recreate() }
++        } else if (handshakeResetInProgress) {
+             startAfterHandshakeReset = true
+         } else {
+             maybeStartCarPlay()
+@@ -3566,7 +3672,7 @@
      private fun exitApplication() {
          if (shuttingDown.get()) return
          restoreSettingsBaseline()
@@ -875,7 +1192,7 @@
          shutdown(terminateProcess = true, reason = "settings exit application")
      }
  
-@@ -3676,7 +3706,7 @@
+@@ -3676,7 +3782,7 @@
              MotionEvent.ACTION_POINTER_UP,
              MotionEvent.ACTION_CANCEL -> Log.i(
                  TAG,
@@ -884,7 +1201,7 @@
                      "pointers=${event.pointerCount} queued=$queued",
              )
          }
-@@ -3721,6 +3751,11 @@
+@@ -3721,6 +3827,11 @@
              appendLog(message)
          }
      }
@@ -896,7 +1213,7 @@
  
      private fun setConnectionStage(message: String) {
          latestStage = message
-@@ -3817,6 +3852,44 @@
+@@ -3817,6 +3928,44 @@
              WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
      }
  
@@ -941,7 +1258,7 @@
      private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
  
      private fun CarPlayStatus.describe(): String = when (this) {
-@@ -3826,7 +3899,7 @@
+@@ -3826,7 +3975,7 @@
          CarPlayStatus.MfiReady -> getString(R.string.mfi_authentication_ready)
          CarPlayStatus.StartingHotspot -> getString(R.string.starting_wireless_hotspot)
          is CarPlayStatus.HotspotReady ->
@@ -950,7 +1267,19 @@
          CarPlayStatus.WaitingForPairedIphone -> getString(R.string.waiting_for_paired_iphone)
          CarPlayStatus.ConnectingBluetooth -> getString(R.string.connecting_bluetooth)
          CarPlayStatus.RunningWireless -> getString(R.string.wireless_carplay_control_running)
-@@ -3876,7 +3949,7 @@
+@@ -3843,7 +3992,10 @@
+             if (wirelessEnabled) getString(R.string.starting_airplay_service) else getString(R.string.status_attaching_ncm)
+         CarPlayStatus.RunningControl -> getString(R.string.carplay_control_running)
+         CarPlayStatus.ControlEnded -> getString(R.string.carplay_control_window_ended)
+-        is CarPlayStatus.Failed -> getString(R.string.status_failed, message)
++        is CarPlayStatus.Failed -> getString(
++            R.string.status_failed,
++            AndroidBluetoothFailureCopy.forControllerMessage(this@CarPlayHostActivity, message) ?: message,
++        )
+     }
+ 
+     private companion object {
+@@ -3876,7 +4028,7 @@
  
      private data class DisplaySize(val width: Int, val height: Int)
      private data class LogEntry(val timestampMillis: Long, val text: String)
@@ -1887,15 +2216,29 @@
  }
 --- a/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt
 +++ b/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt
-@@ -33,6 +33,7 @@
+@@ -33,6 +33,12 @@
  import androidx.core.view.WindowInsetsCompat
  import androidx.core.view.WindowInsetsControllerCompat
  import com.shilapi.xcertplay.airplay.CarPlayClusterDisplay
++import com.shilapi.xcertplay.compat.AnwPowerState
++import com.shilapi.xcertplay.compat.BindingState
++import com.shilapi.xcertplay.compat.GeelyBluetoothDiagnostics
++import com.shilapi.xcertplay.compat.GeelyBluetoothSnapshot
++import com.shilapi.xcertplay.compat.ReadState
 +import com.shilapi.xcertplay.compat.systemService
  import com.shilapi.xcertplay.hud.BydAdbAccess
  import com.shilapi.xcertplay.hud.BydNavigationOutputs
  import com.shilapi.xcertplay.hud.BydOutputSettings
-@@ -80,8 +81,8 @@
+@@ -56,6 +62,8 @@
+     private var disconnectButton: Button? = null
+     private var lastRunning: Boolean? = null
+     private var pendingWireless = false
++    private var bluetoothProbeRequest: GeelyBluetoothDiagnostics.Request? = null
++    private var bluetoothProbeDialog: AlertDialog? = null
+     private var initialLaunch = true
+     private var notificationTransport = true
+     private var exportInProgress = false
+@@ -80,8 +88,8 @@
          render()
          permissionHelp(getString(R.string.location), getString(R.string.allow_precise_location_for_diplay_in_the_head_unit_s_app_p))
      }
@@ -1906,7 +2249,7 @@
      }
  
      private var languagePreferenceAtCreate = AppLocale.SYSTEM
-@@ -95,7 +96,10 @@
+@@ -95,7 +103,10 @@
          languagePreferenceAtCreate = AppLocale.preference(this)
          com.shilapi.xcertplay.hud.BydNavigationOutputs.onAppOpened(applicationContext)
          WindowCompat.setDecorFitsSystemWindows(window, true)
@@ -1918,7 +2261,19 @@
          WindowInsetsControllerCompat(window, window.decorView).apply {
              isAppearanceLightStatusBars = false
              hide(WindowInsetsCompat.Type.statusBars())
-@@ -187,11 +191,11 @@
+@@ -158,6 +169,11 @@
+         }
+     }
+     override fun onPause() { handler.removeCallbacks(tick); super.onPause() }
++
++    override fun onDestroy() {
++        cancelBluetoothStatusProbe()
++        super.onDestroy()
++    }
+ 
+     private fun render() {
+         status = null; connectButton = null; disconnectButton = null; lastRunning = null
+@@ -187,11 +203,11 @@
          val wide = resources.configuration.screenWidthDp >= 850
          val body = column()
          val left = column()
@@ -1932,7 +2287,7 @@
          status = label(getString(R.string.ready_when_you_are), 24, TEXT, true).apply { setPadding(0, dp(10), 0, dp(16)) }
          card.addView(status)
          connectButton = button(getString(R.string.connect_phone), true) {
-@@ -229,7 +233,7 @@
+@@ -229,7 +245,7 @@
          right.addView(label(getString(R.string.plug_your_iphone_into_a_usb_data_port_allow_carplay_when_y), 14, MUTED).apply { gravity = Gravity.CENTER; setPadding(dp(8), dp(10), dp(8), dp(24)) })
          right.addView(button(getString(R.string.settings), false) { page = "settings"; render() }, matchButton())
          right.addView(label(getString(R.string.make_diplay_feel_right_for_your_car), 14, MUTED).apply { gravity = Gravity.CENTER; setPadding(0, dp(10), 0, dp(24)) })
@@ -1941,7 +2296,99 @@
          if (wide) {
              // Both rows share column widths. The USB button starts at the wireless
              // card's top edge, independently of hero wrapping or font scaling.
-@@ -722,7 +726,9 @@
+@@ -263,6 +279,25 @@
+             card.addView(button(getString(R.string.open_connection_setup), false) { page = "connection"; render() }, matchButton(12, 60))
+         }
+         section(content, getString(R.string.diagnostics), R.drawable.ic_dp_diagnostics) { card ->
++            var vendorCheckButton: Button? = null
++            toggle(
++                card,
++                getString(R.string.bt_stack_opt_in_title),
++                getString(R.string.bt_stack_opt_in_description),
++                AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(this),
++            ) { enabled ->
++                AirPlayPersistence.saveGeelyBluetoothDiagnosticsEnabled(this, enabled)
++                vendorCheckButton?.isEnabled = enabled
++                if (!enabled) cancelBluetoothStatusProbe()
++            }
++            vendorCheckButton = button(getString(R.string.bt_stack_check_vendor_button), false) {
++                if (AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(this)) {
++                    val adapter = systemService(BluetoothManager::class.java, "bluetooth")?.adapter
++                    val enabled = runCatching { adapter?.isEnabled == true }.getOrDefault(false)
++                    showBluetoothStackStatus(adapterPresent = adapter != null, adapterEnabled = enabled, manual = true)
++                }
++            }.apply { isEnabled = AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(this@DiPlayActivity) }
++            card.addView(vendorCheckButton, matchButton(10, 60))
+             exportButton = button(if (exportInProgress) getString(R.string.saving_report) else getString(R.string.save_diagnostic_report), false) {
+                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) exportDiagnostics()
+                 else chooseReportDestination()
+@@ -293,7 +328,10 @@
+             }
+         }
+         section(content, getString(R.string.audio_routing)) { card ->
+-            toggle(card, getString(R.string.contrib_audio_home_toggle_audio_focus), getString(R.string.contrib_audio_home_toggle_audio_focus_desc), AirPlayPersistence.loadAudioFocusEnabled(this)) { AirPlayPersistence.saveAudioFocusEnabled(this, it) }
++            geelyAudioControl(card)
++            if (!AirPlayPersistence.loadGeelyAudioRouting(this) || com.shilapi.xcertplay.media.GeelyAudioCapabilities.detect() == null) {
++                toggle(card, getString(R.string.contrib_audio_home_toggle_audio_focus), getString(R.string.contrib_audio_home_toggle_audio_focus_desc), AirPlayPersistence.loadAudioFocusEnabled(this)) { AirPlayPersistence.saveAudioFocusEnabled(this, it) }
++            }
+             if (resources.getBoolean(R.bool.config_advanced_audio_channel_mapping)) {
+                 toggle(card, getString(R.string.advanced_audio_channel_mapping),
+                     getString(R.string.use_usage_content_type_routing_instead_of_stream_type),
+@@ -621,6 +659,53 @@
+         parent.addView(control, matchButton(0, 60))
+     }
+ 
++    private fun geelyAudioControl(parent: LinearLayout) {
++        val capabilities = com.shilapi.xcertplay.media.GeelyAudioCapabilities.detect()
++        val selected = AirPlayPersistence.loadGeelyAudioRouting(this)
++        val alert = AirPlayPersistence.loadGeelyNavigationAlert(this)
++        fun summary(): String = getString(R.string.geely_audio_profile) + " · " + getString(
++            if (!selected || capabilities == null) R.string.geely_audio_generic
++            else if (alert) R.string.geely_audio_alert else R.string.geely_audio_speech)
++        val control = button(summary(), false) {}
++        control.setOnClickListener {
++            val labels = if (capabilities == null) {
++                listOf(getString(R.string.geely_audio_generic))
++            } else {
++                listOf(getString(R.string.geely_audio_generic), getString(R.string.geely_audio_speech)) +
++                    if (capabilities.navigationAlert != null) listOf(getString(R.string.geely_audio_alert)) else emptyList()
++            }
++            var pending = if (capabilities == null || !selected) 0 else if (alert && labels.size > 2) 2 else 1
++            AlertDialog.Builder(this).setTitle(getString(R.string.geely_audio_profile))
++                .setSingleChoiceItems(labels.toTypedArray(), pending) { _, which -> pending = which }
++                .setPositiveButton(getString(R.string.save)) { _, _ ->
++                    if (pending != 0 && capabilities == null) {
++                        toast(getString(R.string.geely_audio_unavailable))
++                    } else {
++                        AirPlayPersistence.saveGeelyAudioRouting(this, pending != 0)
++                        AirPlayPersistence.saveGeelyNavigationAlert(this, pending == 2)
++                        if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
++                        render()
++                    }
++                }.setNegativeButton(getString(R.string.cancel), null).show()
++        }
++        parent.addView(control, matchButton(0, 60))
++        parent.addView(label(getString(if (capabilities == null) R.string.geely_audio_unavailable else R.string.geely_audio_detected), 14, MUTED))
++        parent.addView(label(getString(R.string.geely_audio_hint), 14, MUTED))
++        if (capabilities != null) parent.addView(button(getString(R.string.geely_audio_preview), false) {
++            val routes = listOf(capabilities.carPlay, capabilities.navigationSpeech) + listOfNotNull(capabilities.navigationAlert)
++            val labels = listOf(getString(R.string.geely_audio_test_media), getString(R.string.geely_audio_test_speech)) +
++                if (capabilities.navigationAlert != null) listOf(getString(R.string.geely_audio_test_alert)) else emptyList()
++            val preview = AudioChannelPreview(this) { channel -> toast(getString(R.string.contrib_audio_home_channel_preview_unavailable, channel)) }
++            AlertDialog.Builder(this).setTitle(getString(R.string.geely_audio_preview))
++                .setSingleChoiceItems(labels.toTypedArray(), -1) { _, which ->
++                    preview.play(routes[which], which != 0,
++                        if (which == 0) android.media.AudioManager.AUDIOFOCUS_GAIN
++                        else android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
++                }.setNegativeButton(getString(R.string.close), null)
++                .setOnDismissListener { preview.close() }.show()
++        }, matchButton(8, 60))
++    }
++
+     private fun navigationChannelControl(parent: LinearLayout) {
+         val summary: (Int) -> String = {
+             getString(R.string.contrib_audio_home_choice_summary, getString(R.string.contrib_audio_home_nav_channel_label), channelLabel(it))
+@@ -722,7 +807,9 @@
              }
          })
          val error = label("", 14, WARNING)
@@ -1952,7 +2399,7 @@
          fields.addView(error)
          val dialog = AlertDialog.Builder(this).setTitle(getString(R.string.car_hotspot_details))
              .setView(ScrollView(this).apply { addView(fields) })
-@@ -761,7 +767,7 @@
+@@ -761,7 +848,7 @@
              setPadding(0, dp(16), 0, dp(16))
          })
          body.addView(button(getString(R.string.copy_command), false) {
@@ -1961,7 +2408,7 @@
                  android.content.ClipData.newPlainText(getString(R.string.clipboard_usage_access), command))
              toast(getString(R.string.copied_to_the_car_clipboard_run_the_command_on_your_comput))
          }, matchButton(0, 56))
-@@ -830,7 +836,7 @@
+@@ -830,7 +917,7 @@
      }
  
      private fun hasPreciseLocation() =
@@ -1970,7 +2417,7 @@
  
      // The location component is part of the iAP2 identification, so a running session reconnects.
      private fun reconnectForLocation() {
-@@ -891,7 +897,7 @@
+@@ -891,7 +978,7 @@
              pendingWireless = true; choosePhone(); return
          }
          val preferences = getSharedPreferences("diplay", MODE_PRIVATE)
@@ -1979,7 +2426,7 @@
              preferences.edit().putBoolean("notification_asked", true).apply()
              notificationTransport = wireless
              notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-@@ -899,19 +905,23 @@
+@@ -899,24 +986,26 @@
          }
          val open = {
              AirPlayPersistence.saveWirelessEnabled(this, wireless)
@@ -2006,9 +2453,174 @@
 -        val adapter = getSystemService(BluetoothManager::class.java)?.adapter
 +        val adapter = systemService(BluetoothManager::class.java, "bluetooth")?.adapter
          if (adapter == null || !adapter.isEnabled) {
-             AlertDialog.Builder(this).setTitle(getString(R.string.turn_on_bluetooth))
-                 .setMessage(getString(R.string.enable_the_car_s_bluetooth_and_pair_your_iphone_first))
-@@ -962,22 +972,28 @@
+-            AlertDialog.Builder(this).setTitle(getString(R.string.turn_on_bluetooth))
+-                .setMessage(getString(R.string.enable_the_car_s_bluetooth_and_pair_your_iphone_first))
+-                .setPositiveButton(getString(R.string.open_bluetooth)) { _, _ -> openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }
+-                .setNegativeButton(getString(R.string.later), null).show(); return
++            showBluetoothStackStatus(adapterPresent = adapter != null, adapterEnabled = false)
++            return
+         }
+         val devices = runCatching { adapter.bondedDevices.sortedBy { it.name ?: "" } }.getOrDefault(emptyList())
+         if (devices.isEmpty()) {
+@@ -939,6 +1028,157 @@
+             .setNegativeButton(getString(R.string.cancel)) { _, _ -> pendingWireless = false }.show()
+     }
+ 
++    private fun showBluetoothStackStatus(adapterPresent: Boolean, adapterEnabled: Boolean, manual: Boolean = false) {
++        if (!GeelyBluetoothDiagnosticsOptIn.enabled(this)) {
++            showAndroidBluetoothUnavailable(adapterPresent)
++            return
++        }
++        if (bluetoothProbeRequest != null) return
++        val progress = AlertDialog.Builder(this)
++            .setTitle(getString(R.string.bt_stack_checking_title))
++            .setMessage(getString(R.string.bt_stack_checking_message))
++            .setNegativeButton(getString(R.string.bt_stack_check_cancel)) { _, _ ->
++                pendingWireless = false
++                bluetoothProbeRequest?.cancel()
++                bluetoothProbeRequest = null
++                bluetoothProbeDialog = null
++            }
++            .create()
++        progress.setOnCancelListener {
++            pendingWireless = false
++            bluetoothProbeRequest?.cancel()
++            bluetoothProbeRequest = null
++            bluetoothProbeDialog = null
++        }
++        bluetoothProbeDialog = progress
++        progress.show()
++
++        val startedRequest = GeelyBluetoothDiagnosticsOptIn.runIfEnabled(applicationContext) {
++            GeelyBluetoothDiagnostics(applicationContext).query { snapshot ->
++            if (bluetoothProbeDialog === progress) {
++                bluetoothProbeDialog = null
++                progress.dismiss()
++            }
++            bluetoothProbeRequest = null
++            if (!GeelyBluetoothDiagnosticsOptIn.enabled(this) || isFinishing || isDestroyed) return@query
++
++            val adapterLabel = getString(
++                when {
++                    !adapterPresent -> R.string.bt_stack_android_unavailable
++                    adapterEnabled -> R.string.bt_stack_android_on
++                    else -> R.string.bt_stack_android_off
++                },
++            )
++            val serviceLabel = when (snapshot.bindingState) {
++                BindingState.CONNECTED -> getString(R.string.bt_stack_anw_service_ready)
++                BindingState.NOT_RUNNING -> getString(R.string.bt_stack_anw_service_not_running)
++                BindingState.ACCESS_DENIED -> getString(R.string.bt_stack_anw_service_blocked)
++                BindingState.BIND_TIMEOUT -> getString(R.string.bt_stack_anw_service_timeout)
++                BindingState.READ_TIMEOUT -> getString(R.string.bt_stack_anw_service_read_timeout)
++                else -> getString(R.string.bt_stack_anw_service_unknown)
++            }
++            val powerLabel = if (snapshot.power.state == ReadState.OK) {
++                getString(when (snapshot.power.value) {
++                    AnwPowerState.ON -> R.string.bt_stack_anw_on
++                    AnwPowerState.OFF -> R.string.bt_stack_anw_off
++                    AnwPowerState.TURNING_ON -> R.string.bt_stack_anw_turning_on
++                    AnwPowerState.TURNING_OFF -> R.string.bt_stack_anw_turning_off
++                    AnwPowerState.UNKNOWN, null -> R.string.bt_stack_anw_unknown
++                })
++            } else getString(R.string.bt_stack_anw_unknown)
++            val ecarxLabel = if (snapshot.ecarxEnabled.state == ReadState.OK) {
++                getString(if (snapshot.ecarxEnabled.value == true) R.string.bt_stack_ecarx_enabled else R.string.bt_stack_ecarx_not_ready)
++            } else getString(R.string.bt_stack_anw_unknown)
++            val vendorReportedOn = snapshot.power.value == AnwPowerState.ON || snapshot.ecarxEnabled.value == true
++
++            GeelyBluetoothDiagnosticSnapshotStore.save(
++                applicationContext,
++                when {
++                    !adapterPresent -> "UNAVAILABLE"
++                    adapterEnabled -> "ON"
++                    else -> "OFF"
++                },
++                snapshot,
++            )
++            val summary = getString(
++                R.string.bt_stack_summary,
++                adapterLabel,
++                serviceLabel,
++                powerLabel,
++                ecarxLabel,
++            ) + "\n\n" + getString(when {
++                adapterEnabled -> R.string.bt_stack_android_on_note
++                vendorReportedOn -> R.string.bt_stack_vendor_on_next_step
++                else -> R.string.bt_stack_unknown_next_step
++            })
++            val saveReport = manual || (!adapterEnabled && vendorReportedOn)
++            AlertDialog.Builder(this)
++                .setTitle(getString(when {
++                    manual || adapterEnabled -> R.string.bt_stack_status_title
++                    vendorReportedOn -> R.string.bt_stack_vendor_on_title
++                    else -> R.string.bt_stack_result_title
++                }))
++                .setMessage(summary)
++                .setPositiveButton(
++                    getString(when {
++                        saveReport && Build.VERSION.SDK_INT < 19 -> R.string.bt_stack_copy_report
++                        saveReport -> R.string.bt_stack_save_report
++                        adapterEnabled -> R.string.done
++                        else -> R.string.bt_stack_open_android_settings
++                    }),
++                ) { _, _ ->
++                    if (saveReport && Build.VERSION.SDK_INT < 19) copyBluetoothDiagnosticSummary()
++                    else if (saveReport) chooseReportDestination()
++                    else if (!adapterEnabled) openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
++                }
++                .setNegativeButton(getString(R.string.later)) { _, _ -> pendingWireless = false }
++                .show()
++            }
++        }
++        if (startedRequest == null) {
++            bluetoothProbeDialog = null
++            progress.dismiss()
++            showAndroidBluetoothUnavailable(adapterPresent)
++        } else bluetoothProbeRequest = startedRequest
++    }
++
++    private fun showAndroidBluetoothUnavailable(adapterPresent: Boolean) {
++        AlertDialog.Builder(this)
++            .setTitle(getString(R.string.bt_stack_result_title))
++            .setMessage(getString(
++                R.string.bt_stack_standard_unavailable_message,
++                getString(if (adapterPresent) R.string.bt_stack_android_off else R.string.bt_stack_android_unavailable),
++            ))
++            .setPositiveButton(getString(R.string.bt_stack_open_android_settings)) { _, _ ->
++                openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
++            }
++            .setNegativeButton(getString(R.string.later)) { _, _ -> pendingWireless = false }
++            .show()
++    }
++
++    private fun cancelBluetoothStatusProbe() {
++        val request = bluetoothProbeRequest
++        bluetoothProbeRequest = null
++        request?.cancel()
++        val dialog = bluetoothProbeDialog
++        bluetoothProbeDialog = null
++        dialog?.dismiss()
++    }
++
++    private fun copyBluetoothDiagnosticSummary() {
++        val text = GeelyBluetoothDiagnosticSnapshotStore.report(
++            applicationContext,
++            AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(applicationContext),
++        )
++        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
++        if (clipboard == null) {
++            toast(getString(R.string.bt_stack_copy_failed))
++            return
++        }
++        clipboard.setPrimaryClip(android.content.ClipData.newPlainText(getString(R.string.bt_stack_copy_report), text))
++        toast(getString(R.string.bt_stack_report_copied))
++    }
++
+     private fun wirelessHelp() {
+         AlertDialog.Builder(this).setTitle(getString(R.string.wireless_connection_help))
+             .setMessage(getString(R.string.pair_your_iphone_with_the_car_s_bluetooth_keep_wi_fi_on_an))
+@@ -962,22 +1202,28 @@
              }.setNegativeButton(getString(R.string.cancel), null).show()
      }
  
@@ -2041,7 +2653,7 @@
                                      }
                                      else -> handler.postDelayed({ waitUntilRemoved() }, 200)
                                  }
-@@ -985,11 +1001,11 @@
+@@ -985,11 +1231,11 @@
                          }
                          waitUntilRemoved()
                      }
@@ -2055,7 +2667,7 @@
          }
      }
  
-@@ -1013,9 +1029,18 @@
+@@ -1013,9 +1259,18 @@
      private fun reportFileName() = "DiPlay-${SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date())}.txt"
  
      private fun chooseReportDestination() {
@@ -2075,7 +2687,20 @@
              toast(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                  getString(R.string.this_head_unit_could_not_open_a_save_location_please_try_s)
                  else getString(R.string.this_head_unit_has_no_available_file_picker_to_save_the_re))
-@@ -1135,15 +1160,20 @@
+@@ -1048,6 +1303,12 @@
+                     appendLine()
+                     appendLine("--- Last received boot and app-launch result ---")
+                     appendLine(StartupDiagnosticSnapshot.report(appContext))
++                    appendLine()
++                    appendLine("--- Bluetooth stacks (read-only; separate reports) ---")
++                    appendLine(GeelyBluetoothDiagnosticSnapshotStore.report(
++                        appContext,
++                        AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(appContext),
++                    ))
+                     appendLine("Startup settings: openAfterBoot=${AirPlayPersistence.loadAutoStartOnBoot(appContext)} " +
+                         "connectWhenOpened=${DiPlayPreferences.autoConnect(appContext)}")
+                     appendLine()
+@@ -1135,15 +1396,20 @@
  
      private val channelButtons = mutableListOf<Button>()
  
@@ -2101,7 +2726,7 @@
      }
  
      private fun channelSelector(): ViewGroup {
-@@ -1159,7 +1189,7 @@
+@@ -1159,7 +1425,7 @@
                  isAllCaps = false
                  textSize = 16f
                  minHeight = dp(48)
@@ -2110,7 +2735,7 @@
                  setOnClickListener {
                      val previous = navigationStreamType
                      navigationStreamType = i
-@@ -1173,7 +1203,11 @@
+@@ -1173,7 +1439,11 @@
              val params = GridLayout.LayoutParams().apply {
                  width = 0
                  height = dp(48)
@@ -2123,7 +2748,7 @@
                  setMargins(dp(4), dp(4), dp(4), dp(4))
              }
              grid.addView(btn, params)
-@@ -1197,7 +1231,7 @@
+@@ -1197,7 +1467,7 @@
          val card = card()
          val heading = row().apply { gravity = Gravity.CENTER_VERTICAL; setPadding(0, 0, 0, dp(16)) }
          if (icon != null) heading.addView(ImageView(this).apply {
@@ -2132,7 +2757,7 @@
              importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
          }, LinearLayout.LayoutParams(dp(28), dp(28)).apply { marginEnd = dp(12) })
          heading.addView(label(title, 22, TEXT, true), LinearLayout.LayoutParams(0, -2, 1f))
-@@ -1209,7 +1243,7 @@
+@@ -1209,7 +1479,7 @@
          val line = row().apply { gravity = Gravity.CENTER_VERTICAL; setPadding(0, dp(12), 0, dp(12)) }
          val text = column(); text.addView(label(title, 18, TEXT, true)); text.addView(label(description, 14, MUTED).apply { setPadding(0, dp(6), dp(16), 0) })
          line.addView(text, LinearLayout.LayoutParams(0, -2, 1f))
@@ -2141,7 +2766,7 @@
          parent.addView(line)
      }
      private fun choice(parent: LinearLayout, title: String, options: List<String>, current: Int, reconnects: Boolean = true, save: (Int) -> Unit) {
-@@ -1235,6 +1269,15 @@
+@@ -1235,6 +1505,15 @@
      private fun card() = column().apply { background = rounded(SURFACE, BORDER); setPadding(dp(24), dp(24), dp(24), dp(24)) }
      private fun column() = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; layoutParams = LinearLayout.LayoutParams(-1, -2) }
      private fun row() = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; layoutParams = LinearLayout.LayoutParams(-1, -2) }
@@ -2157,7 +2782,7 @@
      private fun label(value: String, size: Int, color: Int, bold: Boolean = false) = TextView(this).apply {
          text = value; textSize = size.toFloat(); setTextColor(color); gravity = Gravity.CENTER_VERTICAL
          typeface = if (bold) Typeface.create("sans-serif-medium", Typeface.NORMAL) else Typeface.create("sans-serif", Typeface.NORMAL)
-@@ -1243,8 +1286,9 @@
+@@ -1243,8 +1522,9 @@
      private fun button(title: String, primary: Boolean, click: () -> Unit) = Button(this).apply {
          text = title; isAllCaps = false; textSize = 18f; setTextColor(if (primary) BG else TEXT)
          typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
@@ -2293,6 +2918,105 @@
      companion object {
          const val ACTION_STOP = "com.shihab.diplay.DISCONNECT"
          private const val CHANNEL = "diplay_connection"
+--- a/common/src/main/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticSnapshotStore.kt
++++ b/common/src/main/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticSnapshotStore.kt
+@@ -0,0 +1,80 @@
++package com.shilapi.xcertplay
++
++import android.content.Context
++import com.shilapi.xcertplay.compat.BindingState
++import com.shilapi.xcertplay.compat.GeelyBluetoothSnapshot
++import com.shilapi.xcertplay.compat.ReadState
++
++/** Stores only coarse Bluetooth states and counts for the opt-in diagnostic export. */
++internal object GeelyBluetoothDiagnosticSnapshotStore {
++    private const val PREFS = "geely_bluetooth_diagnostics"
++
++    fun save(context: Context, androidAdapterState: String, snapshot: GeelyBluetoothSnapshot) {
++        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
++            .putLong("checked_at", System.currentTimeMillis())
++            .putString("android_adapter", androidAdapterState)
++            .putString("anw_binding", snapshot.bindingState.name)
++            .putString("anw_power_state", snapshot.power.state.name)
++            .putString("anw_power", snapshot.power.value?.name)
++            .putString("anw_power_failure", snapshot.power.failure?.name)
++            .putString("anw_paired_state", snapshot.pairedCount.state.name)
++            .putInt("anw_paired_count", snapshot.pairedCount.value ?: -1)
++            .putString("anw_paired_failure", snapshot.pairedCount.failure?.name)
++            .putString("anw_spp_state", snapshot.sppInitialized.state.name)
++            .putBoolean("anw_spp_initialized", snapshot.sppInitialized.value ?: false)
++            .putString("anw_spp_failure", snapshot.sppInitialized.failure?.name)
++            .putString("ecarx_read_state", snapshot.ecarxEnabled.state.name)
++            .putBoolean("ecarx_enabled", snapshot.ecarxEnabled.value ?: false)
++            .putString("ecarx_failure", snapshot.ecarxEnabled.failure?.name)
++            .apply()
++    }
++
++    fun report(context: Context, optInEnabled: Boolean): String {
++        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
++        val optIn = if (optInEnabled) "enabled" else "disabled"
++        if (!prefs.contains("checked_at")) {
++            return buildString {
++                appendLine("H52 vendor Bluetooth state diagnostics opt-in: $optIn")
++                appendLine("No read-only probe has completed; these states are unknown.")
++                appendLine("Android Bluetooth adapter: unknown")
++                appendLine("ANW service binding: unknown")
++                appendLine("ANW Bluetooth power: unknown")
++                appendLine("ANW paired-device records: unknown")
++                appendLine("ANW SPP initialization: unknown")
++                append("ECarX Bluetooth service: unknown / not probed")
++            }
++        }
++        val power = when (prefs.getString("anw_power_state", null)) {
++            ReadState.OK.name -> prefs.getString("anw_power", "UNKNOWN") ?: "UNKNOWN"
++            ReadState.UNSUPPORTED.name -> "unsupported transaction"
++            else -> "unknown (${prefs.getString("anw_power_failure", "read failed") ?: "read failed"})"
++        }
++        val paired = when (prefs.getString("anw_paired_state", null)) {
++            ReadState.OK.name -> "${prefs.getInt("anw_paired_count", -1)} records"
++            ReadState.UNSUPPORTED.name -> "unsupported transaction"
++            else -> "unknown (${prefs.getString("anw_paired_failure", "read failed") ?: "read failed"})"
++        }
++        val spp = when (prefs.getString("anw_spp_state", null)) {
++            ReadState.OK.name -> if (prefs.getBoolean("anw_spp_initialized", false)) "initialized" else "not initialized"
++            ReadState.UNSUPPORTED.name -> "unsupported transaction"
++            else -> "unknown (${prefs.getString("anw_spp_failure", "read failed") ?: "read failed"})"
++        }
++        val ecarx = when (prefs.getString("ecarx_read_state", null)) {
++            ReadState.OK.name -> if (prefs.getBoolean("ecarx_enabled", false)) "enabled" else "not enabled or not ready"
++            ReadState.UNSUPPORTED.name -> "unsupported transaction"
++            else -> "unknown (${prefs.getString("ecarx_failure", "read failed") ?: "read failed"})"
++        }
++        val checkedAt = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.US)
++            .format(java.util.Date(prefs.getLong("checked_at", 0L)))
++        return buildString {
++            appendLine("H52 vendor Bluetooth state diagnostics opt-in: $optIn")
++            appendLine("Last read-only check: $checkedAt${if (optInEnabled) " (cached snapshot; not live)" else " (historical only; opt-in is disabled)"}")
++            appendLine("Android Bluetooth adapter at check: ${prefs.getString("android_adapter", "unknown")}")
++            appendLine("ANW service binding: ${prefs.getString("anw_binding", BindingState.BIND_FAILED.name)}")
++            appendLine("ANW Bluetooth power: $power")
++            appendLine("ANW paired-device records: $paired (names and addresses were discarded)")
++            appendLine("ANW SPP initialization: $spp (this is not an RFCOMM connection status)")
++            append("ECarX Bluetooth service: $ecarx")
++        }
++    }
++}
+--- a/common/src/main/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticsOptIn.kt
++++ b/common/src/main/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticsOptIn.kt
+@@ -0,0 +1,13 @@
++package com.shilapi.xcertplay
++
++import android.content.Context
++
++/** Central gate for every OEM Bluetooth lookup so the default path stays Android-only. */
++internal object GeelyBluetoothDiagnosticsOptIn {
++    fun enabled(context: Context): Boolean = AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(context)
++
++    fun <T> runIfEnabled(context: Context, action: () -> T): T? {
++        if (!enabled(context)) return null
++        return action()
++    }
++}
 --- a/common/src/main/java/com/shilapi/xcertplay/HomeScreenMonitor.kt
 +++ b/common/src/main/java/com/shilapi/xcertplay/HomeScreenMonitor.kt
 @@ -1,10 +1,10 @@
@@ -2679,6 +3403,59 @@
      <string name="navigation_widget_label">CarPlay navigation</string>
      <string name="navigation_widget_description">Next turn, distance, arrival and song from CarPlay</string>
      <string name="widget_not_connected">CarPlay is not connected</string>
+@@ -478,4 +479,52 @@
+     <string name="center_map_no_permission_screen">This head unit has no settings screen for this permission. Allow it over ADB.</string>
+     <string name="launcher_map_sharing">Share the live map with other launchers</string>
+     <string name="launcher_map_sharing_description">Launchers that support DiPlay can show the live dashboard map inside their own home screen. Off by default, because any app on the head unit could then ask for the map. See docs/LAUNCHER_INTEGRATION.md.</string>
++    <string name="geely_audio_profile">Geely H52 audio routing</string>
++    <string name="geely_audio_generic">Generic / custom channels</string>
++    <string name="geely_audio_speech">CarPlay media + navigation speech</string>
++    <string name="geely_audio_alert">Media 23 + speech 11; alert sounds 25</string>
++    <string name="geely_audio_unavailable">H52 audio extensions not detected. Use generic routing.</string>
++    <string name="geely_audio_detected">H52 extensions detected: CarPlay 23, navigation speech 11.</string>
++    <string name="geely_audio_hint">H52 routing overrides custom media/navigation channels and uses independent audio focus. Speech stays on 11; optional alert sounds use 25. The vendor alert constant needs vehicle testing. Reconnect after changes. Actual sound and mixing require a vehicle test.</string>
++    <string name="geely_audio_preview">Test H52 audio channels</string>
++    <string name="geely_audio_test_media">CarPlay media (23)</string>
++    <string name="geely_audio_test_speech">Navigation speech (11)</string>
++    <string name="geely_audio_test_alert">Navigation alert (25)</string>
++    <string name="bt_stack_checking_title">Checking vehicle Bluetooth</string>
++    <string name="bt_stack_checking_message">Reading available Bluetooth status without changing it…</string>
++    <string name="bt_stack_check_cancel">Cancel</string>
++    <string name="bt_stack_result_title">Android Bluetooth connection unavailable</string>
++    <string name="bt_stack_vendor_on_title">Vendor Bluetooth reports on; app connection path unavailable</string>
++    <string name="bt_stack_status_title">Bluetooth stack status</string>
++    <string name="bt_stack_standard_unavailable_message">Android Bluetooth adapter: %1$s. DiPlay wireless connection uses the standard Android Bluetooth/RFCOMM path. This does not establish the state of any separate vendor Bluetooth stack.</string>
++    <string name="bt_stack_summary">Android Bluetooth adapter: %1$s\nANW service: %2$s\nANW-reported Bluetooth power: %3$s\nECarX service: %4$s\n\nDiPlay wireless connection requires the Android Bluetooth/RFCOMM path. Vendor status and paired records do not enable that path.</string>
++    <string name="bt_stack_vendor_on_next_step">A vendor stack reports Bluetooth on, but DiPlay’s Android Bluetooth/RFCOMM path is unavailable. Save a diagnostic report so the vendor connection path can be reviewed; this does not confirm wireless CarPlay connectivity.</string>
++    <string name="bt_stack_unknown_next_step">Bluetooth stack state is unknown. Android Bluetooth settings are available for checking the standard adapter; opening them does not guarantee that the vendor stack or wireless connection will work.</string>
++    <string name="bt_stack_save_report">Save diagnostic report</string>
++    <string name="bt_stack_open_android_settings">Open Android Bluetooth settings</string>
++    <string name="bt_stack_android_on">on</string>
++    <string name="bt_stack_android_on_note">Android Bluetooth is on. DiPlay still uses the standard Android Bluetooth/RFCOMM path; this status check does not establish a working wireless CarPlay link.</string>
++    <string name="bt_stack_opt_in_title">H52 vendor Bluetooth state check</string>
++    <string name="bt_stack_opt_in_description">For Geely H52 only. Reads factory Bluetooth status and does not change the car’s Bluetooth switch. Vendor wireless connection still needs further adaptation.</string>
++    <string name="bt_stack_check_vendor_button">Check H52 vendor Bluetooth status</string>
++    <string name="bt_stack_copy_report">Copy Bluetooth diagnostic summary</string>
++    <string name="bt_stack_report_copied">Bluetooth diagnostic summary copied</string>
++    <string name="bt_stack_copy_failed">Could not copy the Bluetooth diagnostic summary</string>
++    <string name="android_bluetooth_transport_unavailable">The Android Bluetooth adapter or the standard Android RFCOMM transport is unavailable.</string>
++    <string name="bt_stack_android_off">off</string>
++    <string name="bt_stack_android_unavailable">unavailable</string>
++    <string name="bt_stack_anw_service_ready">reachable</string>
++    <string name="bt_stack_anw_service_not_running">unavailable or not running</string>
++    <string name="bt_stack_anw_service_blocked">blocked by system policy</string>
++    <string name="bt_stack_anw_service_timeout">timed out</string>
++    <string name="bt_stack_anw_service_read_timeout">status read timed out</string>
++    <string name="bt_stack_anw_service_unknown">unknown</string>
++    <string name="bt_stack_anw_on">on</string>
++    <string name="bt_stack_anw_off">off</string>
++    <string name="bt_stack_anw_turning_on">turning on</string>
++    <string name="bt_stack_anw_turning_off">turning off</string>
++    <string name="bt_stack_anw_unknown">unknown</string>
++    <string name="bt_stack_ecarx_enabled">enabled</string>
++    <string name="bt_stack_ecarx_not_ready">not enabled or not ready</string>
++    <string name="bt_stack_open_settings_hint">Open Android Bluetooth settings and retry after the adapter is available.</string>
+ </resources>
 --- a/common/src/main/res/values/themes.xml
 +++ b/common/src/main/res/values/themes.xml
 @@ -1,10 +1,11 @@
@@ -3075,7 +3852,7 @@
      <string name="safe_area_mapping_summary">安全区域：%1$d x %2$d，位于 (%3$d, %4$d)，画面 %5$d x %6$d</string>
      <string name="navigation_widget_label">CarPlay 导航</string>
      <string name="navigation_widget_description">来自 CarPlay 的下一个转弯、距离、到达时间和歌曲</string>
-@@ -467,15 +468,15 @@
+@@ -467,15 +468,63 @@
      <string name="widget_distance_km">%1$d 公里</string>
      <string name="widget_minutes">%1$d 分钟</string>
      <string name="widget_hours_minutes">%1$d 小时 %2$02d 分钟</string>
@@ -3095,6 +3872,54 @@
      <string name="launcher_map_sharing">与其他启动器共享实时地图</string>
 -    <string name="launcher_map_sharing_description">支持 DiPlay 的启动器可以在自己的主屏幕中显示实时仪表盘地图。默认关闭，因为开启后车机上的任何应用都可以请求该地图。详见 docs/LAUNCHER_INTEGRATION.md。</string>
 +    <string name="launcher_map_sharing_description">兼容 DiPlay 的桌面应用可以在主屏幕中显示实时仪表盘地图。默认关闭；开启后，车机上的其他应用也能请求地图画面。</string>
++    <string name="geely_audio_profile">吉利 H52 音频通道</string>
++    <string name="geely_audio_generic">通用／自定义通道</string>
++    <string name="geely_audio_speech">CarPlay 媒体＋导航播报</string>
++    <string name="geely_audio_alert">媒体 23＋播报 11，提示音 25</string>
++    <string name="geely_audio_unavailable">未检测到 H52 专用音频接口，请使用通用通道。</string>
++    <string name="geely_audio_detected">已检测到 H52 专用接口：CarPlay 23，导航播报 11。</string>
++    <string name="geely_audio_hint">H52 模式使用专用媒体和导航通道，并分别申请音频焦点。导航播报仍使用 11；可选将提示音分到 25。原厂 25 通道仍需实车验证。修改后重新连接，实际声音和混音效果需实车确认。</string>
++    <string name="geely_audio_preview">试听 H52 原厂通道</string>
++    <string name="geely_audio_test_media">CarPlay 媒体（23）</string>
++    <string name="geely_audio_test_speech">导航播报（11）</string>
++    <string name="geely_audio_test_alert">导航提示音（25）</string>
++    <string name="bt_stack_checking_title">正在检查车机蓝牙状态</string>
++    <string name="bt_stack_checking_message">正在只读检查可用的蓝牙状态，不会更改设置…</string>
++    <string name="bt_stack_check_cancel">取消</string>
++    <string name="bt_stack_result_title">Android 蓝牙连接通路不可用</string>
++    <string name="bt_stack_vendor_on_title">厂商蓝牙报告已开启，但应用连接通路不可用</string>
++    <string name="bt_stack_status_title">蓝牙通路状态</string>
++    <string name="bt_stack_standard_unavailable_message">Android 蓝牙适配器：%1$s。DiPlay 无线连接使用标准 Android 蓝牙／RFCOMM 通路。此状态不能说明独立厂商蓝牙栈的情况。</string>
++    <string name="bt_stack_summary">Android 蓝牙适配器：%1$s\nANW 服务：%2$s\nANW 报告的蓝牙电源状态：%3$s\nECarX 服务：%4$s\n\nDiPlay 无线连接需要 Android 蓝牙／RFCOMM 通路。厂商蓝牙状态和配对记录不能代替该通路。</string>
++    <string name="bt_stack_vendor_on_next_step">厂商服务报告蓝牙已开启，但 DiPlay 所需的 Android 蓝牙／RFCOMM 通路不可用。请保存诊断报告，以便进一步核对厂商连接通路；这不代表无线 CarPlay 已连通。</string>
++    <string name="bt_stack_unknown_next_step">当前无法确认蓝牙各层的状态。可以打开 Android 蓝牙设置检查标准适配器，但这不保证厂商通路或无线连接可用。</string>
++    <string name="bt_stack_save_report">保存诊断报告</string>
++    <string name="bt_stack_open_android_settings">打开 Android 蓝牙设置</string>
++    <string name="bt_stack_android_on">已开启</string>
++    <string name="bt_stack_android_on_note">Android 蓝牙已开启。DiPlay 仍使用标准 Android 蓝牙／RFCOMM 通路；此状态检查不能证明无线 CarPlay 已连通。</string>
++    <string name="bt_stack_opt_in_title">H52 厂商蓝牙状态检测</string>
++    <string name="bt_stack_opt_in_description">仅适用于吉利 H52。读取原厂蓝牙状态，不改变车机蓝牙开关。厂商无线连接仍需进一步适配。</string>
++    <string name="bt_stack_check_vendor_button">检查 H52 厂商蓝牙状态</string>
++    <string name="bt_stack_copy_report">复制蓝牙诊断摘要</string>
++    <string name="bt_stack_report_copied">已复制蓝牙诊断摘要</string>
++    <string name="bt_stack_copy_failed">无法复制蓝牙诊断摘要</string>
++    <string name="android_bluetooth_transport_unavailable">Android 蓝牙适配器或标准 Android RFCOMM 连接通路不可用。</string>
++    <string name="bt_stack_android_off">已关闭</string>
++    <string name="bt_stack_android_unavailable">不可用</string>
++    <string name="bt_stack_anw_service_ready">可访问</string>
++    <string name="bt_stack_anw_service_not_running">不可访问或尚未运行</string>
++    <string name="bt_stack_anw_service_blocked">被系统策略阻止</string>
++    <string name="bt_stack_anw_service_timeout">读取超时</string>
++    <string name="bt_stack_anw_service_read_timeout">状态读取超时</string>
++    <string name="bt_stack_anw_service_unknown">未知</string>
++    <string name="bt_stack_anw_on">已开启</string>
++    <string name="bt_stack_anw_off">已关闭</string>
++    <string name="bt_stack_anw_turning_on">正在开启</string>
++    <string name="bt_stack_anw_turning_off">正在关闭</string>
++    <string name="bt_stack_anw_unknown">未知</string>
++    <string name="bt_stack_ecarx_enabled">服务报告已开启</string>
++    <string name="bt_stack_ecarx_not_ready">服务报告未开启或尚未就绪</string>
++    <string name="bt_stack_open_settings_hint">打开 Android 蓝牙设置；适配器可用后再试。</string>
  </resources>
 --- a/common/src/test/java/com/shilapi/xcertplay/CarPlayMediaCallbackTest.kt
 +++ b/common/src/test/java/com/shilapi/xcertplay/CarPlayMediaCallbackTest.kt
@@ -3107,6 +3932,56 @@
              CarPlayNowPlaying(
                  title = "Dreams",
                  album = "Rumours",
+--- a/common/src/test/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticsOptInTest.kt
++++ b/common/src/test/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticsOptInTest.kt
+@@ -0,0 +1,47 @@
++package com.shilapi.xcertplay
++
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertFalse
++import org.junit.Assert.assertNull
++import org.junit.Assert.assertTrue
++import org.junit.Before
++import org.junit.Test
++import org.junit.runner.RunWith
++import org.robolectric.RobolectricTestRunner
++import org.robolectric.RuntimeEnvironment
++import org.robolectric.annotation.Config
++
++@RunWith(RobolectricTestRunner::class)
++@Config(sdk = [28], manifest = Config.NONE)
++class GeelyBluetoothDiagnosticsOptInTest {
++    private val context get() = RuntimeEnvironment.getApplication()
++
++    @Before fun clearPreferences() {
++        context.getSharedPreferences("xcertplay_airplay", android.content.Context.MODE_PRIVATE)
++            .edit().clear().commit()
++    }
++
++    @Test fun vendorCallsAreGatedByPersistedOptInAndDefaultOff() {
++        var vendorCalls = 0
++        assertFalse(GeelyBluetoothDiagnosticsOptIn.enabled(context))
++        assertNull(GeelyBluetoothDiagnosticsOptIn.runIfEnabled(context) { vendorCalls++; "queried" })
++        assertEquals(0, vendorCalls)
++
++        AirPlayPersistence.saveGeelyBluetoothDiagnosticsEnabled(context, true)
++        assertTrue(GeelyBluetoothDiagnosticsOptIn.enabled(context))
++        assertEquals("queried", GeelyBluetoothDiagnosticsOptIn.runIfEnabled(context) { vendorCalls++; "queried" })
++        assertEquals(1, vendorCalls)
++
++        AirPlayPersistence.saveGeelyBluetoothDiagnosticsEnabled(context, false)
++        assertFalse(GeelyBluetoothDiagnosticsOptIn.enabled(context))
++        assertNull(GeelyBluetoothDiagnosticsOptIn.runIfEnabled(context) { vendorCalls++; "queried" })
++        assertEquals(1, vendorCalls)
++    }
++
++    @Test fun strictControllerAdapterFailuresHaveLocalizedTransportCopyOnly() {
++        val expected = context.getString(com.shilapi.xcertplay.host.R.string.android_bluetooth_transport_unavailable)
++        assertEquals(expected, AndroidBluetoothFailureCopy.forControllerMessage(context, "Bluetooth adapter is unavailable"))
++        assertEquals(expected, AndroidBluetoothFailureCopy.forControllerMessage(context, "Bluetooth is not enabled"))
++        assertNull(AndroidBluetoothFailureCopy.forControllerMessage(context, "Could not connect RFCOMM to device"))
++    }
++}
 --- a/gradle/libs.versions.toml
 +++ b/gradle/libs.versions.toml
 @@ -1,24 +1,27 @@
@@ -3227,7 +4102,7 @@
 +-----END RSA PUBLIC KEY-----
 --- a/mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt
 +++ b/mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt
-@@ -0,0 +1,512 @@
+@@ -0,0 +1,690 @@
 +package com.shilapi.xcertplay.compat
 +
 +import android.app.Activity
@@ -3238,7 +4113,10 @@
 +import android.content.pm.PackageManager
 +import android.net.VpnService
 +import android.os.Build
++import android.os.Binder
 +import android.os.Bundle
++import android.os.IBinder
++import android.os.Parcel
 +import android.util.Log
 +import android.view.Surface
 +import android.view.SurfaceHolder
@@ -3312,6 +4190,42 @@
 +
 +    private fun runProbes(surface: Surface) {
 +        val mode = intent.getStringExtra("probe") ?: "full"
++        if (mode == "geely_bluetooth") {
++            checkCase("H52_ANW_READONLY_PARCEL_MOCK") { geelyAnwParcelMock() }
++            checkCase("H52_ECARX_READONLY_PARCEL_MOCK") { geelyEcarxParcelMock() }
++            val client = com.shilapi.xcertplay.compat.GeelyBluetoothDiagnostics(applicationContext)
++            client.query(timeoutMillis = 6_000L) { snapshot ->
++                checkCase("VENDOR_SERVICES_UNAVAILABLE_REMAIN_UNKNOWN") {
++                    if (snapshot.bindingState != com.shilapi.xcertplay.compat.BindingState.CONNECTED) {
++                        check(snapshot.power.state != com.shilapi.xcertplay.compat.ReadState.OK && snapshot.power.value == null) {
++                            "Unbound ANW service was incorrectly reported as an OFF state"
++                        }
++                    }
++                    if (snapshot.power.state != com.shilapi.xcertplay.compat.ReadState.OK) {
++                        check(snapshot.power.value == null || snapshot.power.value == com.shilapi.xcertplay.compat.AnwPowerState.UNKNOWN)
++                    }
++                    if (snapshot.ecarxEnabled.state != com.shilapi.xcertplay.compat.ReadState.OK) {
++                        check(snapshot.ecarxEnabled.value == null) { "Unavailable ECarX service was reported false" }
++                    }
++                    "anW=${snapshot.bindingState}/${snapshot.power.state}:${snapshot.power.value} " +
++                        "paired=${snapshot.pairedCount.state}:${snapshot.pairedCount.value} " +
++                        "spp=${snapshot.sppInitialized.state}:${snapshot.sppInitialized.value} " +
++                        "ecarx=${snapshot.ecarxEnabled.state}:${snapshot.ecarxEnabled.value} " +
++                        "(actual vehicle Binder access is not implied by the mock)"
++                }
++                complete()
++            }
++            return
++        }
++        if (mode == "geely_focus") {
++            checkCase("GEELY_CAPABILITY_GUARD") {
++                check(com.shilapi.xcertplay.media.GeelyAudioCapabilities.detect() == null)
++                "stockApi18Rejected=true"
++            }
++            checkCase("GEELY_INDEPENDENT_FOCUS") { geelyFocus() }
++            complete()
++            return
++        }
 +        if (mode == "bonjour_discovery") {
 +            checkCase("BONJOUR_CONTROL_DISCOVERY") { LegacyNetworkProbe.bonjourDiscovery(this) }
 +            complete()
@@ -3716,7 +4630,146 @@
 +            }
 +        }
 +    }
++    private fun geelyFocus(): String {
++        val type = Class.forName("com.shilapi.xcertplay.media.AudioFocusCoordinator")
++        val channelType = Class.forName("com.shilapi.xcertplay.media.AudioChannel")
++        val media = channelType.enumConstants!!.first { it.toString() == "MEDIA" }
++        val navigation = channelType.enumConstants!!.first { it.toString() == "NAVIGATION" }
++        val events = ConcurrentLinkedQueue<String>()
++        val callback: (String) -> Unit = { events.add(it) }
++        val coordinator = type.declaredConstructors.first { it.parameterTypes.size == 4 }
++            .apply { isAccessible = true }.newInstance(this, true, callback, true)
++        val acquire = type.getDeclaredMethod("acquireLegacy", android.media.AudioTrack::class.java, channelType, Int::class.javaPrimitiveType)
++        val release = type.getDeclaredMethod("release", android.media.AudioTrack::class.java)
++        val listeners = type.getDeclaredField("geelyListeners").apply { isAccessible = true }
++        fun count() = (listeners.get(coordinator) as Map<*, *>).size
++        val tracks = listOf(3, 4, 4, 5, 4).map { stream ->
++            android.media.AudioTrack(stream, 8000, android.media.AudioFormat.CHANNEL_OUT_MONO,
++                android.media.AudioFormat.ENCODING_PCM_16BIT, 4096, android.media.AudioTrack.MODE_STREAM)
++                .also { check(it.state == android.media.AudioTrack.STATE_INITIALIZED) }
++        }
++        fun keyedEntry(stream: Int): Map.Entry<*, *> =
++            (listeners.get(coordinator) as Map<*, *>).entries.firstOrNull { entry ->
++                val field = entry.key!!.javaClass.getDeclaredField("streamType").apply { isAccessible = true }
++                field.getInt(entry.key) == stream
++            } ?: error("Missing listener for stream=$stream")
++        fun callbackFor(entry: Map.Entry<*, *>): android.media.AudioManager.OnAudioFocusChangeListener =
++            entry.value!!.javaClass.getDeclaredField("listener").apply { isAccessible = true }
++                .get(entry.value) as android.media.AudioManager.OnAudioFocusChangeListener
++        fun volumeFor(stream: Int): Float {
++            val entry = keyedEntry(stream)
++            val volumes = type.getDeclaredField("geelyVolumes").apply { isAccessible = true }
++                .get(coordinator) as Map<*, *>
++            return volumes[entry.key] as? Float ?: error("No volume state for stream=$stream")
++        }
++        try {
++            acquire.invoke(coordinator, tracks[0], media, 3)
++            acquire.invoke(coordinator, tracks[1], navigation, 4)
++            acquire.invoke(coordinator, tracks[2], navigation, 4)
++            acquire.invoke(coordinator, tracks[3], navigation, 5)
++            check(count() == 3) { "Media, speech, and alert focus requests were not independent: $events" }
++            val staleSpeechListener = callbackFor(keyedEntry(4))
++            release.invoke(coordinator, tracks[1])
++            check(count() == 3) { "Navigation speech focus released before its last track" }
++            release.invoke(coordinator, tracks[2])
++            check(count() == 2) { "Last navigation speech track did not release its focus" }
++            acquire.invoke(coordinator, tracks[4], navigation, 4)
++            check(count() == 3) { "Replacement speech route failed to acquire focus" }
++            check(volumeFor(4) == 1f) { "Replacement speech route was not audible after grant: ${volumeFor(4)}" }
++            staleSpeechListener.onAudioFocusChange(android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
++            check(volumeFor(4) == 1f) { "Stale listener changed replacement route volume: ${volumeFor(4)}" }
++            val currentSpeechListener = callbackFor(keyedEntry(4))
++            currentSpeechListener.onAudioFocusChange(android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
++            check(kotlin.math.abs(volumeFor(4) - 0.2f) < 0.001f) { "Duck callback did not lower current route" }
++            currentSpeechListener.onAudioFocusChange(android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
++            check(volumeFor(4) == 0f) { "Transient loss did not mute current route" }
++            currentSpeechListener.onAudioFocusChange(android.media.AudioManager.AUDIOFOCUS_GAIN)
++            check(volumeFor(4) == 1f) { "Gain callback did not restore current route" }
++            check((listeners.get(coordinator) as Map<*, *>).keys.any { key ->
++                key!!.javaClass.getDeclaredField("streamType").apply { isAccessible = true }.getInt(key) == 5
++            }) { "Alert focus was coupled to navigation speech" }
++            tracks.forEach { release.invoke(coordinator, it) }
++            check(count() == 0) { "A media, speech, or alert focus request leaked" }
++            check(events.any { it.contains("channel=NAVIGATION") && it.contains("stream=4") && it.contains("gain=3") && it.contains("granted=true") })
++            return "independentListeners=media3+speech4+alert5 speechRefCount=true staleCallbackIgnored=true duckLossGain=true released=true (standard test streams, H52 HAL not tested)"
++        } finally {
++            tracks.forEach { track -> runCatching { release.invoke(coordinator, track) }; track.release() }
++        }
++    }
++
 +    private fun startVpn() { startService(Intent(this, Api18VpnProbeService::class.java)) }
++
++    private fun geelyAnwParcelMock(): String {
++        val descriptor = "com.anwsdk.service.IAnwPhoneLink"
++        val codes = mutableListOf<Int>()
++        val capacities = AtomicReference<List<Int>>()
++        val binder = object : Binder() {
++            init { attachInterface(null, descriptor) }
++            override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
++                val output = requireNotNull(reply)
++                if (code == INTERFACE_TRANSACTION) { output.writeString(descriptor); return true }
++                data.enforceInterface(descriptor)
++                codes += code
++                when (code) {
++                    0x03 -> { check(data.dataAvail() == 0); output.writeNoException(); output.writeInt(1) }
++                    0x10 -> {
++                        val requested = List(4) { data.readInt() }
++                        check(requested == listOf(1, 16, 16, 16)) { "Unexpected 10500 capacities: $requested" }
++                        check(data.dataAvail() == 0) { "Unexpected data after four capacity integers" }
++                        capacities.set(requested)
++                        output.writeNoException()
++                        output.writeInt(1)
++                        output.writeIntArray(intArrayOf(2))
++                        output.writeStringArray(arrayOfNulls<String>(16).apply { this[0] = "probe device" })
++                        output.writeStringArray(arrayOfNulls<String>(16).apply { this[0] = "02:00:00:00:00:01" })
++                        output.writeIntArray(IntArray(16))
++                    }
++                    0x43 -> { check(data.dataAvail() == 0); output.writeNoException(); output.writeInt(1) }
++                    else -> return false
++                }
++                return true
++            }
++        }
++        val protocol = Class.forName("com.shilapi.xcertplay.compat.GeelyBluetoothReadOnlyProtocol")
++        val result = protocol.getMethod("read", IBinder::class.java)
++            .invoke(protocol.getField("INSTANCE").get(null), binder)
++        fun value(getter: String): Any? = result.javaClass.getMethod(getter).invoke(result)
++        val power = value("getPower")!!
++        val paired = value("getPairedCount")!!
++        val spp = value("getSppInitialized")!!
++        check(power.javaClass.getMethod("getValue").invoke(power).toString() == "ON")
++        check(paired.javaClass.getMethod("getValue").invoke(paired) == 2)
++        check(spp.javaClass.getMethod("getValue").invoke(spp) == true)
++        check(capacities.get() == listOf(1, 16, 16, 16))
++        check(codes == listOf(0x03, 0x10, 0x43)) { "Unexpected ANW transaction set: $codes" }
++        return "descriptorChecked=true getterCodes=$codes capacities=${capacities.get()} extraPayload=false"
++    }
++
++    private fun geelyEcarxParcelMock(): String {
++        val descriptor = "ecarx.bluetooth.IBluetoothManager"
++        var calls = 0
++        val binder = object : Binder() {
++            init { attachInterface(null, descriptor) }
++            override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
++                val output = requireNotNull(reply)
++                if (code == INTERFACE_TRANSACTION) { output.writeString(descriptor); return true }
++                data.enforceInterface(descriptor)
++                check(code == 0x05) { "Unexpected ECarX transaction $code" }
++                check(data.dataAvail() == 0) { "Unexpected ECarX request payload" }
++                calls++
++                output.writeNoException()
++                output.writeInt(0)
++                return true
++            }
++        }
++        val protocol = Class.forName("com.shilapi.xcertplay.compat.EcarxBluetoothReadOnlyProtocol")
++        val result = protocol.getMethod("readBinder", IBinder::class.java)
++            .invoke(protocol.getField("INSTANCE").get(null), binder)
++        check(result.javaClass.getMethod("getState").invoke(result).toString() == "OK")
++        check(result.javaClass.getMethod("getValue").invoke(result) == false)
++        check(calls == 1)
++        return "descriptorChecked=true transaction=0x05 falseReadOnly=true calls=$calls"
++    }
 +
 +    private fun checkCase(name: String, action: () -> String) {
 +        try { line("PASS $name ${action()}") }
@@ -4541,6 +5594,483 @@
 +    fun hasSigningInfo(info: PackageInfo): Boolean =
 +        Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && info.signingInfo != null
 +}
+--- a/shared/src/main/java/com/shilapi/xcertplay/compat/GeelyBluetoothDiagnostics.kt
++++ b/shared/src/main/java/com/shilapi/xcertplay/compat/GeelyBluetoothDiagnostics.kt
+@@ -0,0 +1,474 @@
++package com.shilapi.xcertplay.compat
++
++import android.content.ComponentName
++import android.content.Context
++import android.content.Intent
++import android.content.ServiceConnection
++import android.os.Handler
++import android.os.IBinder
++import android.os.Looper
++import android.os.Parcel
++import android.os.RemoteException
++import java.util.concurrent.ArrayBlockingQueue
++import java.util.concurrent.Executor
++import java.util.concurrent.ThreadPoolExecutor
++import java.util.concurrent.TimeUnit
++import java.util.concurrent.atomic.AtomicBoolean
++import java.util.concurrent.atomic.AtomicReference
++
++/** Read-only diagnostics for the H52 ANW phone-link Binder. This never changes Bluetooth state. */
++class GeelyBluetoothDiagnostics(context: Context) {
++    private val appContext = context.applicationContext ?: context
++    private val inFlight = AtomicBoolean(false)
++    private var binding: ServiceBinding = AndroidServiceBinding
++    private var worker: Executor = sharedWorker
++    private var mainHandler: Handler = Handler(Looper.getMainLooper())
++    private var ecarxReader: () -> ReadValue<Boolean> = { EcarxBluetoothReadOnlyProtocol.read() }
++
++    internal constructor(
++        context: Context,
++        binding: ServiceBinding,
++        worker: Executor,
++        mainHandler: Handler,
++        ecarxReader: () -> ReadValue<Boolean>,
++    ) : this(context) {
++        this.binding = binding
++        this.worker = worker
++        this.mainHandler = mainHandler
++        this.ecarxReader = ecarxReader
++    }
++
++    fun query(timeoutMillis: Long = DEFAULT_TIMEOUT_MILLIS, callback: (GeelyBluetoothSnapshot) -> Unit): Request {
++        val pending = Pending(callback)
++        if (!inFlight.compareAndSet(false, true)) {
++            mainHandler.post { pending.deliver(GeelyBluetoothSnapshot.unavailable(BindingState.BUSY)) }
++            return Request {
++                pending.cancelled.set(true)
++                pending.finished.set(true)
++                pending.callback.set(null)
++            }
++        }
++
++        mainHandler.post {
++            if (pending.finished.get() || pending.cancelled.get()) {
++                pending.finished.set(true)
++                pending.callback.set(null)
++                release(pending)
++                return@post
++            }
++            val timeout = Runnable { finish(pending, pending.timeoutSnapshot) }
++            pending.timeout = timeout
++            mainHandler.postDelayed(timeout, timeoutMillis.coerceIn(1L, MAX_TIMEOUT_MILLIS))
++            try {
++                pending.bound = binding.bind(appContext, serviceIntent(), pending.connection)
++                if (!pending.bound) startEcarxOnly(pending, BindingState.NOT_RUNNING)
++            } catch (_: SecurityException) {
++                startEcarxOnly(pending, BindingState.ACCESS_DENIED)
++            } catch (_: RuntimeException) {
++                startEcarxOnly(pending, BindingState.BIND_FAILED)
++            }
++        }
++
++        return Request {
++            pending.cancelled.set(true)
++            pending.callback.set(null)
++            mainHandler.post {
++                finish(pending, GeelyBluetoothSnapshot.unavailable(BindingState.CANCELLED), notify = false)
++            }
++        }
++    }
++
++    private fun serviceIntent() = Intent().setComponent(SERVICE_COMPONENT)
++
++    private fun startRead(pending: Pending, binder: IBinder) {
++        pending.timeoutSnapshot = GeelyBluetoothSnapshot.unavailable(BindingState.READ_TIMEOUT)
++        startReadTask(pending) {
++            GeelyBluetoothReadOnlyProtocol.read(binder).copy(
++                ecarxEnabled = ecarxReader(),
++            )
++        }
++    }
++
++    private fun startEcarxOnly(pending: Pending, bindingState: BindingState) {
++        pending.timeoutSnapshot = GeelyBluetoothSnapshot.unavailable(bindingState).copy(
++            ecarxEnabled = ReadValue(ReadState.FAILED, failure = ReadFailure.TIMEOUT),
++        )
++        startReadTask(pending) {
++            GeelyBluetoothSnapshot.unavailable(bindingState).copy(
++                ecarxEnabled = ecarxReader(),
++            )
++        }
++    }
++
++    private fun startReadTask(pending: Pending, read: () -> GeelyBluetoothSnapshot) {
++        if (pending.finished.get() || pending.cancelled.get() || pending.workerStarted) return
++        pending.workerStarted = true
++        try {
++            worker.execute {
++                if (pending.finished.get() || pending.cancelled.get()) {
++                    mainHandler.post {
++                        finish(pending, GeelyBluetoothSnapshot.unavailable(BindingState.CANCELLED), notify = false)
++                        release(pending)
++                    }
++                    return@execute
++                }
++                val result = try {
++                    read()
++                } catch (_: SecurityException) {
++                    GeelyBluetoothSnapshot.unavailable(BindingState.ACCESS_DENIED)
++                } catch (_: RemoteException) {
++                    GeelyBluetoothSnapshot.unavailable(BindingState.BINDER_FAILED)
++                } catch (_: RuntimeException) {
++                    GeelyBluetoothSnapshot.unavailable(BindingState.BINDER_FAILED)
++                }
++                mainHandler.post {
++                    val completed = if (pending.disconnected) {
++                        result.copy(
++                            bindingState = BindingState.DISCONNECTED,
++                            power = ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE),
++                            pairedCount = ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE),
++                            sppInitialized = ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE),
++                        )
++                    } else result
++                    finish(pending, completed)
++                    release(pending)
++                }
++            }
++        } catch (_: RuntimeException) {
++            pending.workerStarted = false
++            finish(pending, GeelyBluetoothSnapshot.unavailable(BindingState.BUSY))
++            release(pending)
++        }
++    }
++
++    private fun finish(pending: Pending, snapshot: GeelyBluetoothSnapshot, notify: Boolean = true) {
++        if (!pending.finished.compareAndSet(false, true)) return
++        pending.timeout?.let(mainHandler::removeCallbacks)
++        pending.timeout = null
++        if (pending.bound) {
++            pending.bound = false
++            try {
++                binding.unbind(appContext, pending.connection)
++            } catch (_: IllegalArgumentException) {
++                // A platform disconnect can race timeout/cancellation; the binding is already gone.
++            } catch (_: RuntimeException) {
++                // Unbinding is best-effort and must not hide the diagnostic result.
++            }
++        }
++        if (notify) pending.deliver(snapshot) else pending.callback.set(null)
++        if (!pending.workerStarted) release(pending)
++    }
++
++    private fun release(pending: Pending) {
++        if (pending.released.compareAndSet(false, true)) inFlight.set(false)
++    }
++
++    private inner class Pending(callback: (GeelyBluetoothSnapshot) -> Unit) {
++        val callback = AtomicReference(callback)
++        val finished = AtomicBoolean(false)
++        val cancelled = AtomicBoolean(false)
++        val released = AtomicBoolean(false)
++        @Volatile var bound = false
++        @Volatile var workerStarted = false
++        @Volatile var disconnected = false
++        @Volatile var timeoutSnapshot = GeelyBluetoothSnapshot.unavailable(BindingState.BIND_TIMEOUT)
++        var timeout: Runnable? = null
++
++        val connection = object : ServiceConnection {
++            override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
++                mainHandler.post {
++                    if (finished.get() || cancelled.get() || workerStarted) return@post
++                    if (service == null) startEcarxOnly(this@Pending, BindingState.INVALID_BINDER)
++                    else startRead(this@Pending, service)
++                }
++            }
++
++            override fun onServiceDisconnected(name: ComponentName?) {
++                mainHandler.post {
++                    disconnected = true
++                    if (!workerStarted) startEcarxOnly(this@Pending, BindingState.DISCONNECTED)
++                }
++            }
++        }
++
++        fun deliver(snapshot: GeelyBluetoothSnapshot) {
++            val listener = callback.getAndSet(null) ?: return
++            try {
++                listener(snapshot)
++            } catch (_: RuntimeException) {
++                // A UI callback failure must not retain the service connection or worker slot.
++            }
++        }
++    }
++
++    class Request internal constructor(private val cancelRequest: () -> Unit) {
++        fun cancel() = cancelRequest()
++    }
++
++    internal interface ServiceBinding {
++        fun bind(context: Context, intent: Intent, connection: ServiceConnection): Boolean
++        fun unbind(context: Context, connection: ServiceConnection)
++    }
++
++    private object AndroidServiceBinding : ServiceBinding {
++        override fun bind(context: Context, intent: Intent, connection: ServiceConnection): Boolean =
++            context.bindService(intent, connection, 0)
++
++        override fun unbind(context: Context, connection: ServiceConnection) = context.unbindService(connection)
++    }
++
++    companion object {
++        const val DEFAULT_TIMEOUT_MILLIS = 3_000L
++        const val MAX_TIMEOUT_MILLIS = 8_000L
++        val SERVICE_COMPONENT = ComponentName("com.anwsdk.service", "com.anwsdk.service.AnwSdkService")
++
++        private val sharedWorker = ThreadPoolExecutor(
++            1,
++            1,
++            0L,
++            TimeUnit.MILLISECONDS,
++            ArrayBlockingQueue(1),
++            { runnable -> Thread(runnable, "diplay-anw-bt-readonly").apply { isDaemon = true } },
++        )
++    }
++}
++
++enum class BindingState {
++    CONNECTED,
++    NOT_RUNNING,
++    ACCESS_DENIED,
++    BIND_TIMEOUT,
++    READ_TIMEOUT,
++    DISCONNECTED,
++    INVALID_BINDER,
++    BIND_FAILED,
++    BINDER_FAILED,
++    BUSY,
++    CANCELLED,
++}
++
++enum class ReadState { OK, UNSUPPORTED, FAILED }
++
++enum class ReadFailure { DESCRIPTOR_MISMATCH, INVALID_RESPONSE, REMOTE_FAILURE, SERVICE_UNAVAILABLE, PERMISSION_DENIED, TIMEOUT }
++
++enum class AnwPowerState { OFF, ON, TURNING_ON, TURNING_OFF, UNKNOWN }
++
++data class ReadValue<T>(val state: ReadState, val value: T? = null, val failure: ReadFailure? = null)
++
++data class GeelyBluetoothSnapshot(
++    val bindingState: BindingState,
++    val power: ReadValue<AnwPowerState>,
++    val pairedCount: ReadValue<Int>,
++    val sppInitialized: ReadValue<Boolean>,
++    val ecarxEnabled: ReadValue<Boolean>,
++) {
++    companion object {
++        fun unavailable(state: BindingState) = GeelyBluetoothSnapshot(
++            bindingState = state,
++            power = ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE),
++            pairedCount = ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE),
++            sppInitialized = ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE),
++            ecarxEnabled = ReadValue(ReadState.FAILED, failure = ReadFailure.SERVICE_UNAVAILABLE),
++        )
++    }
++}
++
++/** H52.10500-verified getter transactions only; no setter or connection transaction is exposed. */
++internal object GeelyBluetoothReadOnlyProtocol {
++    const val DESCRIPTOR = "com.anwsdk.service.IAnwPhoneLink"
++    const val TRANSACTION_POWER = 0x03
++    const val TRANSACTION_PAIRED_LIST = 0x10
++    const val TRANSACTION_SPP_INITIALIZED = 0x43
++    const val MAX_PAIRED_DEVICES = 16
++
++    fun read(binder: IBinder): GeelyBluetoothSnapshot {
++        val descriptor = try {
++            binder.interfaceDescriptor
++        } catch (_: SecurityException) {
++            return GeelyBluetoothSnapshot.unavailable(BindingState.ACCESS_DENIED)
++        } catch (_: RemoteException) {
++            return GeelyBluetoothSnapshot.unavailable(BindingState.BINDER_FAILED)
++        } catch (_: RuntimeException) {
++            return GeelyBluetoothSnapshot.unavailable(BindingState.BINDER_FAILED)
++        }
++        if (descriptor != DESCRIPTOR) {
++            return GeelyBluetoothSnapshot(
++                BindingState.INVALID_BINDER,
++                ReadValue(ReadState.FAILED, failure = ReadFailure.DESCRIPTOR_MISMATCH),
++                ReadValue(ReadState.FAILED, failure = ReadFailure.DESCRIPTOR_MISMATCH),
++                ReadValue(ReadState.FAILED, failure = ReadFailure.DESCRIPTOR_MISMATCH),
++                ReadValue(ReadState.FAILED, failure = ReadFailure.SERVICE_UNAVAILABLE),
++            )
++        }
++        return GeelyBluetoothSnapshot(
++            bindingState = BindingState.CONNECTED,
++            power = readPower(binder),
++            pairedCount = readPairedCount(binder),
++            sppInitialized = readSppInitialized(binder),
++            ecarxEnabled = ReadValue(ReadState.FAILED, failure = ReadFailure.SERVICE_UNAVAILABLE),
++        )
++    }
++
++    private fun readPower(binder: IBinder): ReadValue<AnwPowerState> = transact(binder, TRANSACTION_POWER) { _, reply ->
++        val state = when (reply.readInt()) {
++            0 -> AnwPowerState.OFF
++            1 -> AnwPowerState.ON
++            2 -> AnwPowerState.TURNING_ON
++            3 -> AnwPowerState.TURNING_OFF
++            else -> AnwPowerState.UNKNOWN
++        }
++        if (state == AnwPowerState.UNKNOWN) ReadValue(ReadState.FAILED, state, ReadFailure.INVALID_RESPONSE)
++        else ReadValue(ReadState.OK, state)
++    }
++
++    private fun readPairedCount(binder: IBinder): ReadValue<Int> = transact(
++        binder,
++        TRANSACTION_PAIRED_LIST,
++        writeRequest = { data ->
++            data.writeInt(1)
++            data.writeInt(MAX_PAIRED_DEVICES)
++            data.writeInt(MAX_PAIRED_DEVICES)
++            data.writeInt(MAX_PAIRED_DEVICES)
++        },
++    ) { _, reply ->
++        val returnCode = reply.readInt()
++        if (returnCode != 1) return@transact ReadValue(ReadState.FAILED, failure = ReadFailure.INVALID_RESPONSE)
++        val count = readExactIntArray(reply, 1).single()
++        skipExactStringArray(reply, MAX_PAIRED_DEVICES)
++        skipExactStringArray(reply, MAX_PAIRED_DEVICES)
++        readExactIntArray(reply, MAX_PAIRED_DEVICES)
++        if (count !in 0..MAX_PAIRED_DEVICES) ReadValue(ReadState.FAILED, failure = ReadFailure.INVALID_RESPONSE)
++        else ReadValue(ReadState.OK, count)
++    }
++
++    private fun readSppInitialized(binder: IBinder): ReadValue<Boolean> = transact(binder, TRANSACTION_SPP_INITIALIZED) { _, reply ->
++        when (reply.readInt()) {
++            0 -> ReadValue(ReadState.OK, false)
++            1 -> ReadValue(ReadState.OK, true)
++            else -> ReadValue(ReadState.FAILED, failure = ReadFailure.INVALID_RESPONSE)
++        }
++    }
++
++    private fun readExactIntArray(parcel: Parcel, expectedLength: Int): IntArray {
++        require(parcel.dataAvail() >= 4) { "missing array length" }
++        val actualLength = parcel.readInt()
++        require(actualLength == expectedLength) { "unexpected array length" }
++        require(parcel.dataAvail() >= expectedLength * 4) { "truncated integer array" }
++        return IntArray(expectedLength) { parcel.readInt() }
++    }
++
++    private fun skipExactStringArray(parcel: Parcel, expectedLength: Int) {
++        require(parcel.dataAvail() >= 4) { "missing string array length" }
++        val actualLength = parcel.readInt()
++        require(actualLength == expectedLength) { "unexpected string array length" }
++        repeat(expectedLength) {
++            require(parcel.dataAvail() >= 4) { "truncated string array" }
++            parcel.readString()
++        }
++    }
++
++    private inline fun <T> transact(
++        binder: IBinder,
++        code: Int,
++        crossinline writeRequest: (Parcel) -> Unit = {},
++        crossinline parseReply: (Parcel, Parcel) -> ReadValue<T>,
++    ): ReadValue<T> {
++        val request = Parcel.obtain()
++        val reply = Parcel.obtain()
++        return try {
++            request.writeInterfaceToken(DESCRIPTOR)
++            writeRequest(request)
++            if (!binder.transact(code, request, reply, 0)) {
++                ReadValue(ReadState.UNSUPPORTED)
++            } else {
++                require(reply.dataAvail() >= 4) { "missing Binder exception status" }
++                reply.readException()
++                require(reply.dataAvail() >= 4) { "missing Binder result" }
++                parseReply(request, reply).also {
++                    require(reply.dataAvail() == 0) { "unexpected trailing Binder response" }
++                }
++            }
++        } catch (_: RemoteException) {
++            ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE)
++        } catch (_: SecurityException) {
++            ReadValue(ReadState.FAILED, failure = ReadFailure.PERMISSION_DENIED)
++        } catch (_: RuntimeException) {
++            ReadValue(ReadState.FAILED, failure = ReadFailure.INVALID_RESPONSE)
++        } finally {
++            reply.recycle()
++            request.recycle()
++        }
++    }
++}
++
++/** Read-only ECarX manager state. This is a separate Binder contract from ANW. */
++internal object EcarxBluetoothReadOnlyProtocol {
++    const val SERVICE_NAME = "ecarx_bluetooth_service"
++    const val DESCRIPTOR = "ecarx.bluetooth.IBluetoothManager"
++    const val TRANSACTION_IS_ENABLED = 0x05
++
++    fun read(): ReadValue<Boolean> {
++        val binder = try {
++            val serviceManager = Class.forName("android.os.ServiceManager")
++            serviceManager.getMethod("getService", String::class.java)
++                .invoke(null, SERVICE_NAME) as? IBinder
++        } catch (_: SecurityException) {
++            return ReadValue(ReadState.FAILED, failure = ReadFailure.PERMISSION_DENIED)
++        } catch (error: java.lang.reflect.InvocationTargetException) {
++            val failure = if (error.targetException is SecurityException) ReadFailure.PERMISSION_DENIED
++            else ReadFailure.SERVICE_UNAVAILABLE
++            return ReadValue(ReadState.FAILED, failure = failure)
++        } catch (_: Exception) {
++            null
++        } ?: return ReadValue(ReadState.FAILED, failure = ReadFailure.SERVICE_UNAVAILABLE)
++
++        return readBinder(binder)
++    }
++
++    fun readBinder(binder: IBinder): ReadValue<Boolean> {
++        val descriptor = try {
++            binder.interfaceDescriptor
++        } catch (_: SecurityException) {
++            return ReadValue(ReadState.FAILED, failure = ReadFailure.PERMISSION_DENIED)
++        } catch (_: RemoteException) {
++            return ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE)
++        } catch (_: RuntimeException) {
++            return ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE)
++        }
++        if (descriptor != DESCRIPTOR) {
++            return ReadValue(ReadState.FAILED, failure = ReadFailure.DESCRIPTOR_MISMATCH)
++        }
++
++        val request = Parcel.obtain()
++        val reply = Parcel.obtain()
++        return try {
++            request.writeInterfaceToken(DESCRIPTOR)
++            if (!binder.transact(TRANSACTION_IS_ENABLED, request, reply, 0)) {
++                ReadValue(ReadState.UNSUPPORTED)
++            } else {
++                require(reply.dataAvail() >= 4) { "missing Binder exception status" }
++                reply.readException()
++                require(reply.dataAvail() >= 4) { "missing Binder result" }
++                val rawEnabled = reply.readInt()
++                require(reply.dataAvail() == 0) { "unexpected trailing Binder response" }
++                val enabled = when (rawEnabled) {
++                    0 -> false
++                    1 -> true
++                    else -> return ReadValue(ReadState.FAILED, failure = ReadFailure.INVALID_RESPONSE)
++                }
++                ReadValue(ReadState.OK, enabled).also {
++                    require(reply.dataAvail() == 0) { "unexpected trailing Binder response" }
++                }
++            }
++        } catch (_: RemoteException) {
++            ReadValue(ReadState.FAILED, failure = ReadFailure.REMOTE_FAILURE)
++        } catch (_: SecurityException) {
++            ReadValue(ReadState.FAILED, failure = ReadFailure.PERMISSION_DENIED)
++        } catch (_: RuntimeException) {
++            ReadValue(ReadState.FAILED, failure = ReadFailure.INVALID_RESPONSE)
++        } finally {
++            reply.recycle()
++            request.recycle()
++        }
++    }
++}
 --- a/shared/src/main/java/com/shilapi/xcertplay/compat/NetworkInterfaceCompat.kt
 +++ b/shared/src/main/java/com/shilapi/xcertplay/compat/NetworkInterfaceCompat.kt
 @@ -0,0 +1,8 @@
@@ -4835,7 +6365,7 @@
  import java.io.Closeable
  import java.nio.ByteBuffer
  import java.util.concurrent.ConcurrentHashMap
-@@ -31,17 +30,31 @@
+@@ -31,18 +30,42 @@
  import java.util.concurrent.atomic.AtomicLong
  import java.util.concurrent.TimeUnit
  
@@ -4853,10 +6383,17 @@
      context: Context?,
      private val enabled: Boolean,
      private val report: (String) -> Unit = {},
++    private val separateGeelyFocus: Boolean = false,
  ) {
 -    private data class Entry(val channel: AudioChannel, val attributes: AudioAttributes)
 +    // AudioAttributes/AudioFocusRequest are absent on Android 4.3; keep them as Any and reflect.
 +    private data class Entry(val channel: AudioChannel, val attributes: Any)
++    private data class GeelyFocusKey(val channel: AudioChannel, val streamType: Int)
++    private class GeelyFocusLease(
++        val key: GeelyFocusKey,
++        val listener: AudioManager.OnAudioFocusChangeListener,
++        val callbackVersion: AtomicInteger = AtomicInteger(),
++    )
  
      private val manager = context?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
      private val active = LinkedHashMap<AudioTrack, Entry>()
@@ -4867,14 +6404,22 @@
 +    private var legacyOnlyFocusHeld = false
 +    private var legacyRequestHeld = false
      private var requestedChannel: AudioChannel? = null
++    private val geelyTracks = LinkedHashMap<AudioTrack, GeelyFocusKey>()
++    private val geelyListeners = LinkedHashMap<GeelyFocusKey, GeelyFocusLease>()
++    private val geelyVolumes = LinkedHashMap<GeelyFocusKey, Float>()
      private val listener = AudioManager.OnAudioFocusChangeListener { change ->
          synchronized(this) {
-@@ -56,47 +69,113 @@
+             runCatching { report("Audio: focus change=$change activeTracks=${active.size}") }
+@@ -56,47 +79,215 @@
      }
  
      @Synchronized
 -    fun acquire(track: AudioTrack, channel: AudioChannel, attributes: AudioAttributes) {
 +    fun acquire(track: AudioTrack, channel: AudioChannel, attributes: Any?, legacyStreamType: Int) {
++        if (separateGeelyFocus) {
++            acquireGeely(track, channel, legacyStreamType)
++            return
++        }
          if (!enabled || manager == null || channel == AudioChannel.NAVIGATION) return
 +        currentLegacyStreamType = legacyStreamType
 +        if (attributes == null) return
@@ -4884,6 +6429,10 @@
  
      @Synchronized
 +    fun acquireLegacy(track: AudioTrack, channel: AudioChannel, streamType: Int) {
++        if (separateGeelyFocus) {
++            acquireGeely(track, channel, streamType)
++            return
++        }
 +        if (!enabled || channel == AudioChannel.NAVIGATION) return
 +        currentLegacyStreamType = streamType
 +        legacyOnlyTracks[track] = channel to streamType
@@ -4892,8 +6441,102 @@
 +
 +    @Synchronized
      fun release(track: AudioTrack) {
++        val geelyKey = geelyTracks.remove(track)
++        if (geelyKey != null && geelyTracks.values.none { it == geelyKey }) {
++            geelyVolumes.remove(geelyKey)
++            geelyListeners.remove(geelyKey)?.let { lease ->
++                runCatching { manager?.abandonAudioFocus(lease.listener) }
++                runCatching {
++                    report("Audio: Geely focus released channel=${geelyKey.channel} stream=${geelyKey.streamType}")
++                }
++            }
++        }
 +        if (legacyOnlyTracks.remove(track) != null) refreshLegacyFocus()
          if (active.remove(track) != null) refreshRequest()
++    }
++
++    @Suppress("DEPRECATION")
++    private fun acquireGeely(track: AudioTrack, channel: AudioChannel, streamType: Int) {
++        if (!enabled) return
++        val key = GeelyFocusKey(channel, streamType)
++        val oldKey = geelyTracks[track]
++        if (oldKey == key) return
++        if (oldKey != null) release(track)
++        geelyTracks[track] = key
++        geelyListeners[key]?.let {
++            setGeelyChannelVolume(key, geelyVolumes[key] ?: FULL_VOLUME)
++            return
++        }
++        // A stream is silent until AudioService grants focus. This prevents a rejected vendor
++        // stream from continuing over a call, reversing alert, or another system prompt.
++        if (!geelyVolumes.containsKey(key)) geelyVolumes[key] = MUTED_VOLUME
++        setGeelyChannelVolume(key, geelyVolumes[key] ?: MUTED_VOLUME)
++        val service = manager
++        if (service == null) {
++            runCatching { report("Audio: Geely focus unavailable channel=$channel stream=$streamType; route muted") }
++            return
++        }
++        lateinit var lease: GeelyFocusLease
++        val focus = AudioManager.OnAudioFocusChangeListener { change ->
++            handleGeelyFocusChange(key, lease, change)
++        }
++        lease = GeelyFocusLease(key, focus)
++        // Install identity before requesting focus: an OEM may dispatch a callback immediately.
++        geelyListeners[key] = lease
++        val gain = when (channel) {
++            AudioChannel.MEDIA -> AudioManager.AUDIOFOCUS_GAIN
++            AudioChannel.NAVIGATION -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
++            AudioChannel.PHONE, AudioChannel.ASSISTANT -> AudioManager.AUDIOFOCUS_GAIN_TRANSIENT
++        }
++        val versionBeforeRequest = lease.callbackVersion.get()
++        val result = runCatching { service.requestAudioFocus(focus, streamType, gain) }
++            .getOrDefault(AudioManager.AUDIOFOCUS_REQUEST_FAILED)
++        if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
++            // Do not overwrite a loss callback that raced with requestAudioFocus's return.
++            if (lease.callbackVersion.get() == versionBeforeRequest) setGeelyChannelVolume(key, FULL_VOLUME)
++            runCatching {
++                report("Audio: Geely focus requested channel=$channel stream=$streamType gain=$gain granted=true")
++            }
++        } else {
++            if (geelyListeners[key] === lease) geelyListeners.remove(key)
++            setGeelyChannelVolume(key, MUTED_VOLUME)
++            runCatching {
++                report("Audio: Geely focus denied channel=$channel stream=$streamType gain=$gain; route muted")
++            }
++        }
++    }
++
++    @Synchronized
++    private fun handleGeelyFocusChange(
++        key: GeelyFocusKey,
++        lease: GeelyFocusLease,
++        change: Int,
++    ) {
++        if (geelyListeners[key] !== lease) {
++            runCatching {
++                report("Audio: ignored stale Geely focus callback channel=${key.channel} stream=${key.streamType} change=$change")
++            }
++            return
++        }
++        lease.callbackVersion.incrementAndGet()
++        val volume = when (change) {
++            AudioManager.AUDIOFOCUS_GAIN -> FULL_VOLUME
++            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> DUCKED_VOLUME
++            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
++            AudioManager.AUDIOFOCUS_LOSS -> MUTED_VOLUME
++            else -> return
++        }
++        setGeelyChannelVolume(key, volume)
++        runCatching {
++            report("Audio: Geely focus change channel=${key.channel} stream=${key.streamType} change=$change volume=$volume")
++        }
++    }
++
++    private fun setGeelyChannelVolume(key: GeelyFocusKey, volume: Float) {
++        geelyVolumes[key] = volume
++        geelyTracks.filterValues { it == key }.keys.forEach { track ->
++            runCatching { PortableAudio.setVolume(track, volume) }
++        }
 +    }
 +
 +    @Suppress("DEPRECATION")
@@ -4993,16 +6636,40 @@
      }
  
      private fun AudioChannel.focusPriority(): Int = when (this) {
-@@ -138,7 +217,7 @@
+@@ -110,6 +301,7 @@
+         const val TAG = "DiPlay-AudioFocus"
+         const val FULL_VOLUME = 1f
+         const val DUCKED_VOLUME = 0.2f
++        const val MUTED_VOLUME = 0f
+     }
+ }
+ 
+@@ -129,6 +321,8 @@
+     private val audioFocusEnabled: Boolean = false,
+     private val mediaChannel: Int = 0,
+     private val navigationChannel: Int = 0,
++    geelyAudioRouting: Boolean = false,
++    private val geelyNavigationAlert: Boolean = false,
+     context: Context? = null,
+     private val navigationStreamType: Int = AudioChannelMapper.DEFAULT_NAVIGATION_STREAM_TYPE,
+     onScreenStreamActiveChanged: ((Int, Boolean) -> Unit)? = null,
+@@ -138,11 +332,13 @@
      private val onMediaAudioChanged: (Boolean) -> Unit = {},
  ) : MediaSink {
      private val appContext = context?.applicationContext
 -    private val audioManager = appContext?.getSystemService(AudioManager::class.java)
 +    private val audioManager = appContext?.systemService(AudioManager::class.java, "audio")
++    private val geelyAudio = if (geelyAudioRouting) GeelyAudioCapabilities.detect() else null
      private val audioFocusCoordinator = AudioFocusCoordinator(
          appContext,
-         audioFocusEnabled,
-@@ -288,7 +367,7 @@
+-        audioFocusEnabled,
++        audioFocusEnabled || geelyAudio != null,
+         onAudioDiagnostic,
++        separateGeelyFocus = geelyAudio != null,
+     )
+     private val screenStateLock = Any()
+     private val activeScreenTypes = mutableSetOf<Int>()
+@@ -288,7 +484,7 @@
          // This callback runs on the downlink thread; microphone failures must not stop playback.
          try {
              if (config.audioType == "telephony") enterCommunicationMode(id)
@@ -5011,7 +6678,7 @@
              if (!uplink.start()) {
                  microphoneUplinks.remove(id, uplink)
                  restoreAudioMode(id)
-@@ -364,7 +443,7 @@
+@@ -364,7 +560,7 @@
      }
  
      private fun videoDecoder(type: Int): VideoDecoder =
@@ -5020,7 +6687,24 @@
  
      private fun newVideoDecoder(type: Int, surface: Surface?, statsLabel: String? = null) = VideoDecoder(
          type,
-@@ -608,7 +687,7 @@
+@@ -385,13 +581,15 @@
+         return AudioRenderer(
+             format,
+             advancedAudioChannelMapping,
+-            audioFocusEnabled,
++            audioFocusEnabled || geelyAudio != null,
+             mediaChannel,
+             navigationChannel,
+             audioFocusCoordinator,
+             navigationStreamType,
+             mediaBufferMillis,
+             onAudioDiagnostic,
++            geelyAudio,
++            geelyNavigationAlert,
+         ).also { audioRenderers[id] = it }
+     }
+ }
+@@ -608,7 +806,7 @@
              return
          }
          val codec = decoder
@@ -5029,7 +6713,7 @@
              try {
                  codec.setOutputSurface(surface)
                  Log.i(TAG, "video decoder output surface updated")
-@@ -645,7 +724,7 @@
+@@ -645,7 +843,7 @@
              dequeue = { codec.dequeueInputBuffer(INPUT_TIMEOUT_US) },
          )
          if (index < 0) { recover("video decoder input stalled"); return }
@@ -5038,7 +6722,7 @@
          input.clear()
          if (annexB.size <= input.remaining()) {
              input.put(annexB)
-@@ -682,6 +761,7 @@
+@@ -682,6 +880,7 @@
              when {
                  index == MediaCodec.INFO_TRY_AGAIN_LATER -> return
                  index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> logOutputFormat(codec.outputFormat)
@@ -5046,7 +6730,12 @@
                  index >= 0 -> {
                      val render = outputSurface != null
                      codec.releaseOutputBuffer(index, render)
-@@ -770,7 +850,9 @@
+@@ -767,10 +966,14 @@
+     private val navigationStreamType: Int,
+     private val mediaBufferMillis: Int,
+     private val report: (String) -> Unit,
++    private val geelyAudio: GeelyAudioCapabilities?,
++    private val geelyNavigationAlert: Boolean,
  ) : Closeable {
      private data class AudioPacket(val rtp: ByteArray, val sample: Int)
  
@@ -5057,7 +6746,7 @@
      private var mappedChannel: AudioChannel? = null
      private val queue = LinkedBlockingQueue<AudioPacket>(MAX_QUEUED_PACKETS)
      @Volatile private var running = true
-@@ -823,7 +905,14 @@
+@@ -823,7 +1026,14 @@
              packetsReceived.incrementAndGet()
              val now = System.nanoTime()
              val previous = lastArrivalNs.getAndSet(now)
@@ -5073,16 +6762,18 @@
          }
          if (!started || !queue.offer(AudioPacket(rtp, sample))) {
              if (started) packetsDropped.incrementAndGet()
-@@ -916,27 +1005,34 @@
+@@ -915,28 +1125,43 @@
+         }
          val selection = mappedSelection()
          mappedChannel = selection.channel
-         val streamOverride = channelOverride(selection.channel)
+-        val streamOverride = channelOverride(selection.channel)
 -        val attributes = audioAttributesFor(selection, streamOverride)
 -        trackAttributes = attributes
++        val streamOverride = channelOverride(selection.channel, format.audioType)
          val plan = MediaAudioBuffer.plan(selection.channel == AudioChannel.MEDIA,
              format.sampleRate, format.channels, minBuffer, mediaBufferMillis)
          bytesPerSecond = format.sampleRate * frameBytes
-+        legacyTrackStreamType = legacyStreamTypeFor(selection, streamOverride)
++        legacyTrackStreamType = AudioStreamRouting.legacyStreamType(selection.channel, streamOverride)
 +        trackAttributes = if (modernAudioSupported) {
 +            ModernAudio.attributes(usageFor(selection.channel), contentTypeFor(selection.contentType), streamOverride)
 +        } else {
@@ -5095,12 +6786,20 @@
 +        if (!modernAudioSupported) {
 +            // API 18 only supports the legacy stream-type AudioTrack constructor.
 +            @Suppress("DEPRECATION")
-+            built = AudioTrack(
-+                legacyTrackStreamType, format.sampleRate, channelMask, encoding,
-+                plan.trackBufferBytes, AudioTrack.MODE_STREAM,
++            fun legacyTrack() = AudioTrack(legacyTrackStreamType, format.sampleRate, channelMask,
++                encoding, plan.trackBufferBytes, AudioTrack.MODE_STREAM)
++            built = if (geelyAudio == null) legacyTrack() else LegacyAudioFallback.build(
++                createLegacy = { legacyTrack() },
++                isInitialized = { it.state == AudioTrack.STATE_INITIALIZED },
++                release = { it.release() },
++                createFallback = {
++                    report("Audio: H52 stream=$legacyTrackStreamType unavailable; falling back to MUSIC=3")
++                    legacyTrackStreamType = AudioManager.STREAM_MUSIC
++                    legacyTrack()
++                },
 +            )
 +            routeLabel = "streamType=$legacyTrackStreamType(legacy)"
-+        } else if (streamOverride == 0) {
++        } else if (streamOverride == null) {
              routeLabel = "usage"
 -            built = AudioTrack.Builder()
 -                .setAudioAttributes(attributes)
@@ -5118,7 +6817,7 @@
                      AudioTrack(streamType, format.sampleRate, channelMask, encoding,
                          plan.trackBufferBytes, AudioTrack.MODE_STREAM)
                  },
-@@ -945,18 +1041,13 @@
+@@ -945,18 +1170,13 @@
                  createFallback = {
                      routeLabel = "streamType=$streamType(fallback=usage)"
                      Log.w(TAG, "streamType=$streamType rejected by this ROM; falling back to usage-based track")
@@ -5140,14 +6839,36 @@
          startThresholdBytes = MediaAudioBuffer.startBytesFor(plan.startBytes, capacityBytes, PREBUFFER_WRITE_CHUNK_BYTES)
          report("Audio: ready audioType=${format.audioType} codec=${format.codec} " +
              "rate=${format.sampleRate} channels=${format.channels} " +
-@@ -988,24 +1079,18 @@
-         else -> 0
+@@ -977,36 +1197,25 @@
+                 "channel=${selection.channel} usage=${usageFor(selection.channel)} " +
+                 "contentType=${contentTypeFor(selection.contentType)} " +
+                 "streamOverride=$streamOverride " +
+-                "focus=${if (audioFocusEnabled) "on" else "off"}",
++                "focus=${if (audioFocusEnabled || geelyAudio != null) "on" else "off"}",
+         )
      }
  
+-    /** 0 uses usage-based routing; 1–20 attempt legacy stream types supported by the head unit. */
+-    private fun channelOverride(channel: AudioChannel): Int = when (channel) {
+-        AudioChannel.MEDIA -> mediaChannel
+-        AudioChannel.NAVIGATION -> navigationChannel
+-        else -> 0
+-    }
+-
++    /** Null selects usage routing; a stream number, including 0, is an explicit legacy route. */
++    private fun channelOverride(channel: AudioChannel, audioType: String): Int? = AudioStreamRouting.override(
++        channel = channel,
++        audioType = audioType,
++        geelyAudio = geelyAudio,
++        separateGeelyAlerts = geelyNavigationAlert,
++        mediaChannel = mediaChannel,
++        navigationChannel = navigationChannel,
++    )
++
 +    @RequiresApi(Build.VERSION_CODES.M)
      private fun audioAttributesFor(
          selection: AudioChannelSelection,
-         streamOverride: Int,
+-        streamOverride: Int,
 -    ): AudioAttributes {
 -        if (streamOverride in AudioManager.STREAM_SYSTEM..AudioManager.STREAM_ACCESSIBILITY) {
 -            // Android accepts only its defined legacy stream IDs here. BYD audio policy can
@@ -5163,18 +6884,13 @@
 -            .setUsage(usageFor(selection.channel))
 -            .setContentType(contentTypeFor(selection.contentType))
 -            .build()
+-    }
++        streamOverride: Int?,
 +    ): Any = ModernAudio.attributes(usageFor(selection.channel), contentTypeFor(selection.contentType), streamOverride)
-+
-+    private fun legacyStreamTypeFor(selection: AudioChannelSelection, streamOverride: Int): Int {
-+        if (streamOverride != 0) return streamOverride
-+        return when (selection.channel) {
-+            AudioChannel.MEDIA, AudioChannel.NAVIGATION -> AudioManager.STREAM_MUSIC
-+            AudioChannel.PHONE, AudioChannel.ASSISTANT -> AudioManager.STREAM_VOICE_CALL
-+        }
-     }
  
      private fun mappedSelection(): AudioChannelSelection {
-@@ -1021,11 +1106,19 @@
+         val mode = if (advancedAudioChannelMapping) {
+@@ -1021,11 +1230,19 @@
          )
      }
  
@@ -5190,7 +6906,7 @@
 +        channelMask: Int,
 +        bufferBytes: Int,
 +    ): AudioTrack = ModernAudio.usageTrack(
-+        attributes = audioAttributesFor(selection, 0),
++        attributes = audioAttributesFor(selection, null),
 +        encoding = encoding,
 +        sampleRate = format.sampleRate,
 +        channelMask = channelMask,
@@ -5199,12 +6915,13 @@
  
      /**
       * Shares a sink-level focus request across all active non-navigation renderers.
-@@ -1033,23 +1126,22 @@
+@@ -1033,23 +1250,22 @@
       */
      private fun requestAudioFocus() {
          val channel = mappedChannel ?: return
 -        val attributes = trackAttributes ?: return
-         if (channel == AudioChannel.NAVIGATION) {
+-        if (channel == AudioChannel.NAVIGATION) {
++        if (channel == AudioChannel.NAVIGATION && geelyAudio == null) {
              Log.i(TAG, "audio focus skipped channel=NAVIGATION; overlays without ducking")
              return
          }
@@ -5230,7 +6947,7 @@
  
      private fun streamType(): Int {
          val mode = if (advancedAudioChannelMapping) {
-@@ -1074,15 +1166,15 @@
+@@ -1074,15 +1290,15 @@
      }
  
      private fun usageFor(channel: AudioChannel): Int = when (channel) {
@@ -5252,7 +6969,7 @@
      }
  
      /** Minimal OpusHead CSD for the mono 48 kHz stream CarPlay negotiates. */
-@@ -1169,7 +1261,7 @@
+@@ -1169,7 +1385,7 @@
              }
              return
          }
@@ -5261,7 +6978,7 @@
          input.clear()
          if (payload.size <= input.remaining()) {
              input.put(payload)
-@@ -1197,6 +1289,7 @@
+@@ -1197,6 +1413,7 @@
              when {
                  index == MediaCodec.INFO_TRY_AGAIN_LATER -> return
                  index == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> Unit
@@ -5269,7 +6986,7 @@
                  index >= 0 -> {
                      val size = info.size
                      if (size > 0) {
-@@ -1211,7 +1304,7 @@
+@@ -1211,7 +1428,7 @@
                          }
                      }
                      if (size > 0) {
@@ -5278,7 +6995,7 @@
                          if (output != null) {
                              if (size > pcm.size) pcm = ByteArray(size)
                              output.position(info.offset)
-@@ -1251,7 +1344,7 @@
+@@ -1251,7 +1468,7 @@
                  minOf(length - written, PREBUFFER_WRITE_CHUNK_BYTES)
              }
              val writeStarted = System.nanoTime()
@@ -5287,7 +7004,7 @@
              maxWriteMs = maxOf(maxWriteMs, (System.nanoTime() - writeStarted) / 1_000_000L)
              if (count < 0) {
                  writeErrorsThisWindow++
-@@ -1280,7 +1373,7 @@
+@@ -1280,7 +1497,7 @@
      }
  
      private fun startPlayback(track: AudioTrack) {
@@ -5296,7 +7013,7 @@
          track.play()
          playbackStarted = true
      }
-@@ -1288,7 +1381,7 @@
+@@ -1288,7 +1505,7 @@
      private fun maintainPlaybackBuffer() {
          val track = track ?: return
          if (bufferProgress.shouldRebuffer(mappedChannel == AudioChannel.MEDIA, playbackStarted,
@@ -5305,7 +7022,7 @@
              // The hardware buffer has actually drained. Pause without flushing or discarding PCM,
              // then use the configured start threshold again when music resumes.
              track.pause()
-@@ -1308,7 +1401,7 @@
+@@ -1308,7 +1525,7 @@
          val now = System.nanoTime()
          if (statsWindowStartNs == 0L) statsWindowStartNs = now
          if (!force && now - statsWindowStartNs < STATS_WINDOW_NS) return
@@ -5314,7 +7031,7 @@
          val lastRx = lastArrivalNs.get()
          val currentTrack = track
          val playbackHeadFrames = currentTrack?.playbackHeadPosition
-@@ -1320,10 +1413,10 @@
+@@ -1320,10 +1537,10 @@
          }
          val queuedFrames = playbackHeadFrames?.let { (totalWrittenFrames - it).coerceAtLeast(0L) }
          val line = "audio stats audioType=${format.audioType} channel=$mappedChannel " +
@@ -5327,6 +7044,38 @@
              "rx=${packetsReceived.getAndSet(0)} " +
              "dropped=${packetsDropped.getAndSet(0)} underruns=+${underruns - statsLastUnderruns} queue=${queue.size} " +
              "playing=$playbackStarted maxGapMs=${maxArrivalGapMs.getAndSet(0)} " +
+--- a/shared/src/main/java/com/shilapi/xcertplay/media/AudioChannelMapping.kt
++++ b/shared/src/main/java/com/shilapi/xcertplay/media/AudioChannelMapping.kt
+@@ -88,3 +88,29 @@
+             AudioChannelSelection(AudioChannel.NAVIGATION, AudioContentType.SPEECH, navigationStreamType)
+         }
+ }
++
++/** Keeps the user-facing zero/automatic preference separate from AudioManager's real stream 0. */
++internal object AudioStreamRouting {
++    const val LEGACY_STREAM_MUSIC = 3
++    const val LEGACY_STREAM_VOICE_CALL = 0
++
++    fun override(
++        channel: AudioChannel,
++        audioType: String,
++        geelyAudio: GeelyAudioCapabilities?,
++        separateGeelyAlerts: Boolean,
++        mediaChannel: Int,
++        navigationChannel: Int,
++    ): Int? = when (channel) {
++        AudioChannel.MEDIA -> geelyAudio?.carPlay ?: mediaChannel.takeIf { it != 0 }
++        AudioChannel.NAVIGATION -> geelyAudio?.navigationStream(audioType, separateGeelyAlerts)
++            ?: navigationChannel.takeIf { it != 0 }
++        AudioChannel.PHONE, AudioChannel.ASSISTANT -> null
++    }
++
++    fun legacyStreamType(channel: AudioChannel, streamOverride: Int?): Int =
++        streamOverride ?: when (channel) {
++            AudioChannel.MEDIA, AudioChannel.NAVIGATION -> LEGACY_STREAM_MUSIC
++            AudioChannel.PHONE, AudioChannel.ASSISTANT -> LEGACY_STREAM_VOICE_CALL
++        }
++}
 --- a/shared/src/main/java/com/shilapi/xcertplay/media/CodecCompat.kt
 +++ b/shared/src/main/java/com/shilapi/xcertplay/media/CodecCompat.kt
 @@ -0,0 +1,25 @@
@@ -5354,7 +7103,38 @@
 +    fun videoDecoderFor(mime: String): MediaCodecInfo? = decoders().firstOrNull { info ->
 +        !info.isEncoder && info.supportedTypes.any { it.equals(mime, ignoreCase = true) }
 +    }
-+}--- a/shared/src/main/java/com/shilapi/xcertplay/media/MicrophoneUplink.kt
++}--- a/shared/src/main/java/com/shilapi/xcertplay/media/GeelyAudioCapabilities.kt
++++ b/shared/src/main/java/com/shilapi/xcertplay/media/GeelyAudioCapabilities.kt
+@@ -0,0 +1,28 @@
++package com.shilapi.xcertplay.media
++
++import android.media.AudioManager
++
++/** H52 extends AudioManager; discover its public constants rather than assuming stream numbers. */
++data class GeelyAudioCapabilities(val carPlay: Int, val navigationSpeech: Int, val navigationAlert: Int?) {
++    /** Only CarPlay's alert stream may opt into the questionable vendor alert route. */
++    fun navigationStream(audioType: String, separateAlerts: Boolean): Int =
++        if (separateAlerts && audioType.equals("alert", ignoreCase = true)) {
++            navigationAlert ?: navigationSpeech
++        } else {
++            navigationSpeech
++        }
++
++    companion object {
++        fun detect(): GeelyAudioCapabilities? = fromFields { name ->
++            runCatching { AudioManager::class.java.getField(name).getInt(null) }.getOrNull()
++        }
++
++        internal fun fromFields(read: (String) -> Int?): GeelyAudioCapabilities? {
++            val media = read("STREAM_CARPLAYAUDIO") ?: return null
++            val speech = read("STREAM_NAVI_TTS") ?: return null
++            // H41 has NAVI_TTS but no CARPLAYAUDIO. Do not activate a guessed H52 profile there.
++            if (media != 23 || speech != 11 || read("MODE_CARPLAYAUDIO") != 14) return null
++            return GeelyAudioCapabilities(media, speech, read("STREAM_NAVI_ALERT")?.takeIf { it == 25 })
++        }
++    }
++}
+--- a/shared/src/main/java/com/shilapi/xcertplay/media/MicrophoneUplink.kt
 +++ b/shared/src/main/java/com/shilapi/xcertplay/media/MicrophoneUplink.kt
 @@ -77,17 +77,24 @@
          }
@@ -5423,7 +7203,7 @@
          if (!running.compareAndSet(true, false)) {
 --- a/shared/src/main/java/com/shilapi/xcertplay/media/ModernAudio.kt
 +++ b/shared/src/main/java/com/shilapi/xcertplay/media/ModernAudio.kt
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,74 @@
 +package com.shilapi.xcertplay.media
 +
 +import android.media.AudioAttributes
@@ -5443,9 +7223,11 @@
 +/** Keep AudioAttributes and AudioFormat out of API 18 classes and method descriptors. */
 +@RequiresApi(Build.VERSION_CODES.M)
 +object ModernAudio {
-+    fun attributes(usage: Int, contentType: Int, legacyStreamType: Int): Any {
++    fun attributes(usage: Int, contentType: Int, legacyStreamType: Int?): Any {
 +        val builder = AudioAttributes.Builder()
-+        if (legacyStreamType in AudioManager.STREAM_SYSTEM..AudioManager.STREAM_ACCESSIBILITY) {
++        if (legacyStreamType != null && legacyStreamType in
++            AudioManager.STREAM_VOICE_CALL..AudioManager.STREAM_ACCESSIBILITY
++        ) {
 +            builder.setLegacyStreamType(legacyStreamType)
 +        } else {
 +            builder.setUsage(usage).setContentType(contentType)
@@ -7871,6 +9653,358 @@
 +    }
 +
 +    private const val GET_CONFIGURATION_TIMEOUT_MS = 2_000
++}
+--- a/shared/src/test/java/com/shilapi/xcertplay/compat/GeelyBluetoothDiagnosticsTest.kt
++++ b/shared/src/test/java/com/shilapi/xcertplay/compat/GeelyBluetoothDiagnosticsTest.kt
+@@ -0,0 +1,285 @@
++package com.shilapi.xcertplay.compat
++
++import android.content.ComponentName
++import android.content.Context
++import android.content.Intent
++import android.content.ServiceConnection
++import android.os.Binder
++import android.os.IBinder
++import android.os.Looper
++import android.os.Parcel
++import java.util.concurrent.Executor
++import java.util.concurrent.TimeUnit
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertFalse
++import org.junit.Assert.assertNull
++import org.junit.Assert.assertTrue
++import org.junit.Test
++import org.junit.runner.RunWith
++import org.robolectric.RobolectricTestRunner
++import org.robolectric.RuntimeEnvironment
++import org.robolectric.annotation.Config
++import org.robolectric.Shadows.shadowOf
++
++@RunWith(RobolectricTestRunner::class)
++@Config(sdk = [28], manifest = Config.NONE)
++class GeelyBluetoothDiagnosticsTest {
++    @Test fun anwGettersUse10500DescriptorCodesAndExactOutputCapacities() {
++        val binder = FakeAnwBinder(power = 1, pairedCount = 2, spp = 1)
++        val result = GeelyBluetoothReadOnlyProtocol.read(binder)
++
++        assertEquals(BindingState.CONNECTED, result.bindingState)
++        assertEquals(AnwPowerState.ON, result.power.value)
++        assertEquals(2, result.pairedCount.value)
++        assertEquals(true, result.sppInitialized.value)
++        assertEquals(listOf(0x03, 0x10, 0x43), binder.codes)
++        assertEquals(listOf(1, 16, 16, 16), binder.pairedCapacities)
++        assertFalse(binder.protocolError)
++    }
++
++    @Test fun unsupportedTransactionIsNotReportedAsOffOrFalse() {
++        val binder = FakeAnwBinder(power = 0, pairedCount = 0, spp = 0, unsupportedCode = 0x03)
++        val result = GeelyBluetoothReadOnlyProtocol.read(binder)
++        assertEquals(ReadState.UNSUPPORTED, result.power.state)
++        assertNull(result.power.value)
++        assertEquals(ReadState.OK, result.sppInitialized.state)
++        assertEquals(false, result.sppInitialized.value)
++    }
++
++    @Test fun unknownPowerCodeAndTruncatedRepliesRemainUnknown() {
++        val unknown = GeelyBluetoothReadOnlyProtocol.read(FakeAnwBinder(power = 9, pairedCount = 0, spp = 0))
++        assertEquals(ReadState.FAILED, unknown.power.state)
++        assertEquals(ReadFailure.INVALID_RESPONSE, unknown.power.failure)
++
++        val truncated = GeelyBluetoothReadOnlyProtocol.read(
++            FakeAnwBinder(power = 0, pairedCount = 0, spp = 0, emptyReplyCodes = setOf(0x03, 0x43)),
++        )
++        assertEquals(ReadState.FAILED, truncated.power.state)
++        assertEquals(ReadState.FAILED, truncated.sppInitialized.state)
++        assertNull(truncated.power.value)
++        assertNull(truncated.sppInitialized.value)
++    }
++
++    @Test fun malformedPairedArrayCapacitiesAndReturnCodeDoNotBecomeEmptyList() {
++        val wrongCapacities = GeelyBluetoothReadOnlyProtocol.read(
++            FakeAnwBinder(power = 1, pairedCount = 0, spp = 0, wrongPairedReplyLength = true),
++        )
++        assertEquals(ReadState.FAILED, wrongCapacities.pairedCount.state)
++        assertNull(wrongCapacities.pairedCount.value)
++
++        val failedReturn = GeelyBluetoothReadOnlyProtocol.read(
++            FakeAnwBinder(power = 1, pairedCount = 0, spp = 0, pairedReturnCode = 0),
++        )
++        assertEquals(ReadState.FAILED, failedReturn.pairedCount.state)
++        assertNull(failedReturn.pairedCount.value)
++    }
++
++    @Test fun wrongAnwDescriptorStopsBeforeAnyTransaction() {
++        val binder = FakeAnwBinder(power = 1, pairedCount = 0, spp = 0, descriptor = "other.IPhoneLink")
++        val result = GeelyBluetoothReadOnlyProtocol.read(binder)
++        assertEquals(BindingState.INVALID_BINDER, result.bindingState)
++        assertTrue(binder.codes.isEmpty())
++        assertEquals(ReadFailure.DESCRIPTOR_MISMATCH, result.power.failure)
++    }
++
++    @Test fun ecarxGetterUsesItsOwnDescriptorAndTransactionAndRejectsNonBooleanValues() {
++        val binder = FakeEcarxBinder(value = 0)
++        assertEquals(ReadValue(ReadState.OK, false), EcarxBluetoothReadOnlyProtocol.readBinder(binder))
++        assertEquals(listOf(0x05), binder.codes)
++        assertFalse(binder.protocolError)
++
++        val malformed = FakeEcarxBinder(value = 7)
++        assertEquals(ReadFailure.INVALID_RESPONSE, EcarxBluetoothReadOnlyProtocol.readBinder(malformed).failure)
++
++        val wrongDescriptor = FakeEcarxBinder(value = 1, descriptor = "com.anwsdk.service.IAnwPhoneLink")
++        assertEquals(ReadFailure.DESCRIPTOR_MISMATCH, EcarxBluetoothReadOnlyProtocol.readBinder(wrongDescriptor).failure)
++        assertTrue(wrongDescriptor.codes.isEmpty())
++
++        val truncated = FakeEcarxBinder(value = 0, emptyReply = true)
++        assertEquals(ReadFailure.INVALID_RESPONSE, EcarxBluetoothReadOnlyProtocol.readBinder(truncated).failure)
++    }
++
++    @Test fun bindTimeoutUnbindsAndLateServiceCallbackCannotStartBinderReads() {
++        val binding = FakeBinding()
++        val client = client(binding)
++        var result: GeelyBluetoothSnapshot? = null
++        client.query(timeoutMillis = 20) { result = it }
++        mainLooper().idle()
++        assertTrue(binding.bindCalled)
++        mainLooper().idleFor(25, TimeUnit.MILLISECONDS)
++
++        assertEquals(BindingState.BIND_TIMEOUT, result?.bindingState)
++        assertEquals(1, binding.unbindCount)
++        val late = FakeAnwBinder(power = 1, pairedCount = 0, spp = 0)
++        binding.connection!!.onServiceConnected(GeelyBluetoothDiagnostics.SERVICE_COMPONENT, late)
++        mainLooper().idle()
++        assertTrue(late.codes.isEmpty())
++    }
++
++    @Test fun serviceDisconnectProducesUnknownAnwStateAndIndependentEcarxRead() {
++        val binding = FakeBinding()
++        val client = client(binding, ecarxReader = { ReadValue(ReadState.OK, false) })
++        var result: GeelyBluetoothSnapshot? = null
++        client.query { result = it }
++        mainLooper().idle()
++        binding.connection!!.onServiceDisconnected(GeelyBluetoothDiagnostics.SERVICE_COMPONENT)
++        mainLooper().idle()
++
++        assertEquals(BindingState.DISCONNECTED, result?.bindingState)
++        assertEquals(ReadState.FAILED, result?.power?.state)
++        assertEquals(ReadState.OK, result?.ecarxEnabled?.state)
++        assertEquals(false, result?.ecarxEnabled?.value)
++        assertEquals(1, binding.unbindCount)
++    }
++
++    @Test fun disconnectDuringBinderReadMarksAnwUnknownButKeepsEcarxResultSeparate() {
++        val binding = FakeBinding()
++        val executor = ManualExecutor()
++        val client = client(binding, executor) { ReadValue(ReadState.OK, true) }
++        var result: GeelyBluetoothSnapshot? = null
++        client.query { result = it }
++        mainLooper().idle()
++        val binder = FakeAnwBinder(power = 1, pairedCount = 3, spp = 1)
++        binding.connection!!.onServiceConnected(GeelyBluetoothDiagnostics.SERVICE_COMPONENT, binder)
++        mainLooper().idle()
++        assertTrue(executor.task != null)
++        binding.connection!!.onServiceDisconnected(GeelyBluetoothDiagnostics.SERVICE_COMPONENT)
++        mainLooper().idle()
++        executor.runPending()
++        mainLooper().idle()
++
++        assertEquals(BindingState.DISCONNECTED, result?.bindingState)
++        assertEquals(ReadState.FAILED, result?.power?.state)
++        assertEquals(ReadState.FAILED, result?.pairedCount?.state)
++        assertEquals(ReadState.FAILED, result?.sppInitialized?.state)
++        assertEquals(ReadState.OK, result?.ecarxEnabled?.state)
++        assertEquals(true, result?.ecarxEnabled?.value)
++    }
++
++    @Test fun busyCallbackCanBeCancelledBeforeMainQueueDelivery() {
++        val binding = FakeBinding()
++        val client = client(binding)
++        val first = client.query { }
++        mainLooper().idle()
++        var called = false
++        val second = client.query { called = true }
++        second.cancel()
++        mainLooper().idle()
++        assertFalse(called)
++        first.cancel()
++        mainLooper().idle()
++    }
++
++    private fun client(
++        binding: FakeBinding,
++        executor: Executor = Executor { it.run() },
++        ecarxReader: () -> ReadValue<Boolean> = { ReadValue(ReadState.FAILED, failure = ReadFailure.SERVICE_UNAVAILABLE) },
++    ) = GeelyBluetoothDiagnostics(
++        RuntimeEnvironment.getApplication(),
++        binding,
++        executor,
++        android.os.Handler(Looper.getMainLooper()),
++        ecarxReader,
++    )
++
++    private fun mainLooper() = shadowOf(Looper.getMainLooper())
++
++    private class ManualExecutor : Executor {
++        var task: Runnable? = null
++        override fun execute(command: Runnable) { task = command }
++        fun runPending() { task?.run(); task = null }
++    }
++
++    private class FakeBinding : GeelyBluetoothDiagnostics.ServiceBinding {
++        var bindCalled = false
++        var unbindCount = 0
++        var connection: ServiceConnection? = null
++
++        override fun bind(context: Context, intent: Intent, connection: ServiceConnection): Boolean {
++            bindCalled = true
++            assertEquals(GeelyBluetoothDiagnostics.SERVICE_COMPONENT, intent.component)
++            this.connection = connection
++            return true
++        }
++
++        override fun unbind(context: Context, connection: ServiceConnection) {
++            unbindCount++
++        }
++    }
++
++    private class FakeAnwBinder(
++        private val power: Int,
++        private val pairedCount: Int,
++        private val spp: Int,
++        private val descriptor: String = GeelyBluetoothReadOnlyProtocol.DESCRIPTOR,
++        private val unsupportedCode: Int? = null,
++        private val emptyReplyCodes: Set<Int> = emptySet(),
++        private val wrongPairedReplyLength: Boolean = false,
++        private val pairedReturnCode: Int = 1,
++    ) : Binder() {
++        val codes = mutableListOf<Int>()
++        var pairedCapacities = emptyList<Int>()
++        var protocolError = false
++
++        init { attachInterface(null, descriptor) }
++
++        override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
++            val output = requireNotNull(reply)
++            if (code == INTERFACE_TRANSACTION) {
++                output.writeString(descriptor)
++                return true
++            }
++            if (code == unsupportedCode) return false
++            codes += code
++            data.enforceInterface(descriptor)
++            if (emptyReplyCodes.contains(code)) return true
++            output.writeNoException()
++            when (code) {
++                0x03 -> output.writeInt(power)
++                0x10 -> {
++                    val capacities = List(4) { data.readInt() }
++                    pairedCapacities = capacities
++                    protocolError = data.dataAvail() != 0 || capacities != listOf(1, 16, 16, 16)
++                    if (protocolError) return false
++                    output.writeInt(pairedReturnCode)
++                    if (pairedReturnCode == 1) {
++                        output.writeIntArray(if (wrongPairedReplyLength) intArrayOf(pairedCount, 1) else intArrayOf(pairedCount))
++                        output.writeStringArray(Array(16) { if (it == 0) "sample phone" else "" })
++                        output.writeStringArray(Array(16) { if (it == 0) "02:00:00:00:00:01" else "" })
++                        output.writeIntArray(IntArray(16))
++                    }
++                }
++                0x43 -> output.writeInt(spp)
++                else -> return false
++            }
++            return true
++        }
++    }
++
++    private class FakeEcarxBinder(
++        private val value: Int,
++        private val descriptor: String = EcarxBluetoothReadOnlyProtocol.DESCRIPTOR,
++        private val emptyReply: Boolean = false,
++    ) : Binder() {
++        val codes = mutableListOf<Int>()
++        var protocolError = false
++
++        init { attachInterface(null, descriptor) }
++
++        override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
++            val output = requireNotNull(reply)
++            if (code == INTERFACE_TRANSACTION) {
++                output.writeString(descriptor)
++                return true
++            }
++            codes += code
++            data.enforceInterface(descriptor)
++            protocolError = code != 0x05 || data.dataAvail() != 0
++            if (protocolError) return false
++            if (emptyReply) return true
++            output.writeNoException()
++            output.writeInt(value)
++            return true
++        }
++    }
++}
+--- a/shared/src/test/java/com/shilapi/xcertplay/media/GeelyAudioCapabilitiesTest.kt
++++ b/shared/src/test/java/com/shilapi/xcertplay/media/GeelyAudioCapabilitiesTest.kt
+@@ -0,0 +1,61 @@
++package com.shilapi.xcertplay.media
++
++import org.junit.Assert.*
++import org.junit.Test
++
++class GeelyAudioCapabilitiesTest {
++    private val h52 = mapOf("STREAM_CARPLAYAUDIO" to 23, "STREAM_NAVI_TTS" to 11,
++        "MODE_CARPLAYAUDIO" to 14, "STREAM_NAVI_ALERT" to 25)
++
++    @Test fun h52ProvidesSeparateMediaSpeechAndAlertRoutes() {
++        val profile = GeelyAudioCapabilities.fromFields(h52::get)!!
++        assertEquals(23, profile.carPlay)
++        assertEquals(11, profile.navigationStream("default", separateAlerts = true))
++        assertEquals(11, profile.navigationStream("compatibility", separateAlerts = true))
++        assertEquals(25, profile.navigationStream("alert", separateAlerts = true))
++        assertEquals(11, profile.navigationStream("alert", separateAlerts = false))
++    }
++
++    @Test fun stockAndroidDoesNotEnableVendorRouting() {
++        assertNull(GeelyAudioCapabilities.fromFields { null })
++    }
++
++    @Test fun h41NavigationConstantAloneIsInsufficient() {
++        assertNull(GeelyAudioCapabilities.fromFields(mapOf("STREAM_NAVI_TTS" to 11)::get))
++    }
++
++    @Test fun differingVendorMediaNumberIsRejected() {
++        assertNull(GeelyAudioCapabilities.fromFields((h52 + ("STREAM_CARPLAYAUDIO" to 12))::get))
++    }
++
++    @Test fun missingOrWrongModeDoesNotEnableProfile() {
++        assertNull(GeelyAudioCapabilities.fromFields((h52 - "MODE_CARPLAYAUDIO")::get))
++        assertNull(GeelyAudioCapabilities.fromFields((h52 + ("MODE_CARPLAYAUDIO" to 3))::get))
++    }
++
++    @Test fun missingAlertExtensionFallsBackToSpeech() {
++        val profile = GeelyAudioCapabilities.fromFields((h52 - "STREAM_NAVI_ALERT")::get)!!
++        assertNull(profile.navigationAlert)
++        assertEquals(11, profile.navigationStream("alert", separateAlerts = true))
++    }
++
++    @Test fun unrelatedAlertNumberIsNotExposed() {
++        assertNull(GeelyAudioCapabilities.fromFields((h52 + ("STREAM_NAVI_ALERT" to 9))::get)!!.navigationAlert)
++    }
++
++    @Test fun alertStreamIsUsedOnlyForAlertAudioType() {
++        val profile = GeelyAudioCapabilities.fromFields(h52::get)!!
++        assertEquals(11, AudioStreamRouting.override(AudioChannel.NAVIGATION, "default", profile, true, 0, 0))
++        assertEquals(11, AudioStreamRouting.override(AudioChannel.NAVIGATION, "compatibility", profile, true, 0, 0))
++        assertEquals(25, AudioStreamRouting.override(AudioChannel.NAVIGATION, "alert", profile, true, 0, 0))
++        assertEquals(11, AudioStreamRouting.override(AudioChannel.NAVIGATION, "alert", profile, false, 0, 0))
++    }
++
++    @Test fun automaticRouteAndRealVoiceCallStreamZeroAreDistinct() {
++        assertNull(AudioStreamRouting.override(AudioChannel.PHONE, "telephony", null, false, 0, 0))
++        assertEquals(0, AudioStreamRouting.legacyStreamType(AudioChannel.PHONE, null))
++        assertEquals(0, AudioStreamRouting.legacyStreamType(AudioChannel.MEDIA, 0))
++        assertNull(AudioStreamRouting.override(AudioChannel.MEDIA, "media", null, false, 0, 0))
++        assertEquals(3, AudioStreamRouting.legacyStreamType(AudioChannel.MEDIA, null))
++    }
 +}
 --- a/shared/src/test/java/com/shilapi/xcertplay/transport/ConfigurationDescriptorScannerTest.kt
 +++ b/shared/src/test/java/com/shilapi/xcertplay/transport/ConfigurationDescriptorScannerTest.kt

@@ -1,5 +1,7 @@
 package com.shilapi.xcertplay
 
+import android.content.Context
+
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
@@ -17,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.sin
 
 /** Plays one short tone through the same legacy stream route used by CarPlay audio. */
-internal class AudioChannelPreview(private val onUnavailable: (Int) -> Unit) : Closeable {
+internal class AudioChannelPreview(private val context: Context? = null, private val onUnavailable: (Int) -> Unit) : Closeable {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor { task ->
         Thread(task, "diplay-channel-preview").apply { isDaemon = true }
@@ -27,14 +29,32 @@ internal class AudioChannelPreview(private val onUnavailable: (Int) -> Unit) : C
     private var pending: Future<*>? = null
     @Volatile private var closed = false
 
-    fun play(channel: Int, navigation: Boolean) {
+    fun play(channel: Int, navigation: Boolean, geelyFocusGain: Int? = null) {
         if (closed) return
-        require(channel in AirPlayPersistence.AUDIO_CHANNELS)
+        require(channel in AirPlayPersistence.AUDIO_CHANNELS ||
+            (geelyFocusGain != null && channel in listOf(11, 23, 25)))
         val request = generation.incrementAndGet()
         pending?.cancel(true)
         activeTrack.get()?.let { runCatching { it.stop() } }
         pending = worker.submit {
             var track: AudioTrack? = null
+            val manager = context?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            val callbackVersion = AtomicInteger()
+            val focusTrack = AtomicReference<AudioTrack?>()
+            val listener = AudioManager.OnAudioFocusChangeListener { change ->
+                if (!closed && generation.get() == request) {
+                    callbackVersion.incrementAndGet()
+                    val volume = when (change) {
+                        AudioManager.AUDIOFOCUS_GAIN -> PREVIEW_VOLUME
+                        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> PREVIEW_VOLUME * 0.2f
+                        AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
+                        AudioManager.AUDIOFOCUS_LOSS -> 0f
+                        else -> null
+                    }
+                    volume?.let { focusTrack.get()?.let { current -> PortableAudio.setVolume(current, it) } }
+                }
+            }
+            var focusRequested = false
             try {
                 if (closed || generation.get() != request) return@submit
                 val pcm = tone()
@@ -48,7 +68,7 @@ internal class AudioChannelPreview(private val onUnavailable: (Int) -> Unit) : C
                         attributes = ModernAudio.attributes(
                             usage = if (navigation) 12 else 1,
                             contentType = if (navigation) 1 else 2,
-                            legacyStreamType = 0,
+                            legacyStreamType = null,
                         ),
                         encoding = AudioFormat.ENCODING_PCM_16BIT,
                         sampleRate = SAMPLE_RATE,
@@ -63,10 +83,23 @@ internal class AudioChannelPreview(private val onUnavailable: (Int) -> Unit) : C
                         AudioFormat.ENCODING_PCM_16BIT, bufferBytes, AudioTrack.MODE_STREAM)
                 }
                 track = built
+                focusTrack.set(built)
                 check(built.state == AudioTrack.STATE_INITIALIZED) { "Audio output did not initialize" }
+                if (geelyFocusGain != null) {
+                    check(manager != null) { "Audio focus service unavailable" }
+                    PortableAudio.setVolume(built, 0f)
+                    val versionBeforeRequest = callbackVersion.get()
+                    @Suppress("DEPRECATION")
+                    val result = manager.requestAudioFocus(listener, channel, geelyFocusGain)
+                    focusRequested = true
+                    check(result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) { "Audio focus denied" }
+                    if (callbackVersion.get() == versionBeforeRequest) {
+                        PortableAudio.setVolume(built, PREVIEW_VOLUME)
+                    }
+                }
                 if (closed || generation.get() != request) return@submit
                 activeTrack.set(built)
-                PortableAudio.setVolume(built, 0.6f)
+                if (geelyFocusGain == null) PortableAudio.setVolume(built, PREVIEW_VOLUME)
                 built.play()
                 var written = 0
                 while (written < pcm.size && !closed && generation.get() == request) {
@@ -86,6 +119,8 @@ internal class AudioChannelPreview(private val onUnavailable: (Int) -> Unit) : C
                     if (!closed && generation.get() == request) onUnavailable(channel)
                 }
             } finally {
+                focusTrack.set(null)
+                if (focusRequested) runCatching { manager?.abandonAudioFocus(listener) }
                 activeTrack.compareAndSet(track, null)
                 track?.let { runCatching { it.stop() }; it.release() }
             }
@@ -119,5 +154,6 @@ internal class AudioChannelPreview(private val onUnavailable: (Int) -> Unit) : C
         private const val TAG = "DiPlayAudioPreview"
         private const val SAMPLE_RATE = 48_000
         private const val TONE_MILLIS = 600
+        private const val PREVIEW_VOLUME = 0.6f
     }
 }

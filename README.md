@@ -38,3 +38,7 @@ Release 提供**内置实验性认证材料的完整车测 APK**，无需用户�
 基线：DiPlay v0.2.10，提交 `3e43e25c55921bdf5149f5f92851acf202ed353a`。本次工作从对应 0.2.10 源码归档开始，并非基于 0.2.9，也没有合并上游后续版本。
 
 保留上游 [GPL-3.0 LICENSE](LICENSE)、版权声明及 [第三方许可文件](docs/licenses)。上游注明基础实现来自 xcertplay（GPL-3.0），界面及网站适配自 DiAuto（AGPL-3.0）；这些原始声明及适用许可继续保留，详见 [上游 Credits](docs/THIRD_PARTY_NOTICES.md)。本仓库的适配说明不会替代各组件原有许可。
+
+## H52 test update
+
+Adds capability-gated factory audio routing and an opt-in read-only Bluetooth diagnostic switch. **OEM wireless transport is not implemented**. API18 supports copying the Bluetooth summary; full diagnostic file export remains unavailable. See [audio](docs/geely-android43/H52-AUDIO.md), [Bluetooth](docs/geely-android43/H52-BLUETOOTH.md), and [independent validation](docs/geely-android43/H52-VALIDATION.md).

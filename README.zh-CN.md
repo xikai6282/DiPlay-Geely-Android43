@@ -38,3 +38,9 @@ Release 提供**内置实验性认证材料的完整车测 APK**，无需用户�
 基线：DiPlay v0.2.10，提交 `3e43e25c55921bdf5149f5f92851acf202ed353a`。本次工作从对应 0.2.10 源码归档开始，并非基于 0.2.9，也没有合并上游后续版本。
 
 保留上游 [GPL-3.0 LICENSE](LICENSE)、版权声明及 [第三方许可文件](docs/licenses)。上游注明基础实现来自 xcertplay（GPL-3.0），界面及网站适配自 DiAuto（AGPL-3.0）；这些原始声明及适用许可继续保留，详见 [上游 Credits](docs/THIRD_PARTY_NOTICES.md)。本仓库的适配说明不会替代各组件原有许可。
+
+## H52 新增测试版
+
+新增原厂音频配置和默认关闭的厂商蓝牙只读检测按钮。**OEM 无线传输尚未实现**。API18 可复制蓝牙诊断摘要，完整文件导出仍不支持。
+
+详见 [音频代码说明](docs/geely-android43/H52-AUDIO.md)、[蓝牙协议说明](docs/geely-android43/H52-BLUETOOTH.md)、[固定APK独立验收](docs/geely-android43/H52-VALIDATION.md)。

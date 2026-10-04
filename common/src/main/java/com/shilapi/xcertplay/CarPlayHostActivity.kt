@@ -304,6 +304,8 @@ class CarPlayHostActivity : ComponentActivity() {
     private var hevcSoftwareDecoderEnabled = false
     private var advancedAudioChannelMappingSupported = false
     private var advancedAudioChannelMapping = false
+    private var geelyAudioRouting = false
+    private var geelyNavigationAlert = false
     private var navigationStreamType = 14
     private var debugLogsEnabled = false
     private var autoStartOnBoot = false
@@ -487,6 +489,8 @@ class CarPlayHostActivity : ComponentActivity() {
         advancedAudioChannelMapping =
             advancedAudioChannelMappingSupported &&
                 AirPlayPersistence.loadAdvancedAudioChannelMapping(this)
+        geelyAudioRouting = AirPlayPersistence.loadGeelyAudioRouting(this)
+        geelyNavigationAlert = AirPlayPersistence.loadGeelyNavigationAlert(this)
         navigationStreamType = AirPlayPersistence.loadNavigationStreamType(this)
         debugLogsEnabled = AirPlayPersistence.loadDebugLogsEnabled(this)
         autoStartOnBoot = AirPlayPersistence.loadAutoStartOnBoot(this)
@@ -686,7 +690,26 @@ class CarPlayHostActivity : ComponentActivity() {
             }
             return true
         }
+        if (reloadGeelyAudioSettingsIfChanged()) {
+            switchingTransport = true
+            val restart = { recreate() }
+            if (CarPlayBackgroundSession.hasSession() || controller != null) {
+                shutdown(terminateProcess = false, reason = "H52 audio routing changed", completion = restart)
+            } else {
+                restart()
+            }
+            return true
+        }
         return false
+    }
+
+    private fun reloadGeelyAudioSettingsIfChanged(): Boolean {
+        val routing = AirPlayPersistence.loadGeelyAudioRouting(this)
+        val alert = AirPlayPersistence.loadGeelyNavigationAlert(this)
+        if (routing == geelyAudioRouting && alert == geelyNavigationAlert) return false
+        geelyAudioRouting = routing
+        geelyNavigationAlert = alert
+        return true
     }
 
     private fun reloadHotspotSettingsIfChanged(): Boolean {
@@ -1153,7 +1176,8 @@ class CarPlayHostActivity : ComponentActivity() {
             ).apply { topMargin = dp(12) },
         )
 
-        if (advancedAudioChannelMappingSupported) {
+        val geelyAudioCapabilities = com.shilapi.xcertplay.media.GeelyAudioCapabilities.detect()
+        if (advancedAudioChannelMappingSupported || geelyAudioCapabilities != null) {
             content.addView(
                 settingsCategoryHeader(getString(R.string.audio)),
                 LinearLayout.LayoutParams(
@@ -1161,24 +1185,66 @@ class CarPlayHostActivity : ComponentActivity() {
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                 ).apply { topMargin = dp(36) },
             )
-            content.addView(
-                settingsSwitchRow(
-                    label = getString(R.string.advanced_audio_channel_mapping),
-                    checked = advancedAudioChannelMapping,
-                    description = getString(R.string.use_usage_content_type_routing_instead_of_stream_type),
-                ) { checked ->
-                    advancedAudioChannelMapping = checked
-                    appendLog(
-                        "Advanced audio channel mapping ${if (checked) "enabled" else "disabled"}; " +
-                            "applies when settings close",
-                    )
-                    updateResolutionMenu()
-                },
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                ).apply { topMargin = dp(12) },
-            )
+            if (advancedAudioChannelMappingSupported) {
+                content.addView(
+                    settingsSwitchRow(
+                        label = getString(R.string.advanced_audio_channel_mapping),
+                        checked = advancedAudioChannelMapping,
+                        description = getString(R.string.use_usage_content_type_routing_instead_of_stream_type),
+                    ) { checked ->
+                        advancedAudioChannelMapping = checked
+                        appendLog(
+                            "Advanced audio channel mapping ${if (checked) "enabled" else "disabled"}; " +
+                                "applies when settings close",
+                        )
+                        updateResolutionMenu()
+                    },
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ).apply { topMargin = dp(12) },
+                )
+            }
+            if (geelyAudioCapabilities != null) {
+                val options = buildList {
+                    add(false to getString(R.string.geely_audio_generic))
+                    add(true to getString(R.string.geely_audio_speech))
+                }
+                val profileOptions = if (geelyAudioCapabilities.navigationAlert != null) {
+                    options + (true to getString(R.string.geely_audio_alert))
+                } else {
+                    options
+                }
+                val selectedProfile = when {
+                    !geelyAudioRouting -> 0
+                    geelyNavigationAlert && geelyAudioCapabilities.navigationAlert != null -> 2
+                    else -> 1
+                }
+                content.addView(
+                    settingsChoiceRow(
+                        label = getString(R.string.geely_audio_profile),
+                        options = profileOptions.mapIndexed { index, (_, label) -> index to label },
+                        selected = selectedProfile,
+                    ) { selected ->
+                        geelyAudioRouting = selected != 0
+                        geelyNavigationAlert = selected == 2
+                        appendLog(
+                            "H52 audio profile changed to ${if (selected == 0) "generic" else if (selected == 2) "speech + alert" else "media + navigation speech"}; applies when settings close",
+                        )
+                    },
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ).apply { topMargin = dp(12) },
+                )
+                content.addView(
+                    menuText(getString(R.string.geely_audio_hint), 14f, MENU_SECONDARY),
+                    LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ).apply { topMargin = dp(6) },
+                )
+            }
         }
 
         content.addView(
@@ -1612,6 +1678,8 @@ class CarPlayHostActivity : ComponentActivity() {
         AirPlayPersistence.saveLocationReportingEnabled(this, locationReportingEnabled)
         AirPlayPersistence.saveAutoStartOnBoot(this, autoStartOnBoot)
         AirPlayPersistence.saveAdvancedAudioChannelMapping(this, advancedAudioChannelMapping)
+        AirPlayPersistence.saveGeelyAudioRouting(this, geelyAudioRouting)
+        AirPlayPersistence.saveGeelyNavigationAlert(this, geelyNavigationAlert)
         AirPlayPersistence.saveDisplayScaleTenths(this, displayScaleTenths)
         AirPlayPersistence.saveFps(this, fps)
         AirPlayPersistence.saveWidthPhysicalMm(this, widthPhysicalMm)
@@ -3090,6 +3158,8 @@ class CarPlayHostActivity : ComponentActivity() {
             audioFocusEnabled = AirPlayPersistence.loadAudioFocusEnabled(this),
             mediaChannel = AirPlayPersistence.loadMediaAudioChannel(this),
             navigationChannel = AirPlayPersistence.loadNavigationAudioChannel(this),
+            geelyAudioRouting = geelyAudioRouting,
+            geelyNavigationAlert = geelyNavigationAlert,
             context = this,
             navigationStreamType = navigationStreamType,
             onScreenStreamActiveChanged = { type, active ->
@@ -3561,9 +3631,12 @@ class CarPlayHostActivity : ComponentActivity() {
         if (!menuOpen) return
         if (!validateMfiSettings()) return
         if (!validateManualHotspotSettings()) return
+        val h52AudioChanged =
+            AirPlayPersistence.loadGeelyAudioRouting(this) != geelyAudioRouting ||
+                AirPlayPersistence.loadGeelyNavigationAlert(this) != geelyNavigationAlert
         persistMenuSettings()
         settingsBaseline = null
-        finishSettingsMenu("Settings saved")
+        finishSettingsMenu("Settings saved", restartForAudioChange = h52AudioChanged)
     }
 
     private fun cancelSettingsEdits() {
@@ -3572,7 +3645,7 @@ class CarPlayHostActivity : ComponentActivity() {
         finishSettingsMenu("Settings changes discarded")
     }
 
-    private fun finishSettingsMenu(prefix: String) {
+    private fun finishSettingsMenu(prefix: String, restartForAudioChange: Boolean = false) {
         if (!menuOpen) return
         menuOpen = false
         settingsMenu?.visibility = View.GONE
@@ -3586,7 +3659,10 @@ class CarPlayHostActivity : ComponentActivity() {
                 ", MFI ${mfiTargetLabel(mfiTarget)}" +
                 ", Wi-Fi session ${hotspotModeLabel(wirelessHotspotMode)}",
         )
-        if (handshakeResetInProgress) {
+        if (restartForAudioChange && (CarPlayBackgroundSession.hasSession() || controller != null)) {
+            switchingTransport = true
+            shutdown(terminateProcess = false, reason = "H52 audio routing changed") { recreate() }
+        } else if (handshakeResetInProgress) {
             startAfterHandshakeReset = true
         } else {
             maybeStartCarPlay()
@@ -3916,7 +3992,10 @@ class CarPlayHostActivity : ComponentActivity() {
             if (wirelessEnabled) getString(R.string.starting_airplay_service) else getString(R.string.status_attaching_ncm)
         CarPlayStatus.RunningControl -> getString(R.string.carplay_control_running)
         CarPlayStatus.ControlEnded -> getString(R.string.carplay_control_window_ended)
-        is CarPlayStatus.Failed -> getString(R.string.status_failed, message)
+        is CarPlayStatus.Failed -> getString(
+            R.string.status_failed,
+            AndroidBluetoothFailureCopy.forControllerMessage(this@CarPlayHostActivity, message) ?: message,
+        )
     }
 
     private companion object {

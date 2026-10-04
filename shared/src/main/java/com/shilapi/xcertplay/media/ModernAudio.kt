@@ -17,9 +17,11 @@ val modernAudioSupported: Boolean
 /** Keep AudioAttributes and AudioFormat out of API 18 classes and method descriptors. */
 @RequiresApi(Build.VERSION_CODES.M)
 object ModernAudio {
-    fun attributes(usage: Int, contentType: Int, legacyStreamType: Int): Any {
+    fun attributes(usage: Int, contentType: Int, legacyStreamType: Int?): Any {
         val builder = AudioAttributes.Builder()
-        if (legacyStreamType in AudioManager.STREAM_SYSTEM..AudioManager.STREAM_ACCESSIBILITY) {
+        if (legacyStreamType != null && legacyStreamType in
+            AudioManager.STREAM_VOICE_CALL..AudioManager.STREAM_ACCESSIBILITY
+        ) {
             builder.setLegacyStreamType(legacyStreamType)
         } else {
             builder.setUsage(usage).setContentType(contentType)

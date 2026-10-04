@@ -1,0 +1,9 @@
+{
+  "defaultOff": true,
+  "manualCheckDisabledWhenOff": true,
+  "enabledPersists": true,
+  "missingVendorStateUnknown": true,
+  "api18CopyActionInvoked": true,
+  "disabledPersists": true,
+  "noFatalException": true
+}

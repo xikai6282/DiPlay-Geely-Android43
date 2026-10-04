@@ -33,6 +33,11 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.shilapi.xcertplay.airplay.CarPlayClusterDisplay
+import com.shilapi.xcertplay.compat.AnwPowerState
+import com.shilapi.xcertplay.compat.BindingState
+import com.shilapi.xcertplay.compat.GeelyBluetoothDiagnostics
+import com.shilapi.xcertplay.compat.GeelyBluetoothSnapshot
+import com.shilapi.xcertplay.compat.ReadState
 import com.shilapi.xcertplay.compat.systemService
 import com.shilapi.xcertplay.hud.BydAdbAccess
 import com.shilapi.xcertplay.hud.BydNavigationOutputs
@@ -57,6 +62,8 @@ class DiPlayActivity : ComponentActivity() {
     private var disconnectButton: Button? = null
     private var lastRunning: Boolean? = null
     private var pendingWireless = false
+    private var bluetoothProbeRequest: GeelyBluetoothDiagnostics.Request? = null
+    private var bluetoothProbeDialog: AlertDialog? = null
     private var initialLaunch = true
     private var notificationTransport = true
     private var exportInProgress = false
@@ -163,6 +170,11 @@ class DiPlayActivity : ComponentActivity() {
     }
     override fun onPause() { handler.removeCallbacks(tick); super.onPause() }
 
+    override fun onDestroy() {
+        cancelBluetoothStatusProbe()
+        super.onDestroy()
+    }
+
     private fun render() {
         status = null; connectButton = null; disconnectButton = null; lastRunning = null
         val scroll = ScrollView(this).apply { setBackgroundColor(BG); isFillViewport = true; clipToPadding = false }
@@ -267,6 +279,25 @@ class DiPlayActivity : ComponentActivity() {
             card.addView(button(getString(R.string.open_connection_setup), false) { page = "connection"; render() }, matchButton(12, 60))
         }
         section(content, getString(R.string.diagnostics), R.drawable.ic_dp_diagnostics) { card ->
+            var vendorCheckButton: Button? = null
+            toggle(
+                card,
+                getString(R.string.bt_stack_opt_in_title),
+                getString(R.string.bt_stack_opt_in_description),
+                AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(this),
+            ) { enabled ->
+                AirPlayPersistence.saveGeelyBluetoothDiagnosticsEnabled(this, enabled)
+                vendorCheckButton?.isEnabled = enabled
+                if (!enabled) cancelBluetoothStatusProbe()
+            }
+            vendorCheckButton = button(getString(R.string.bt_stack_check_vendor_button), false) {
+                if (AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(this)) {
+                    val adapter = systemService(BluetoothManager::class.java, "bluetooth")?.adapter
+                    val enabled = runCatching { adapter?.isEnabled == true }.getOrDefault(false)
+                    showBluetoothStackStatus(adapterPresent = adapter != null, adapterEnabled = enabled, manual = true)
+                }
+            }.apply { isEnabled = AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(this@DiPlayActivity) }
+            card.addView(vendorCheckButton, matchButton(10, 60))
             exportButton = button(if (exportInProgress) getString(R.string.saving_report) else getString(R.string.save_diagnostic_report), false) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) exportDiagnostics()
                 else chooseReportDestination()
@@ -297,7 +328,10 @@ class DiPlayActivity : ComponentActivity() {
             }
         }
         section(content, getString(R.string.audio_routing)) { card ->
-            toggle(card, getString(R.string.contrib_audio_home_toggle_audio_focus), getString(R.string.contrib_audio_home_toggle_audio_focus_desc), AirPlayPersistence.loadAudioFocusEnabled(this)) { AirPlayPersistence.saveAudioFocusEnabled(this, it) }
+            geelyAudioControl(card)
+            if (!AirPlayPersistence.loadGeelyAudioRouting(this) || com.shilapi.xcertplay.media.GeelyAudioCapabilities.detect() == null) {
+                toggle(card, getString(R.string.contrib_audio_home_toggle_audio_focus), getString(R.string.contrib_audio_home_toggle_audio_focus_desc), AirPlayPersistence.loadAudioFocusEnabled(this)) { AirPlayPersistence.saveAudioFocusEnabled(this, it) }
+            }
             if (resources.getBoolean(R.bool.config_advanced_audio_channel_mapping)) {
                 toggle(card, getString(R.string.advanced_audio_channel_mapping),
                     getString(R.string.use_usage_content_type_routing_instead_of_stream_type),
@@ -625,6 +659,53 @@ class DiPlayActivity : ComponentActivity() {
         parent.addView(control, matchButton(0, 60))
     }
 
+    private fun geelyAudioControl(parent: LinearLayout) {
+        val capabilities = com.shilapi.xcertplay.media.GeelyAudioCapabilities.detect()
+        val selected = AirPlayPersistence.loadGeelyAudioRouting(this)
+        val alert = AirPlayPersistence.loadGeelyNavigationAlert(this)
+        fun summary(): String = getString(R.string.geely_audio_profile) + " · " + getString(
+            if (!selected || capabilities == null) R.string.geely_audio_generic
+            else if (alert) R.string.geely_audio_alert else R.string.geely_audio_speech)
+        val control = button(summary(), false) {}
+        control.setOnClickListener {
+            val labels = if (capabilities == null) {
+                listOf(getString(R.string.geely_audio_generic))
+            } else {
+                listOf(getString(R.string.geely_audio_generic), getString(R.string.geely_audio_speech)) +
+                    if (capabilities.navigationAlert != null) listOf(getString(R.string.geely_audio_alert)) else emptyList()
+            }
+            var pending = if (capabilities == null || !selected) 0 else if (alert && labels.size > 2) 2 else 1
+            AlertDialog.Builder(this).setTitle(getString(R.string.geely_audio_profile))
+                .setSingleChoiceItems(labels.toTypedArray(), pending) { _, which -> pending = which }
+                .setPositiveButton(getString(R.string.save)) { _, _ ->
+                    if (pending != 0 && capabilities == null) {
+                        toast(getString(R.string.geely_audio_unavailable))
+                    } else {
+                        AirPlayPersistence.saveGeelyAudioRouting(this, pending != 0)
+                        AirPlayPersistence.saveGeelyNavigationAlert(this, pending == 2)
+                        if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
+                        render()
+                    }
+                }.setNegativeButton(getString(R.string.cancel), null).show()
+        }
+        parent.addView(control, matchButton(0, 60))
+        parent.addView(label(getString(if (capabilities == null) R.string.geely_audio_unavailable else R.string.geely_audio_detected), 14, MUTED))
+        parent.addView(label(getString(R.string.geely_audio_hint), 14, MUTED))
+        if (capabilities != null) parent.addView(button(getString(R.string.geely_audio_preview), false) {
+            val routes = listOf(capabilities.carPlay, capabilities.navigationSpeech) + listOfNotNull(capabilities.navigationAlert)
+            val labels = listOf(getString(R.string.geely_audio_test_media), getString(R.string.geely_audio_test_speech)) +
+                if (capabilities.navigationAlert != null) listOf(getString(R.string.geely_audio_test_alert)) else emptyList()
+            val preview = AudioChannelPreview(this) { channel -> toast(getString(R.string.contrib_audio_home_channel_preview_unavailable, channel)) }
+            AlertDialog.Builder(this).setTitle(getString(R.string.geely_audio_preview))
+                .setSingleChoiceItems(labels.toTypedArray(), -1) { _, which ->
+                    preview.play(routes[which], which != 0,
+                        if (which == 0) android.media.AudioManager.AUDIOFOCUS_GAIN
+                        else android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                }.setNegativeButton(getString(R.string.close), null)
+                .setOnDismissListener { preview.close() }.show()
+        }, matchButton(8, 60))
+    }
+
     private fun navigationChannelControl(parent: LinearLayout) {
         val summary: (Int) -> String = {
             getString(R.string.contrib_audio_home_choice_summary, getString(R.string.contrib_audio_home_nav_channel_label), channelLabel(it))
@@ -923,10 +1004,8 @@ class DiPlayActivity : ComponentActivity() {
         }
         val adapter = systemService(BluetoothManager::class.java, "bluetooth")?.adapter
         if (adapter == null || !adapter.isEnabled) {
-            AlertDialog.Builder(this).setTitle(getString(R.string.turn_on_bluetooth))
-                .setMessage(getString(R.string.enable_the_car_s_bluetooth_and_pair_your_iphone_first))
-                .setPositiveButton(getString(R.string.open_bluetooth)) { _, _ -> openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }
-                .setNegativeButton(getString(R.string.later), null).show(); return
+            showBluetoothStackStatus(adapterPresent = adapter != null, adapterEnabled = false)
+            return
         }
         val devices = runCatching { adapter.bondedDevices.sortedBy { it.name ?: "" } }.getOrDefault(emptyList())
         if (devices.isEmpty()) {
@@ -947,6 +1026,157 @@ class DiPlayActivity : ComponentActivity() {
                 if (start) connect(true)
             }.setNeutralButton(getString(R.string.pair_another)) { _, _ -> openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }
             .setNegativeButton(getString(R.string.cancel)) { _, _ -> pendingWireless = false }.show()
+    }
+
+    private fun showBluetoothStackStatus(adapterPresent: Boolean, adapterEnabled: Boolean, manual: Boolean = false) {
+        if (!GeelyBluetoothDiagnosticsOptIn.enabled(this)) {
+            showAndroidBluetoothUnavailable(adapterPresent)
+            return
+        }
+        if (bluetoothProbeRequest != null) return
+        val progress = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.bt_stack_checking_title))
+            .setMessage(getString(R.string.bt_stack_checking_message))
+            .setNegativeButton(getString(R.string.bt_stack_check_cancel)) { _, _ ->
+                pendingWireless = false
+                bluetoothProbeRequest?.cancel()
+                bluetoothProbeRequest = null
+                bluetoothProbeDialog = null
+            }
+            .create()
+        progress.setOnCancelListener {
+            pendingWireless = false
+            bluetoothProbeRequest?.cancel()
+            bluetoothProbeRequest = null
+            bluetoothProbeDialog = null
+        }
+        bluetoothProbeDialog = progress
+        progress.show()
+
+        val startedRequest = GeelyBluetoothDiagnosticsOptIn.runIfEnabled(applicationContext) {
+            GeelyBluetoothDiagnostics(applicationContext).query { snapshot ->
+            if (bluetoothProbeDialog === progress) {
+                bluetoothProbeDialog = null
+                progress.dismiss()
+            }
+            bluetoothProbeRequest = null
+            if (!GeelyBluetoothDiagnosticsOptIn.enabled(this) || isFinishing || isDestroyed) return@query
+
+            val adapterLabel = getString(
+                when {
+                    !adapterPresent -> R.string.bt_stack_android_unavailable
+                    adapterEnabled -> R.string.bt_stack_android_on
+                    else -> R.string.bt_stack_android_off
+                },
+            )
+            val serviceLabel = when (snapshot.bindingState) {
+                BindingState.CONNECTED -> getString(R.string.bt_stack_anw_service_ready)
+                BindingState.NOT_RUNNING -> getString(R.string.bt_stack_anw_service_not_running)
+                BindingState.ACCESS_DENIED -> getString(R.string.bt_stack_anw_service_blocked)
+                BindingState.BIND_TIMEOUT -> getString(R.string.bt_stack_anw_service_timeout)
+                BindingState.READ_TIMEOUT -> getString(R.string.bt_stack_anw_service_read_timeout)
+                else -> getString(R.string.bt_stack_anw_service_unknown)
+            }
+            val powerLabel = if (snapshot.power.state == ReadState.OK) {
+                getString(when (snapshot.power.value) {
+                    AnwPowerState.ON -> R.string.bt_stack_anw_on
+                    AnwPowerState.OFF -> R.string.bt_stack_anw_off
+                    AnwPowerState.TURNING_ON -> R.string.bt_stack_anw_turning_on
+                    AnwPowerState.TURNING_OFF -> R.string.bt_stack_anw_turning_off
+                    AnwPowerState.UNKNOWN, null -> R.string.bt_stack_anw_unknown
+                })
+            } else getString(R.string.bt_stack_anw_unknown)
+            val ecarxLabel = if (snapshot.ecarxEnabled.state == ReadState.OK) {
+                getString(if (snapshot.ecarxEnabled.value == true) R.string.bt_stack_ecarx_enabled else R.string.bt_stack_ecarx_not_ready)
+            } else getString(R.string.bt_stack_anw_unknown)
+            val vendorReportedOn = snapshot.power.value == AnwPowerState.ON || snapshot.ecarxEnabled.value == true
+
+            GeelyBluetoothDiagnosticSnapshotStore.save(
+                applicationContext,
+                when {
+                    !adapterPresent -> "UNAVAILABLE"
+                    adapterEnabled -> "ON"
+                    else -> "OFF"
+                },
+                snapshot,
+            )
+            val summary = getString(
+                R.string.bt_stack_summary,
+                adapterLabel,
+                serviceLabel,
+                powerLabel,
+                ecarxLabel,
+            ) + "\n\n" + getString(when {
+                adapterEnabled -> R.string.bt_stack_android_on_note
+                vendorReportedOn -> R.string.bt_stack_vendor_on_next_step
+                else -> R.string.bt_stack_unknown_next_step
+            })
+            val saveReport = manual || (!adapterEnabled && vendorReportedOn)
+            AlertDialog.Builder(this)
+                .setTitle(getString(when {
+                    manual || adapterEnabled -> R.string.bt_stack_status_title
+                    vendorReportedOn -> R.string.bt_stack_vendor_on_title
+                    else -> R.string.bt_stack_result_title
+                }))
+                .setMessage(summary)
+                .setPositiveButton(
+                    getString(when {
+                        saveReport && Build.VERSION.SDK_INT < 19 -> R.string.bt_stack_copy_report
+                        saveReport -> R.string.bt_stack_save_report
+                        adapterEnabled -> R.string.done
+                        else -> R.string.bt_stack_open_android_settings
+                    }),
+                ) { _, _ ->
+                    if (saveReport && Build.VERSION.SDK_INT < 19) copyBluetoothDiagnosticSummary()
+                    else if (saveReport) chooseReportDestination()
+                    else if (!adapterEnabled) openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+                }
+                .setNegativeButton(getString(R.string.later)) { _, _ -> pendingWireless = false }
+                .show()
+            }
+        }
+        if (startedRequest == null) {
+            bluetoothProbeDialog = null
+            progress.dismiss()
+            showAndroidBluetoothUnavailable(adapterPresent)
+        } else bluetoothProbeRequest = startedRequest
+    }
+
+    private fun showAndroidBluetoothUnavailable(adapterPresent: Boolean) {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.bt_stack_result_title))
+            .setMessage(getString(
+                R.string.bt_stack_standard_unavailable_message,
+                getString(if (adapterPresent) R.string.bt_stack_android_off else R.string.bt_stack_android_unavailable),
+            ))
+            .setPositiveButton(getString(R.string.bt_stack_open_android_settings)) { _, _ ->
+                openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS))
+            }
+            .setNegativeButton(getString(R.string.later)) { _, _ -> pendingWireless = false }
+            .show()
+    }
+
+    private fun cancelBluetoothStatusProbe() {
+        val request = bluetoothProbeRequest
+        bluetoothProbeRequest = null
+        request?.cancel()
+        val dialog = bluetoothProbeDialog
+        bluetoothProbeDialog = null
+        dialog?.dismiss()
+    }
+
+    private fun copyBluetoothDiagnosticSummary() {
+        val text = GeelyBluetoothDiagnosticSnapshotStore.report(
+            applicationContext,
+            AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(applicationContext),
+        )
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+        if (clipboard == null) {
+            toast(getString(R.string.bt_stack_copy_failed))
+            return
+        }
+        clipboard.setPrimaryClip(android.content.ClipData.newPlainText(getString(R.string.bt_stack_copy_report), text))
+        toast(getString(R.string.bt_stack_report_copied))
     }
 
     private fun wirelessHelp() {
@@ -1073,6 +1303,12 @@ class DiPlayActivity : ComponentActivity() {
                     appendLine()
                     appendLine("--- Last received boot and app-launch result ---")
                     appendLine(StartupDiagnosticSnapshot.report(appContext))
+                    appendLine()
+                    appendLine("--- Bluetooth stacks (read-only; separate reports) ---")
+                    appendLine(GeelyBluetoothDiagnosticSnapshotStore.report(
+                        appContext,
+                        AirPlayPersistence.loadGeelyBluetoothDiagnosticsEnabled(appContext),
+                    ))
                     appendLine("Startup settings: openAfterBoot=${AirPlayPersistence.loadAutoStartOnBoot(appContext)} " +
                         "connectWhenOpened=${DiPlayPreferences.autoConnect(appContext)}")
                     appendLine()

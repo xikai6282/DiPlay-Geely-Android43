@@ -8,7 +8,10 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.VpnService
 import android.os.Build
+import android.os.Binder
 import android.os.Bundle
+import android.os.IBinder
+import android.os.Parcel
 import android.util.Log
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -82,6 +85,42 @@ class Api18CompatProbeActivity : Activity(), SurfaceHolder.Callback {
 
     private fun runProbes(surface: Surface) {
         val mode = intent.getStringExtra("probe") ?: "full"
+        if (mode == "geely_bluetooth") {
+            checkCase("H52_ANW_READONLY_PARCEL_MOCK") { geelyAnwParcelMock() }
+            checkCase("H52_ECARX_READONLY_PARCEL_MOCK") { geelyEcarxParcelMock() }
+            val client = com.shilapi.xcertplay.compat.GeelyBluetoothDiagnostics(applicationContext)
+            client.query(timeoutMillis = 6_000L) { snapshot ->
+                checkCase("VENDOR_SERVICES_UNAVAILABLE_REMAIN_UNKNOWN") {
+                    if (snapshot.bindingState != com.shilapi.xcertplay.compat.BindingState.CONNECTED) {
+                        check(snapshot.power.state != com.shilapi.xcertplay.compat.ReadState.OK && snapshot.power.value == null) {
+                            "Unbound ANW service was incorrectly reported as an OFF state"
+                        }
+                    }
+                    if (snapshot.power.state != com.shilapi.xcertplay.compat.ReadState.OK) {
+                        check(snapshot.power.value == null || snapshot.power.value == com.shilapi.xcertplay.compat.AnwPowerState.UNKNOWN)
+                    }
+                    if (snapshot.ecarxEnabled.state != com.shilapi.xcertplay.compat.ReadState.OK) {
+                        check(snapshot.ecarxEnabled.value == null) { "Unavailable ECarX service was reported false" }
+                    }
+                    "anW=${snapshot.bindingState}/${snapshot.power.state}:${snapshot.power.value} " +
+                        "paired=${snapshot.pairedCount.state}:${snapshot.pairedCount.value} " +
+                        "spp=${snapshot.sppInitialized.state}:${snapshot.sppInitialized.value} " +
+                        "ecarx=${snapshot.ecarxEnabled.state}:${snapshot.ecarxEnabled.value} " +
+                        "(actual vehicle Binder access is not implied by the mock)"
+                }
+                complete()
+            }
+            return
+        }
+        if (mode == "geely_focus") {
+            checkCase("GEELY_CAPABILITY_GUARD") {
+                check(com.shilapi.xcertplay.media.GeelyAudioCapabilities.detect() == null)
+                "stockApi18Rejected=true"
+            }
+            checkCase("GEELY_INDEPENDENT_FOCUS") { geelyFocus() }
+            complete()
+            return
+        }
         if (mode == "bonjour_discovery") {
             checkCase("BONJOUR_CONTROL_DISCOVERY") { LegacyNetworkProbe.bonjourDiscovery(this) }
             complete()
@@ -486,7 +525,146 @@ class Api18CompatProbeActivity : Activity(), SurfaceHolder.Callback {
             }
         }
     }
+    private fun geelyFocus(): String {
+        val type = Class.forName("com.shilapi.xcertplay.media.AudioFocusCoordinator")
+        val channelType = Class.forName("com.shilapi.xcertplay.media.AudioChannel")
+        val media = channelType.enumConstants!!.first { it.toString() == "MEDIA" }
+        val navigation = channelType.enumConstants!!.first { it.toString() == "NAVIGATION" }
+        val events = ConcurrentLinkedQueue<String>()
+        val callback: (String) -> Unit = { events.add(it) }
+        val coordinator = type.declaredConstructors.first { it.parameterTypes.size == 4 }
+            .apply { isAccessible = true }.newInstance(this, true, callback, true)
+        val acquire = type.getDeclaredMethod("acquireLegacy", android.media.AudioTrack::class.java, channelType, Int::class.javaPrimitiveType)
+        val release = type.getDeclaredMethod("release", android.media.AudioTrack::class.java)
+        val listeners = type.getDeclaredField("geelyListeners").apply { isAccessible = true }
+        fun count() = (listeners.get(coordinator) as Map<*, *>).size
+        val tracks = listOf(3, 4, 4, 5, 4).map { stream ->
+            android.media.AudioTrack(stream, 8000, android.media.AudioFormat.CHANNEL_OUT_MONO,
+                android.media.AudioFormat.ENCODING_PCM_16BIT, 4096, android.media.AudioTrack.MODE_STREAM)
+                .also { check(it.state == android.media.AudioTrack.STATE_INITIALIZED) }
+        }
+        fun keyedEntry(stream: Int): Map.Entry<*, *> =
+            (listeners.get(coordinator) as Map<*, *>).entries.firstOrNull { entry ->
+                val field = entry.key!!.javaClass.getDeclaredField("streamType").apply { isAccessible = true }
+                field.getInt(entry.key) == stream
+            } ?: error("Missing listener for stream=$stream")
+        fun callbackFor(entry: Map.Entry<*, *>): android.media.AudioManager.OnAudioFocusChangeListener =
+            entry.value!!.javaClass.getDeclaredField("listener").apply { isAccessible = true }
+                .get(entry.value) as android.media.AudioManager.OnAudioFocusChangeListener
+        fun volumeFor(stream: Int): Float {
+            val entry = keyedEntry(stream)
+            val volumes = type.getDeclaredField("geelyVolumes").apply { isAccessible = true }
+                .get(coordinator) as Map<*, *>
+            return volumes[entry.key] as? Float ?: error("No volume state for stream=$stream")
+        }
+        try {
+            acquire.invoke(coordinator, tracks[0], media, 3)
+            acquire.invoke(coordinator, tracks[1], navigation, 4)
+            acquire.invoke(coordinator, tracks[2], navigation, 4)
+            acquire.invoke(coordinator, tracks[3], navigation, 5)
+            check(count() == 3) { "Media, speech, and alert focus requests were not independent: $events" }
+            val staleSpeechListener = callbackFor(keyedEntry(4))
+            release.invoke(coordinator, tracks[1])
+            check(count() == 3) { "Navigation speech focus released before its last track" }
+            release.invoke(coordinator, tracks[2])
+            check(count() == 2) { "Last navigation speech track did not release its focus" }
+            acquire.invoke(coordinator, tracks[4], navigation, 4)
+            check(count() == 3) { "Replacement speech route failed to acquire focus" }
+            check(volumeFor(4) == 1f) { "Replacement speech route was not audible after grant: ${volumeFor(4)}" }
+            staleSpeechListener.onAudioFocusChange(android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+            check(volumeFor(4) == 1f) { "Stale listener changed replacement route volume: ${volumeFor(4)}" }
+            val currentSpeechListener = callbackFor(keyedEntry(4))
+            currentSpeechListener.onAudioFocusChange(android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK)
+            check(kotlin.math.abs(volumeFor(4) - 0.2f) < 0.001f) { "Duck callback did not lower current route" }
+            currentSpeechListener.onAudioFocusChange(android.media.AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+            check(volumeFor(4) == 0f) { "Transient loss did not mute current route" }
+            currentSpeechListener.onAudioFocusChange(android.media.AudioManager.AUDIOFOCUS_GAIN)
+            check(volumeFor(4) == 1f) { "Gain callback did not restore current route" }
+            check((listeners.get(coordinator) as Map<*, *>).keys.any { key ->
+                key!!.javaClass.getDeclaredField("streamType").apply { isAccessible = true }.getInt(key) == 5
+            }) { "Alert focus was coupled to navigation speech" }
+            tracks.forEach { release.invoke(coordinator, it) }
+            check(count() == 0) { "A media, speech, or alert focus request leaked" }
+            check(events.any { it.contains("channel=NAVIGATION") && it.contains("stream=4") && it.contains("gain=3") && it.contains("granted=true") })
+            return "independentListeners=media3+speech4+alert5 speechRefCount=true staleCallbackIgnored=true duckLossGain=true released=true (standard test streams, H52 HAL not tested)"
+        } finally {
+            tracks.forEach { track -> runCatching { release.invoke(coordinator, track) }; track.release() }
+        }
+    }
+
     private fun startVpn() { startService(Intent(this, Api18VpnProbeService::class.java)) }
+
+    private fun geelyAnwParcelMock(): String {
+        val descriptor = "com.anwsdk.service.IAnwPhoneLink"
+        val codes = mutableListOf<Int>()
+        val capacities = AtomicReference<List<Int>>()
+        val binder = object : Binder() {
+            init { attachInterface(null, descriptor) }
+            override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
+                val output = requireNotNull(reply)
+                if (code == INTERFACE_TRANSACTION) { output.writeString(descriptor); return true }
+                data.enforceInterface(descriptor)
+                codes += code
+                when (code) {
+                    0x03 -> { check(data.dataAvail() == 0); output.writeNoException(); output.writeInt(1) }
+                    0x10 -> {
+                        val requested = List(4) { data.readInt() }
+                        check(requested == listOf(1, 16, 16, 16)) { "Unexpected 10500 capacities: $requested" }
+                        check(data.dataAvail() == 0) { "Unexpected data after four capacity integers" }
+                        capacities.set(requested)
+                        output.writeNoException()
+                        output.writeInt(1)
+                        output.writeIntArray(intArrayOf(2))
+                        output.writeStringArray(arrayOfNulls<String>(16).apply { this[0] = "probe device" })
+                        output.writeStringArray(arrayOfNulls<String>(16).apply { this[0] = "02:00:00:00:00:01" })
+                        output.writeIntArray(IntArray(16))
+                    }
+                    0x43 -> { check(data.dataAvail() == 0); output.writeNoException(); output.writeInt(1) }
+                    else -> return false
+                }
+                return true
+            }
+        }
+        val protocol = Class.forName("com.shilapi.xcertplay.compat.GeelyBluetoothReadOnlyProtocol")
+        val result = protocol.getMethod("read", IBinder::class.java)
+            .invoke(protocol.getField("INSTANCE").get(null), binder)
+        fun value(getter: String): Any? = result.javaClass.getMethod(getter).invoke(result)
+        val power = value("getPower")!!
+        val paired = value("getPairedCount")!!
+        val spp = value("getSppInitialized")!!
+        check(power.javaClass.getMethod("getValue").invoke(power).toString() == "ON")
+        check(paired.javaClass.getMethod("getValue").invoke(paired) == 2)
+        check(spp.javaClass.getMethod("getValue").invoke(spp) == true)
+        check(capacities.get() == listOf(1, 16, 16, 16))
+        check(codes == listOf(0x03, 0x10, 0x43)) { "Unexpected ANW transaction set: $codes" }
+        return "descriptorChecked=true getterCodes=$codes capacities=${capacities.get()} extraPayload=false"
+    }
+
+    private fun geelyEcarxParcelMock(): String {
+        val descriptor = "ecarx.bluetooth.IBluetoothManager"
+        var calls = 0
+        val binder = object : Binder() {
+            init { attachInterface(null, descriptor) }
+            override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
+                val output = requireNotNull(reply)
+                if (code == INTERFACE_TRANSACTION) { output.writeString(descriptor); return true }
+                data.enforceInterface(descriptor)
+                check(code == 0x05) { "Unexpected ECarX transaction $code" }
+                check(data.dataAvail() == 0) { "Unexpected ECarX request payload" }
+                calls++
+                output.writeNoException()
+                output.writeInt(0)
+                return true
+            }
+        }
+        val protocol = Class.forName("com.shilapi.xcertplay.compat.EcarxBluetoothReadOnlyProtocol")
+        val result = protocol.getMethod("readBinder", IBinder::class.java)
+            .invoke(protocol.getField("INSTANCE").get(null), binder)
+        check(result.javaClass.getMethod("getState").invoke(result).toString() == "OK")
+        check(result.javaClass.getMethod("getValue").invoke(result) == false)
+        check(calls == 1)
+        return "descriptorChecked=true transaction=0x05 falseReadOnly=true calls=$calls"
+    }
 
     private fun checkCase(name: String, action: () -> String) {
         try { line("PASS $name ${action()}") }

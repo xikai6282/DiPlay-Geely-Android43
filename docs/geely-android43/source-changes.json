@@ -44,6 +44,14 @@
     "status": "modified"
   },
   {
+    "file": "common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt",
+    "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/AndroidBluetoothFailureCopy.kt",
+    "status": "added"
+  },
+  {
     "file": "common/src/main/java/com/shilapi/xcertplay/AudioChannelPreview.kt",
     "status": "modified"
   },
@@ -94,6 +102,14 @@
   {
     "file": "common/src/main/java/com/shilapi/xcertplay/DiPlaySessionService.kt",
     "status": "modified"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticSnapshotStore.kt",
+    "status": "added"
+  },
+  {
+    "file": "common/src/main/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticsOptIn.kt",
+    "status": "added"
   },
   {
     "file": "common/src/main/java/com/shilapi/xcertplay/HomeScreenMonitor.kt",
@@ -150,6 +166,10 @@
   {
     "file": "common/src/test/java/com/shilapi/xcertplay/CarPlayMediaCallbackTest.kt",
     "status": "modified"
+  },
+  {
+    "file": "common/src/test/java/com/shilapi/xcertplay/GeelyBluetoothDiagnosticsOptInTest.kt",
+    "status": "added"
   },
   {
     "file": "gradle/libs.versions.toml",
@@ -252,6 +272,10 @@
     "status": "added"
   },
   {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/compat/GeelyBluetoothDiagnostics.kt",
+    "status": "added"
+  },
+  {
     "file": "shared/src/main/java/com/shilapi/xcertplay/compat/NetworkInterfaceCompat.kt",
     "status": "added"
   },
@@ -288,7 +312,15 @@
     "status": "modified"
   },
   {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/media/AudioChannelMapping.kt",
+    "status": "modified"
+  },
+  {
     "file": "shared/src/main/java/com/shilapi/xcertplay/media/CodecCompat.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/main/java/com/shilapi/xcertplay/media/GeelyAudioCapabilities.kt",
     "status": "added"
   },
   {
@@ -405,6 +437,14 @@
   },
   {
     "file": "shared/src/main/java/com/shilapi/xcertplay/transport/UsbDeviceLayout.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/test/java/com/shilapi/xcertplay/compat/GeelyBluetoothDiagnosticsTest.kt",
+    "status": "added"
+  },
+  {
+    "file": "shared/src/test/java/com/shilapi/xcertplay/media/GeelyAudioCapabilitiesTest.kt",
     "status": "added"
   },
   {
