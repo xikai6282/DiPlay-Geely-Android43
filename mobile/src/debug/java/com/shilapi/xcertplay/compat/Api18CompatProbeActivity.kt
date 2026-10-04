@@ -85,6 +85,24 @@ class Api18CompatProbeActivity : Activity(), SurfaceHolder.Callback {
 
     private fun runProbes(surface: Surface) {
         val mode = intent.getStringExtra("probe") ?: "full"
+        if (mode == "hotspot_read") {
+            checkCase("HOTSPOT_READ_ONLY_API18") {
+                val result = com.shilapi.xcertplay.network.CarHotspotTools.read(this)
+                when (result) {
+                    is com.shilapi.xcertplay.network.CarHotspotReadResult.Available -> {
+                        val config = result.configuration
+                        check(config.ssid.isNotBlank())
+                        line("HOTSPOT configReadable=true security=${config.security} bandKnown=${config.band != null} channelKnown=${config.channel != null} (credentials omitted)")
+                    }
+                    is com.shilapi.xcertplay.network.CarHotspotReadResult.Failure ->
+                        line("HOTSPOT configReadable=false reason=${result.reason} (supported failure path)")
+                }
+                val state = com.shilapi.xcertplay.network.CarHotspotTools.readState(this)
+                "AP state=${state ?: "UNKNOWN"}; no setter invoked; H52 hardware not tested"
+            }
+            line("COMPLETE failures=${failures.get()}")
+            return
+        }
         if (mode == "geely_spp") {
             checkCase("ANW_BACKEND_BINDER_MOCK_API18") {
                 val address = "01:02:03:04:05:06"

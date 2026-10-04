@@ -44,6 +44,14 @@ import com.shilapi.xcertplay.hud.BydNavigationOutputs
 import com.shilapi.xcertplay.hud.BydOutputSettings
 import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
+import com.shilapi.xcertplay.network.CarHotspotConfiguration
+import com.shilapi.xcertplay.network.CarHotspotFailure
+import com.shilapi.xcertplay.network.CarHotspotReadResult
+import com.shilapi.xcertplay.network.CarHotspotStartResult
+import com.shilapi.xcertplay.network.CarHotspotState
+import com.shilapi.xcertplay.network.CarHotspotTools
+import com.shilapi.xcertplay.orchestration.ManualHotspotBand
+import com.shilapi.xcertplay.orchestration.ManualHotspotSecurity
 import com.shilapi.xcertplay.transport.EvChargingConnectors
 import java.io.File
 import java.lang.ref.WeakReference
@@ -53,6 +61,14 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.Executors
 import kotlin.math.roundToInt
+
+private enum class CarHotspotAction { READ_CONFIGURATION, ENABLE, READ_STATE }
+
+private sealed class CarHotspotActionResult {
+    class Read(val result: CarHotspotReadResult) : CarHotspotActionResult()
+    class Start(val result: CarHotspotStartResult) : CarHotspotActionResult()
+    class State(val state: CarHotspotState?) : CarHotspotActionResult()
+}
 
 /** DiAuto's visual language, with a connection flow for an independent CarPlay receiver. */
 class DiPlayActivity : ComponentActivity() {
@@ -78,6 +94,14 @@ class DiPlayActivity : ComponentActivity() {
     private var exportButton: Button? = null
     private var adbStatus: TextView? = null
     private var adbCheckGeneration = 0
+    private var hotspotToolsStatusView: TextView? = null
+    private var hotspotToolsMessage: String? = null
+    private var carHotspotEnabledSnapshot: Boolean? = null
+    private var hotspotOperationGeneration = 0
+    private var hotspotOperationTimeout: Runnable? = null
+    private var hotspotTimedOutGeneration: Int? = null
+    private var hotspotOperationCancellation: AtomicBoolean? = null
+    private var activityResumed = false
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         connect(notificationTransport)
     }
@@ -153,12 +177,18 @@ class DiPlayActivity : ComponentActivity() {
 
     override fun onStop() {
         if (!isChangingConfigurations && geelyPhoneLookupDialog != null) cancelGeelyPhoneLookup()
+        activityResumed = false
+        hotspotOperationCancellation?.set(true)
+        hotspotOperationGeneration++
+        hotspotOperationTimeout?.let(handler::removeCallbacks)
+        hotspotOperationTimeout = null
         super.onStop()
         if (!isFinishing && !isChangingConfigurations) CenterMapOverlay.scheduleShow()
     }
 
     override fun onResume() {
         super.onResume()
+        activityResumed = true
         if (Build.VERSION.SDK_INT < 33 && AppLocale.preference(this) != languagePreferenceAtCreate) {
             recreate()
             return
@@ -173,17 +203,26 @@ class DiPlayActivity : ComponentActivity() {
                 handler.post { connect(AirPlayPersistence.loadWirelessEnabled(this)) }
             }
         }
+        if (AirPlayPersistence.loadWirelessHotspotMode(this) == WirelessHotspotMode.MANUAL) {
+            submitCarHotspotAction(CarHotspotAction.READ_STATE)
+        }
     }
-    override fun onPause() { handler.removeCallbacks(tick); super.onPause() }
+    override fun onPause() { activityResumed = false; handler.removeCallbacks(tick); super.onPause() }
 
     override fun onDestroy() {
         cancelGeelyPhoneLookup()
         cancelBluetoothStatusProbe()
+        hotspotOperationGeneration++
+        hotspotOperationCancellation?.set(true)
+        hotspotOperationTimeout?.let(handler::removeCallbacks)
+        hotspotOperationTimeout = null
+        hotspotToolsStatusView = null
         super.onDestroy()
     }
 
     private fun render() {
         status = null; connectButton = null; disconnectButton = null; lastRunning = null
+        hotspotToolsStatusView = null
         val scroll = ScrollView(this).apply { setBackgroundColor(BG); isFillViewport = true; clipToPadding = false }
         val content = column().apply { setPadding(dp(32), dp(24), dp(32), dp(32)) }
         scroll.addView(content)
@@ -560,10 +599,10 @@ class DiPlayActivity : ComponentActivity() {
         }
     }
 
-    // The car hotspot link needs the hotspot on; DiPlay only checks it (turning it on needs ADB-only permission).
+    // The cached AP state is refreshed on a background worker; connection checks stay on the UI thread.
     private fun carHotspotOff(): Boolean =
         AirPlayPersistence.loadWirelessHotspotMode(this) == WirelessHotspotMode.MANUAL &&
-            com.shilapi.xcertplay.network.CarHotspotStatus.isEnabled(this) == false
+            carHotspotEnabledSnapshot == false
 
     private fun carHotspotOffDialog() {
         AlertDialog.Builder(this).setTitle(getString(R.string.car_hotspot_is_off))
@@ -571,6 +610,182 @@ class DiPlayActivity : ComponentActivity() {
             .setPositiveButton(getString(R.string.open_car_settings)) { _, _ -> openCarWifiSettings() }
             .setNeutralButton(getString(R.string.connect)) { _, _ -> connect(true) }
             .setNegativeButton(getString(R.string.cancel), null).show()
+    }
+
+    private fun confirmEnableCarHotspot() {
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.hotspot_tools_enable_title))
+            .setMessage(getString(R.string.hotspot_tools_enable_warning))
+            .setPositiveButton(getString(R.string.hotspot_tools_enable_confirm)) { _, _ ->
+                submitCarHotspotAction(CarHotspotAction.ENABLE)
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
+            .show()
+    }
+
+    private fun submitCarHotspotAction(action: CarHotspotAction) {
+        if (!hotspotOperationBusy.compareAndSet(false, true)) {
+            if (action != CarHotspotAction.READ_STATE) {
+                setHotspotToolsMessage(getString(R.string.hotspot_tools_busy))
+            }
+            return
+        }
+
+        val requestId = ++hotspotOperationGeneration
+        val cancelled = AtomicBoolean(false)
+        hotspotOperationCancellation = cancelled
+        hotspotTimedOutGeneration = null
+        val ownerRef = WeakReference(this)
+        val operationTimeoutMillis = if (action == CarHotspotAction.READ_STATE) {
+            HOTSPOT_STATE_UI_TIMEOUT_MILLIS
+        } else {
+            HOTSPOT_OPERATION_UI_TIMEOUT_MILLIS
+        }
+        val timeout = Runnable {
+            val owner = ownerRef.get() ?: return@Runnable
+            if (owner.hotspotOperationGeneration == requestId && owner.activityResumed) {
+                cancelled.set(true)
+                owner.hotspotTimedOutGeneration = requestId
+                if (action != CarHotspotAction.READ_STATE) {
+                    owner.setHotspotToolsMessage(owner.getString(R.string.hotspot_tools_pending_timeout))
+                }
+            }
+        }
+        hotspotOperationTimeout = timeout
+        handler.postDelayed(timeout, operationTimeoutMillis)
+
+        val appContext = applicationContext
+        hotspotToolsExecutor.execute {
+            val outcome = try {
+                when (action) {
+                    CarHotspotAction.READ_CONFIGURATION -> CarHotspotActionResult.Read(
+                        CarHotspotTools.read(appContext),
+                    )
+                    CarHotspotAction.ENABLE -> CarHotspotActionResult.Start(
+                        CarHotspotTools.start(
+                            appContext,
+                            timeoutMillis = CarHotspotTools.DEFAULT_START_TIMEOUT_MILLIS,
+                            cancelled = cancelled::get,
+                        ),
+                    )
+                    CarHotspotAction.READ_STATE -> CarHotspotActionResult.State(
+                        CarHotspotTools.readState(appContext),
+                    )
+                }
+            } catch (_: Throwable) {
+                when (action) {
+                    CarHotspotAction.READ_CONFIGURATION -> CarHotspotActionResult.Read(
+                        CarHotspotReadResult.Failure(CarHotspotFailure.OPERATION_FAILED),
+                    )
+                    CarHotspotAction.ENABLE -> CarHotspotActionResult.Start(
+                        CarHotspotStartResult.Failure(CarHotspotFailure.OPERATION_FAILED),
+                    )
+                    CarHotspotAction.READ_STATE -> CarHotspotActionResult.State(null)
+                }
+            }
+            hotspotOperationBusy.set(false)
+            hotspotMainHandler.post {
+                val owner = ownerRef.get() ?: return@post
+                if (owner.isFinishing || owner.isDestroyed || !owner.activityResumed ||
+                    owner.hotspotOperationGeneration != requestId ||
+                    owner.hotspotTimedOutGeneration == requestId) return@post
+                owner.handler.removeCallbacks(timeout)
+                owner.hotspotOperationTimeout = null
+                owner.hotspotOperationCancellation = null
+                owner.completeCarHotspotAction(outcome)
+            }
+        }
+    }
+
+    private fun completeCarHotspotAction(outcome: CarHotspotActionResult) {
+        when (outcome) {
+            is CarHotspotActionResult.Read -> when (val result = outcome.result) {
+                is CarHotspotReadResult.Available -> {
+                    persistCarHotspotConfiguration(result.configuration)
+                    pendingCarHotspotSetup = false
+                    AirPlayPersistence.saveWirelessHotspotMode(this, WirelessHotspotMode.MANUAL)
+                    hotspotToolsMessage = formatHotspotConfiguration(result.configuration)
+                    render()
+                }
+                is CarHotspotReadResult.Failure ->
+                    setHotspotToolsMessage(hotspotFailureMessage(result.reason))
+            }
+            is CarHotspotActionResult.Start -> when (val result = outcome.result) {
+                is CarHotspotStartResult.AlreadyEnabled -> {
+                    carHotspotEnabledSnapshot = true
+                    persistCarHotspotConfiguration(result.configuration)
+                    setHotspotToolsMessage(getString(R.string.hotspot_tools_already_enabled))
+                }
+                is CarHotspotStartResult.Enabled -> {
+                    carHotspotEnabledSnapshot = true
+                    persistCarHotspotConfiguration(result.configuration)
+                    setHotspotToolsMessage(getString(R.string.hotspot_tools_enabled))
+                }
+                is CarHotspotStartResult.Failure ->
+                    setHotspotToolsMessage(hotspotFailureMessage(result.reason))
+            }
+            is CarHotspotActionResult.State -> {
+                val wasEnabled = carHotspotEnabledSnapshot
+                carHotspotEnabledSnapshot = outcome.state?.let { it == CarHotspotState.ENABLED }
+                if (wasEnabled != carHotspotEnabledSnapshot &&
+                    (page == "home" || page == "settings" || page == "connection")) {
+                    render()
+                }
+            }
+        }
+    }
+
+    private fun persistCarHotspotConfiguration(configuration: CarHotspotConfiguration) {
+        AirPlayPersistence.saveManualHotspotProfile(
+            this,
+            configuration.ssid,
+            configuration.passphrase,
+            configuration.security,
+            configuration.band ?: ManualHotspotBand.AUTO,
+            configuration.channel ?: 0,
+        )
+    }
+
+    private fun formatHotspotConfiguration(configuration: CarHotspotConfiguration): String {
+        val security = getString(
+            if (configuration.security == ManualHotspotSecurity.OPEN) {
+                R.string.hotspot_tools_security_open
+            } else {
+                R.string.hotspot_tools_security_wpa
+            },
+        )
+        val band = when (configuration.band) {
+            ManualHotspotBand.GHZ_2_4 -> getString(R.string.hotspot_tools_band_24)
+            ManualHotspotBand.GHZ_5 -> getString(R.string.hotspot_tools_band_5)
+            ManualHotspotBand.AUTO -> getString(R.string.hotspot_tools_band_auto)
+            null -> getString(R.string.hotspot_tools_unavailable)
+        }
+        val channel = configuration.channel?.let {
+            getString(R.string.hotspot_tools_channel_value, it)
+        } ?: getString(R.string.hotspot_tools_unavailable)
+        return getString(R.string.hotspot_tools_read_result, configuration.ssid, security, band, channel)
+    }
+
+    private fun hotspotFailureMessage(failure: CarHotspotFailure): String = getString(when (failure) {
+        CarHotspotFailure.CONFIGURATION_UNAVAILABLE -> R.string.hotspot_tools_configuration_unavailable
+        CarHotspotFailure.UNSUPPORTED_CONFIGURATION -> R.string.hotspot_tools_configuration_unsupported
+        CarHotspotFailure.PERMISSION_DENIED -> R.string.hotspot_tools_permission_denied
+        CarHotspotFailure.STATE_UNAVAILABLE -> R.string.hotspot_tools_state_unavailable
+        CarHotspotFailure.STATE_TRANSITION_IN_PROGRESS -> R.string.hotspot_tools_transition_in_progress
+        CarHotspotFailure.FIRMWARE_REPORTED_FAILURE -> R.string.hotspot_tools_firmware_failed
+        CarHotspotFailure.REQUEST_REJECTED -> R.string.hotspot_tools_request_rejected
+        CarHotspotFailure.START_TIMED_OUT -> R.string.hotspot_tools_start_timeout
+        CarHotspotFailure.OPERATION_CANCELLED -> R.string.hotspot_tools_operation_cancelled
+        CarHotspotFailure.OPERATION_INTERRUPTED -> R.string.hotspot_tools_operation_cancelled
+        CarHotspotFailure.OPERATION_FAILED -> R.string.hotspot_tools_operation_failed
+    })
+
+    private fun setHotspotToolsMessage(message: String) {
+        hotspotToolsMessage = message
+        hotspotToolsStatusView?.apply {
+            text = message
+            contentDescription = getString(R.string.hotspot_tools_status_content_description, message)
+        }
     }
 
     // BYD maps the AOSP tether action to its own hotspot screen; other firmware falls back to Wi-Fi settings.
@@ -622,12 +837,18 @@ class DiPlayActivity : ComponentActivity() {
 
     private fun wirelessLinkControls(parent: LinearLayout) {
         val mode = if (pendingCarHotspotSetup) WirelessHotspotMode.MANUAL else AirPlayPersistence.loadWirelessHotspotMode(this)
-        val modes = listOf(WirelessHotspotMode.MANUAL, WirelessHotspotMode.WIFI_P2P)
-        val titles = listOf(getString(R.string.built_in_car_hotspot), getString(R.string.wifi_direct))
-        val descriptions = listOf(
-            getString(R.string.hotspot_mode_manual_desc),
-            getString(R.string.hotspot_mode_p2p_desc)
-        )
+        val p2pSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        val modes = if (p2pSupported) {
+            listOf(WirelessHotspotMode.MANUAL, WirelessHotspotMode.WIFI_P2P)
+        } else {
+            listOf(WirelessHotspotMode.MANUAL)
+        }
+        val titles = modes.map { candidate ->
+            getString(if (candidate == WirelessHotspotMode.MANUAL) R.string.built_in_car_hotspot else R.string.wifi_direct)
+        }
+        val descriptions = modes.map { candidate ->
+            getString(if (candidate == WirelessHotspotMode.MANUAL) R.string.hotspot_mode_manual_desc else R.string.hotspot_mode_p2p_desc)
+        }
         val wide = resources.configuration.screenWidthDp >= 850
         val choices = if (wide) row().apply { gravity = Gravity.TOP } else column()
         parent.addView(choices)
@@ -647,10 +868,38 @@ class DiPlayActivity : ComponentActivity() {
             }, matchButton(12, 60))
             option.addView(label(descriptions[index], 15, MUTED).apply { setPadding(0, dp(6), 0, dp(12)) })
         }
+        if (!p2pSupported) {
+            parent.addView(label(getString(R.string.hotspot_tools_p2p_unavailable), 14, MUTED).apply {
+                setPadding(0, dp(4), 0, dp(8))
+            })
+        }
         if (mode == WirelessHotspotMode.MANUAL) {
             parent.addView(label(getString(R.string.hotspot_setup), 22, TEXT, true))
             parent.addView(label(getString(R.string.s_1_open_car_hotspot_settings_turn_the_hotspot_on_and_sele), 16, MUTED).apply { setPadding(0, dp(8), 0, dp(12)) })
             parent.addView(button(getString(R.string.open_car_hotspot_settings), false) { openCarWifiSettings() }, matchButton(0, 60))
+            val readHotspotButton = button(getString(R.string.hotspot_tools_read_button), false) {
+                submitCarHotspotAction(CarHotspotAction.READ_CONFIGURATION)
+            }.apply { contentDescription = getString(R.string.hotspot_tools_read_button) }
+            parent.addView(readHotspotButton, matchButton(12, 60))
+            val enableHotspotButton = button(getString(R.string.hotspot_tools_enable_button), true) {
+                confirmEnableCarHotspot()
+            }.apply { contentDescription = getString(R.string.hotspot_tools_enable_button) }
+            parent.addView(enableHotspotButton, matchButton(12, 60))
+            parent.addView(label(getString(R.string.hotspot_tools_5ghz_unavailable), 14, MUTED).apply {
+                setPadding(0, dp(10), 0, 0)
+            })
+            val hotspotStatus = label(hotspotToolsMessage ?: getString(R.string.hotspot_tools_idle), 14, MUTED).apply {
+                hotspotToolsStatusView = this
+                contentDescription = getString(
+                    R.string.hotspot_tools_status_content_description,
+                    hotspotToolsMessage ?: getString(R.string.hotspot_tools_idle),
+                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                    accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+                }
+                setPadding(0, dp(8), 0, dp(4))
+            }
+            parent.addView(hotspotStatus)
             parent.addView(button(if (pendingCarHotspotSetup) getString(R.string.save_hotspot_details_and_use_this_mode) else "${getString(R.string.edit_saved_hotspot_prefix)}${storedSsid()}", false) {
                 askHotspotCredentials { ssid, password ->
                     saveHotspotCredentials(ssid, password)
@@ -791,12 +1040,14 @@ class DiPlayActivity : ComponentActivity() {
         com.shilapi.xcertplay.orchestration.ManualHotspotValidation.error(ssid, password)?.let { getString(it.messageResource()) }
 
     private fun saveHotspotCredentials(ssid: String, password: String) {
-        AirPlayPersistence.saveManualHotspotSsid(this, ssid)
-        AirPlayPersistence.saveManualHotspotPassphrase(this, password)
-        AirPlayPersistence.saveManualHotspotSecurity(this,
-            com.shilapi.xcertplay.orchestration.ManualHotspotValidation.securityFor(password))
-        AirPlayPersistence.saveManualHotspotBand(this, com.shilapi.xcertplay.orchestration.ManualHotspotBand.AUTO)
-        AirPlayPersistence.saveManualHotspotChannel(this, 0)
+        AirPlayPersistence.saveManualHotspotProfile(
+            this,
+            ssid,
+            password,
+            com.shilapi.xcertplay.orchestration.ManualHotspotValidation.securityFor(password),
+            ManualHotspotBand.AUTO,
+            0,
+        )
     }
 
     private fun askHotspotCredentials(done: (String, String) -> Unit) {
@@ -1691,6 +1942,13 @@ class DiPlayActivity : ComponentActivity() {
     private fun space(height: Int) = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
     companion object {
+        private val hotspotOperationBusy = AtomicBoolean(false)
+        private val hotspotToolsExecutor = Executors.newSingleThreadExecutor { task ->
+            Thread(task, "diplay-car-hotspot-tools").apply { isDaemon = true }
+        }
+        private val hotspotMainHandler = Handler(Looper.getMainLooper())
+        private const val HOTSPOT_STATE_UI_TIMEOUT_MILLIS = 8_000L
+        private const val HOTSPOT_OPERATION_UI_TIMEOUT_MILLIS = 20_000L
         private val geelyPhoneLookupBusy = AtomicBoolean(false)
         private val geelyPhoneLookupExecutor = Executors.newSingleThreadExecutor { task ->
             Thread(task, "diplay-h52-paired-phones").apply { isDaemon = true }

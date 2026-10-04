@@ -1,0 +1,23 @@
+{
+  "baseCommit": "4da49ab",
+  "changedFiles": [
+    "README.md",
+    "README.zh-CN.md",
+    "common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt",
+    "common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt",
+    "common/src/main/java/com/shilapi/xcertplay/ConnectionRecoveryAdvice.kt",
+    "common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt",
+    "common/src/main/res/values-zh-rCN/hotspot_tools.xml",
+    "common/src/main/res/values/hotspot_tools.xml",
+    "common/src/test/java/com/shilapi/xcertplay/ConnectionRecoveryAdviceTest.kt",
+    "docs/geely-android43/CONNECTION-UI-IMPLEMENTATION.md",
+    "docs/geely-android43/H52-WIFI-REVIEW.md",
+    "docs/geely-android43/H52-WiFiLog-manifest.json",
+    "mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt",
+    "shared/src/main/java/com/shilapi/xcertplay/network/CarHotspotTools.kt",
+    "shared/src/main/java/com/shilapi/xcertplay/orchestration/CarPlayController.kt",
+    "shared/src/main/java/com/shilapi/xcertplay/transport/Iap2WirelessControlClient.kt",
+    "shared/src/test/java/com/shilapi/xcertplay/network/CarHotspotToolsTest.kt"
+  ],
+  "note": "WiFi/log change over the ANW implementation; full source history contains earlier API18 and ANW changes"
+}

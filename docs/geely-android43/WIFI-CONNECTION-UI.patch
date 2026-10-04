@@ -1,0 +1,2571 @@
+diff --git a/README.md b/README.md
+index e16619a..38d6560 100644
+--- a/README.md
++++ b/README.md
+@@ -39,9 +39,8 @@ Release 提供**内置实验性认证材料的完整车测 APK**，无需用户
+ 
+ 保留上游 [GPL-3.0 LICENSE](LICENSE)、版权声明及 [第三方许可文件](docs/licenses)。上游注明基础实现来自 xcertplay（GPL-3.0），界面及网站适配自 DiAuto（AGPL-3.0）；这些原始声明及适用许可继续保留，详见 [上游 Credits](docs/THIRD_PARTY_NOTICES.md)。本仓库的适配说明不会替代各组件原有许可。
+ 
+-## H52 test update
++## H52 最新实验适配（2026-10-05）
+ 
+-Adds capability-gated factory audio routing and an opt-in read-only Bluetooth diagnostic switch. **OEM wireless transport is not implemented**. API18 supports copying the Bluetooth summary; full diagnostic file export remains unavailable. See [audio](docs/geely-android43/H52-AUDIO.md), [Bluetooth](docs/geely-android43/H52-BLUETOOTH.md), and [independent validation](docs/geely-android43/H52-VALIDATION.md).
++新增默认关闭的 H52 ANW 原厂蓝牙连接开关、读取热点配置和用户确认开启车机热点按钮，以及宽屏左侧连接状态/解决建议、右侧实时滚动日志。Android4.3 的完整诊断报告直接保存到用户内存根目录。605项单元测试通过；最终APK通过安卓4.3模拟器宽屏/窄屏、热点按钮、缺配置防崩溃和日志跟随/重试验收，验证范围见技术文档。H52实车 iPhone 握手和热点硬件操作仍待验证，尚无经过验证的5 GHz AP频段控制接口。
+ 
+-
+-2026-10-04：新增默认关闭的“尝试 H52 原厂蓝牙连接”实验开关，使用 ANW SPP 接入既有 iAP2 流程。实车 iPhone 握手尚未验证。实现与使用说明见 [H52-ANW-CONNECTION](docs/geely-android43/H52-ANW-CONNECTION.md)。
++代码与使用说明：[ANW接入](docs/geely-android43/H52-ANW-CONNECTION.md)、[热点与连接界面](docs/geely-android43/CONNECTION-UI-IMPLEMENTATION.md)、[WiFi固件证据](docs/geely-android43/H52-WIFI-REVIEW.md)、[原厂音频](docs/geely-android43/H52-AUDIO.md)、[API18报告导出](docs/geely-android43/API18-REPORT-EXPORT.md)。测试APK保留本地认证私钥与证书；源码不包含原始认证凭据。
+diff --git a/README.zh-CN.md b/README.zh-CN.md
+index e70c9f3..38d6560 100644
+--- a/README.zh-CN.md
++++ b/README.zh-CN.md
+@@ -39,11 +39,8 @@ Release 提供**内置实验性认证材料的完整车测 APK**，无需用户
+ 
+ 保留上游 [GPL-3.0 LICENSE](LICENSE)、版权声明及 [第三方许可文件](docs/licenses)。上游注明基础实现来自 xcertplay（GPL-3.0），界面及网站适配自 DiAuto（AGPL-3.0）；这些原始声明及适用许可继续保留，详见 [上游 Credits](docs/THIRD_PARTY_NOTICES.md)。本仓库的适配说明不会替代各组件原有许可。
+ 
+-## H52 新增测试版
++## H52 最新实验适配（2026-10-05）
+ 
+-新增原厂音频配置和默认关闭的厂商蓝牙只读检测按钮。**OEM 无线传输尚未实现**。API18 可复制蓝牙诊断摘要，完整文件导出仍不支持。
++新增默认关闭的 H52 ANW 原厂蓝牙连接开关、读取热点配置和用户确认开启车机热点按钮，以及宽屏左侧连接状态/解决建议、右侧实时滚动日志。Android4.3 的完整诊断报告直接保存到用户内存根目录。605项单元测试通过；最终APK通过安卓4.3模拟器宽屏/窄屏、热点按钮、缺配置防崩溃和日志跟随/重试验收，验证范围见技术文档。H52实车 iPhone 握手和热点硬件操作仍待验证，尚无经过验证的5 GHz AP频段控制接口。
+ 
+-详见 [音频代码说明](docs/geely-android43/H52-AUDIO.md)、[蓝牙协议说明](docs/geely-android43/H52-BLUETOOTH.md)、[固定APK独立验收](docs/geely-android43/H52-VALIDATION.md)。
+-
+-
+-2026-10-04：新增默认关闭的“尝试 H52 原厂蓝牙连接”实验开关，使用 ANW SPP 接入既有 iAP2 流程。实车 iPhone 握手尚未验证。实现与使用说明见 [H52-ANW-CONNECTION](docs/geely-android43/H52-ANW-CONNECTION.md)。
++代码与使用说明：[ANW接入](docs/geely-android43/H52-ANW-CONNECTION.md)、[热点与连接界面](docs/geely-android43/CONNECTION-UI-IMPLEMENTATION.md)、[WiFi固件证据](docs/geely-android43/H52-WIFI-REVIEW.md)、[原厂音频](docs/geely-android43/H52-AUDIO.md)、[API18报告导出](docs/geely-android43/API18-REPORT-EXPORT.md)。测试APK保留本地认证私钥与证书；源码不包含原始认证凭据。
+diff --git a/common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt b/common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt
+index 6248355..0ae4301 100644
+--- a/common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt
++++ b/common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt
+@@ -360,6 +360,23 @@ object AirPlayPersistence {
+             .apply()
+     }
+ 
++    fun saveManualHotspotProfile(
++        context: Context,
++        ssid: String,
++        passphrase: String,
++        security: ManualHotspotSecurity,
++        band: ManualHotspotBand,
++        channel: Int,
++    ) {
++        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
++            .putString(KEY_MANUAL_HOTSPOT_SSID, ssid)
++            .putString(KEY_MANUAL_HOTSPOT_PASSPHRASE, passphrase)
++            .putString(KEY_MANUAL_HOTSPOT_SECURITY, security.name)
++            .putString(KEY_MANUAL_HOTSPOT_BAND, band.name)
++            .putInt(KEY_MANUAL_HOTSPOT_CHANNEL, channel.coerceIn(0, 196))
++            .apply()
++    }
++
+     fun loadDebugLogsEnabled(context: Context): Boolean =
+         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+             .getBoolean(KEY_DEBUG_LOGS_ENABLED, false)
+diff --git a/common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt b/common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt
+index 122bb21..e5f07fe 100644
+--- a/common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt
++++ b/common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt
+@@ -109,6 +109,14 @@ class CarPlayHostActivity : ComponentActivity() {
+     )
+ 
+     private var connectionPanel: View? = null
++    private var wideConnectionPanel: View? = null
++    private var wideStageView: TextView? = null
++    private var wideGuidanceView: TextView? = null
++    private var wideElapsedView: TextView? = null
++    private var wideFailureView: TextView? = null
++    private var wideConfirmedStageView: TextView? = null
++    private var wideWifiRecoveryButton: View? = null
++    private var latestLogButton: Button? = null
+     private var wifiRecoveryButton: View? = null
+     private var reconnectAttempts = 0
+     private lateinit var airPlayIdentity: AirPlayIdentity
+@@ -257,6 +265,11 @@ class CarPlayHostActivity : ComponentActivity() {
+     private var locationReportingSwitch: Switch? = null
+     private var statusView: TextView? = null
+     private var statusScrollView: ScrollView? = null
++    private var logScrollChangedListener: android.view.ViewTreeObserver.OnScrollChangedListener? = null
++    private var logFollowLatest = true
++    private var programmaticLogScroll = false
++    private var logRefreshScheduled = false
++    @Volatile private var hostUiDestroyed = false
+     private var stageStatusView: TextView? = null
+     private var resolutionValueView: TextView? = null
+     private var resolutionPreviewView: TextView? = null
+@@ -346,7 +359,11 @@ class CarPlayHostActivity : ComponentActivity() {
+     private var vpnReady = false
+     private var hotspotStatus = HotspotStatus(state = "off")
+     private var menuOpen = false
+-    private var latestStage = "Preparing CarPlay"
++    private var currentConnectionStatus: CarPlayStatus? = null
++    private var currentStageStartedAtMillis = 0L
++    private var lastFailureMessage: String? = null
++    private var lastFailureAdvice: String? = null
++    private var lastConfirmedStage: String? = null
+     private var darkMode = false
+     private var lastConfiguration: Configuration? = null
+     private var activeAirPlaySession: AirPlaySession? = null
+@@ -366,6 +383,21 @@ class CarPlayHostActivity : ComponentActivity() {
+     private val airPlayCommandExecutor: ExecutorService = Executors.newSingleThreadExecutor()
+     private val logLines = ArrayDeque<LogEntry>()
+     private val expireOldLogLines = Runnable { refreshLogView(System.currentTimeMillis()) }
++    private val refreshPendingLogView = Runnable {
++        logRefreshScheduled = false
++        if (!hostUiDestroyed) refreshLogView(System.currentTimeMillis())
++    }
++    private val showStageElapsedNotice = Runnable {
++        if (hostUiDestroyed || currentConnectionStatus == null || currentStageStartedAtMillis == 0L) return@Runnable
++        val elapsed = System.currentTimeMillis() - currentStageStartedAtMillis
++        if (elapsed >= STAGE_STALL_NOTICE_MILLIS) {
++            wideElapsedView?.text = connectionUiText(
++                "此阶段已持续超过 ${elapsed / 1000} 秒；当前尚未确认原因。请查看右侧最新日志。",
++                "This stage has lasted ${elapsed / 1000}s; the cause is not confirmed. Check the latest log entries.",
++            )
++            wideElapsedView?.visibility = View.VISIBLE
++        }
++    }
+     // Some head units (e.g. BYD DiLink) update resources.configuration for day/night
+     // without delivering onConfigurationChanged, so poll while the activity is visible.
+     private val pollConfiguration = object : Runnable {
+@@ -960,6 +992,7 @@ class CarPlayHostActivity : ComponentActivity() {
+         refreshConfiguration(newConfig)
+         applyFullscreenMode()
+         stageStatusView?.maxWidth = (resources.displayMetrics.widthPixels * 0.78f).toInt()
++        updateDebugOverlays()
+         scrollLogsToBottom()
+         videoView?.post {
+             val view = videoView ?: return@post
+@@ -981,6 +1014,15 @@ class CarPlayHostActivity : ComponentActivity() {
+         dismissClusterPresentation()
+         mainHandler.removeCallbacks(applyDisplaySize)
+         mainHandler.removeCallbacks(expireOldLogLines)
++        mainHandler.removeCallbacks(refreshPendingLogView)
++        mainHandler.removeCallbacks(showStageElapsedNotice)
++        hostUiDestroyed = true
++        statusScrollView?.let { scroll ->
++            logScrollChangedListener?.let { listener ->
++                if (scroll.viewTreeObserver.isAlive) scroll.viewTreeObserver.removeOnScrollChangedListener(listener)
++            }
++        }
++        logScrollChangedListener = null
+         mainHandler.removeCallbacks(pollConfiguration)
+         currentSurface?.let { surface ->
+             sink?.clearSurface(SCREEN_TYPE_MAIN, surface)
+@@ -1050,6 +1092,7 @@ class CarPlayHostActivity : ComponentActivity() {
+             textSize = 13f; gravity = Gravity.CENTER; setTextColor(Color.rgb(168, 182, 202)); setPadding(0, dp(20), 0, 0)
+         })
+         root.addView(panel, FrameLayout.LayoutParams(-1, -1))
++        root.addView(buildWideConnectionPanel(), FrameLayout.LayoutParams(-1, -1))
+         videoView = video
+         gestureOverlay = gestureLayer
+         stageStatusView = stage
+@@ -1058,6 +1101,196 @@ class CarPlayHostActivity : ComponentActivity() {
+         return root
+     }
+ 
++    /** Wide 16:9 and wider head units use a split connection surface until video is active. */
++    private fun buildWideConnectionPanel(): View {
++        val overlay = FrameLayout(this).apply {
++            setBackgroundColor(Color.argb(150, 0, 0, 0))
++            isClickable = true
++            contentDescription = "connection-panel"
++        }
++        val columns = LinearLayout(this).apply {
++            orientation = LinearLayout.HORIZONTAL
++            setPadding(dp(22), dp(22), dp(22), dp(22))
++        }
++        val leftContent = LinearLayout(this).apply {
++            orientation = LinearLayout.VERTICAL
++            gravity = Gravity.CENTER_VERTICAL
++            setPadding(dp(28), dp(24), dp(28), dp(24))
++            setBackgroundColor(Color.argb(238, 12, 17, 27))
++        }
++        val right = LinearLayout(this).apply {
++            orientation = LinearLayout.VERTICAL
++            setPadding(dp(24), dp(20), dp(24), dp(20))
++            setBackgroundColor(Color.argb(232, 7, 11, 17))
++        }
++
++        leftContent.addView(TextView(this).apply {
++            text = getString(R.string.diplay)
++            textSize = 28f
++            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
++            setTextColor(Color.rgb(241, 245, 252))
++            contentDescription = "connection-title"
++        }, LinearLayout.LayoutParams(-1, -2))
++        leftContent.addView(TextView(this).apply {
++            text = connectionUiText("连接状态", "Connection status")
++            textSize = 15f
++            setTextColor(Color.rgb(150, 168, 190))
++            setPadding(0, dp(18), 0, dp(8))
++        }, LinearLayout.LayoutParams(-1, -2))
++        val stage = TextView(this).apply {
++            text = connectionUiText("正在准备 CarPlay", "Preparing CarPlay")
++            textSize = 25f
++            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
++            setTextColor(Color.rgb(241, 245, 252))
++            contentDescription = "connection-stage"
++            maxLines = 3
++        }
++        wideStageView = stage
++        leftContent.addView(stage, LinearLayout.LayoutParams(-1, -2))
++        val guidance = TextView(this).apply {
++            text = connectionUiText("等待连接阶段状态。", "Waiting for a connection stage.")
++            textSize = 18f
++            setTextColor(Color.rgb(190, 204, 222))
++            setPadding(0, dp(12), 0, dp(4))
++            contentDescription = "connection-guidance"
++            maxLines = 5
++        }
++        wideGuidanceView = guidance
++        leftContent.addView(guidance, LinearLayout.LayoutParams(-1, -2))
++        val elapsed = TextView(this).apply {
++            textSize = 14f
++            setTextColor(Color.rgb(242, 196, 96))
++            visibility = View.GONE
++            setPadding(0, dp(8), 0, dp(4))
++            contentDescription = "connection-stage-elapsed"
++            maxLines = 2
++        }
++        wideElapsedView = elapsed
++        leftContent.addView(elapsed, LinearLayout.LayoutParams(-1, -2))
++        val confirmed = TextView(this).apply {
++            textSize = 14f
++            setTextColor(Color.rgb(146, 190, 160))
++            setPadding(0, dp(6), 0, dp(4))
++            contentDescription = "connection-last-confirmed-stage"
++            visibility = View.GONE
++            maxLines = 2
++        }
++        wideConfirmedStageView = confirmed
++        leftContent.addView(confirmed, LinearLayout.LayoutParams(-1, -2))
++        val failure = TextView(this).apply {
++            textSize = 15f
++            setTextColor(Color.rgb(255, 184, 166))
++            setPadding(dp(14), dp(10), dp(14), dp(10))
++            background = GradientDrawable().apply {
++                setColor(Color.argb(150, 107, 35, 30))
++                cornerRadius = dp(10).toFloat()
++            }
++            visibility = View.GONE
++            contentDescription = "connection-last-failure"
++            maxLines = 8
++        }
++        wideFailureView = failure
++        leftContent.addView(failure, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(14) })
++
++        val wifiRecovery = Button(this).apply {
++            text = getString(R.string.reset_carplay_wi_fi)
++            isAllCaps = false
++            textSize = 17f
++            visibility = View.GONE
++            setOnClickListener { showDiPlayHome("wireless-recovery") }
++            contentDescription = "connection-wifi-recovery"
++        }
++        wideWifiRecoveryButton = wifiRecovery
++        leftContent.addView(wifiRecovery, LinearLayout.LayoutParams(-1, dp(54)).apply { topMargin = dp(18) })
++        leftContent.addView(Button(this).apply {
++            text = connectionUiText("重试连接", "Retry connection")
++            isAllCaps = false
++            textSize = 18f
++            contentDescription = "connection-retry"
++            setOnClickListener {
++                if (controller == null) maybeStartCarPlay() else restartCarPlay("User requested connection retry")
++            }
++        }, LinearLayout.LayoutParams(-1, dp(58)).apply { topMargin = dp(18) })
++        leftContent.addView(Button(this).apply {
++            text = getString(R.string.carplay_settings)
++            isAllCaps = false
++            textSize = 18f
++            contentDescription = "connection-open-settings"
++            setOnClickListener { openSettingsMenu() }
++        }, LinearLayout.LayoutParams(-1, dp(58)).apply { topMargin = dp(18) })
++        leftContent.addView(Button(this).apply {
++            text = getString(R.string.back_to_diplay)
++            isAllCaps = false
++            textSize = 18f
++            contentDescription = "connection-return-home"
++            setOnClickListener { showDiPlayHome() }
++        }, LinearLayout.LayoutParams(-1, dp(58)).apply { topMargin = dp(10) })
++
++        val logHeader = LinearLayout(this).apply {
++            orientation = LinearLayout.HORIZONTAL
++            gravity = Gravity.CENTER_VERTICAL
++        }
++        logHeader.addView(TextView(this).apply {
++            text = connectionUiText("实时连接日志", "Live connection log")
++            textSize = 19f
++            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
++            setTextColor(Color.rgb(220, 231, 245))
++            contentDescription = "connection-log-title"
++        }, LinearLayout.LayoutParams(0, -2, 1f))
++        val latest = Button(this).apply {
++            text = connectionUiText("回到最新", "Latest")
++            isAllCaps = false
++            textSize = 15f
++            visibility = View.GONE
++            contentDescription = "connection-log-latest"
++            setOnClickListener {
++                logFollowLatest = true
++                updateLatestLogButton()
++                scrollLogsToBottom(force = true)
++            }
++        }
++        latestLogButton = latest
++        logHeader.addView(latest, LinearLayout.LayoutParams(-2, dp(44)))
++        right.addView(logHeader, LinearLayout.LayoutParams(-1, -2))
++
++        val logText = TextView(this).apply {
++            textSize = 14f
++            typeface = Typeface.MONOSPACE
++            setTextColor(Color.rgb(182, 207, 183))
++            setPadding(dp(12), dp(12), dp(12), dp(12))
++            contentDescription = "connection-log"
++            text = ""
++        }
++        val logs = ScrollView(this).apply {
++            isFillViewport = true
++            addView(logText, FrameLayout.LayoutParams(-1, -2))
++            setBackgroundColor(Color.argb(80, 0, 0, 0))
++        }
++        statusView = logText
++        statusScrollView = logs
++        val scrollListener = android.view.ViewTreeObserver.OnScrollChangedListener {
++            if (programmaticLogScroll || hostUiDestroyed) return@OnScrollChangedListener
++            val child = logs.getChildAt(0) ?: return@OnScrollChangedListener
++            val atBottom = logs.scrollY + logs.height >= child.height - dp(18)
++            logFollowLatest = atBottom
++            updateLatestLogButton()
++        }
++        logScrollChangedListener = scrollListener
++        logs.viewTreeObserver.addOnScrollChangedListener(scrollListener)
++        right.addView(logs, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(12) })
++
++        val leftScroll = ScrollView(this).apply {
++            isFillViewport = true
++            addView(leftContent, FrameLayout.LayoutParams(-1, -2))
++            contentDescription = "connection-actions-scroll"
++        }
++        columns.addView(leftScroll, LinearLayout.LayoutParams(0, -1, 0.40f).apply { rightMargin = dp(12) })
++        columns.addView(right, LinearLayout.LayoutParams(0, -1, 0.60f).apply { leftMargin = dp(12) })
++        overlay.addView(columns, FrameLayout.LayoutParams(-1, -1))
++        wideConnectionPanel = overlay
++        return overlay
++    }
++
+     private fun buildSettingsMenu(): View {
+         val overlay = FrameLayout(this).apply {
+             setBackgroundColor(Color.BLACK)
+@@ -3217,8 +3450,32 @@ class CarPlayHostActivity : ComponentActivity() {
+                     }
+                     activeAirPlaySession = session
+                     CarPlayBackgroundSession.active = true
++                    if (hostUiDestroyed) return@runOnUiThread
+                     reconnectAttempts = 0
++                    lastFailureMessage = null
++                    lastFailureAdvice = null
++                    currentConnectionStatus = null
++                    currentStageStartedAtMillis = 0L
++                    mainHandler.removeCallbacks(showStageElapsedNotice)
++                    val activeTitle = connectionUiText(
++                        "CarPlay 会话已建立",
++                        "CarPlay session active",
++                    )
++                    stageStatusView?.text = activeTitle
++                    wideStageView?.text = activeTitle
++                    wideGuidanceView?.text = connectionUiText(
++                        "会话已建立；主视频流出现后将切换为全屏 CarPlay。",
++                        "The session is active; full-screen CarPlay appears when the main video stream starts.",
++                    )
++                    lastConfirmedStage = connectionUiText("CarPlay 会话已建立", "CarPlay session established")
++                    wideFailureView?.visibility = View.GONE
++                    wideConfirmedStageView?.text = connectionUiText(
++                        "最近确认节点：${lastConfirmedStage}",
++                        "Last confirmed milestone: ${lastConfirmedStage}",
++                    )
++                    wideConfirmedStageView?.visibility = View.VISIBLE
+                     syncAirPlayDarkMode()
++                    updateDebugOverlays()
+                     if (menuOpen) return@runOnUiThread
+                     appendLog("AirPlay session active")
+                 }
+@@ -3228,7 +3485,7 @@ class CarPlayHostActivity : ComponentActivity() {
+                 runOnUiThread {
+                     if (activeAirPlaySession === session) activeAirPlaySession = null
+                     CarPlayBackgroundSession.active = false
+-                    if (menuOpen || controllerGeneration != restartGeneration) {
++                    if (hostUiDestroyed || menuOpen || controllerGeneration != restartGeneration) {
+                         return@runOnUiThread
+                     }
+                     activeScreenStreamTypes.clear()
+@@ -3240,11 +3497,12 @@ class CarPlayHostActivity : ComponentActivity() {
+ 
+             override fun onTransportError(message: String) {
+                 runOnUiThread {
+-                    if (menuOpen || controllerGeneration != restartGeneration) {
++                    if (hostUiDestroyed || menuOpen || controllerGeneration != restartGeneration) {
+                         return@runOnUiThread
+                     }
+                     activeScreenStreamTypes.clear()
+                     setConnectionStage(getString(R.string.transport_error_reconnecting))
++                    recordExplicitFailure(message)
+                     appendLog("CarPlay transport error: $message; reconnecting from scratch")
+                     reconnectAfterLoss("CarPlay transport error: $message")
+                 }
+@@ -3255,10 +3513,17 @@ class CarPlayHostActivity : ComponentActivity() {
+                 if (message.startsWith(CarPlayController.CONNECTION_DIAGNOSTIC_PREFIX + " ")) {
+                     // Retain old-controller teardown evidence without accepting its UI/session state.
+                     AsyncDiagnosticLog.append(diagnosticLog, message)
++                    if (controllerGeneration == restartGeneration) {
++                        runOnUiThread {
++                            if (!hostUiDestroyed && !menuOpen && controllerGeneration == restartGeneration) {
++                                appendUiLogOnly(message)
++                            }
++                        }
++                    }
+                     return
+                 }
+                 runOnUiThread {
+-                    if (controllerGeneration != restartGeneration) {
++                    if (hostUiDestroyed || controllerGeneration != restartGeneration) {
+                         return@runOnUiThread
+                     }
+                     DisplayDiagnosticSnapshot.record(this@CarPlayHostActivity, displayDiagnosticAttempt, message)
+@@ -3275,20 +3540,28 @@ class CarPlayHostActivity : ComponentActivity() {
+     private fun createStatusReporter(
+         controllerGeneration: Int,
+     ): (CarPlayStatus) -> Unit = { status ->
+-        if (!menuOpen && controllerGeneration == restartGeneration) {
+-            updateHotspotStatus(status)
+-            val description = status.describe()
+-            setConnectionStage(description)
+-            when (status) {
+-                is CarPlayStatus.Failed -> if (status.wifiResetRequired) {
+-                    wifiRecoveryButton?.visibility = View.VISIBLE
+-                } else {
+-                    wifiRecoveryButton?.visibility = View.GONE
+-                    reconnectAfterLoss(description)
++        val update = Runnable {
++            if (!hostUiDestroyed && !menuOpen && controllerGeneration == restartGeneration) {
++                updateHotspotStatus(status)
++                val description = statusTitle(status)
++                renderConnectionStatus(status, description)
++                when (status) {
++                    is CarPlayStatus.Failed -> if (status.wifiResetRequired) {
++                        wifiRecoveryButton?.visibility = View.VISIBLE
++                        wideWifiRecoveryButton?.visibility = View.VISIBLE
++                    } else {
++                        wifiRecoveryButton?.visibility = View.GONE
++                        wideWifiRecoveryButton?.visibility = View.GONE
++                        reconnectAfterLoss(description)
++                    }
++                    else -> {
++                        wifiRecoveryButton?.visibility = View.GONE
++                        wideWifiRecoveryButton?.visibility = View.GONE
++                    }
+                 }
+-                else -> Unit
+             }
+         }
++        if (Looper.myLooper() == Looper.getMainLooper()) update.run() else mainHandler.post(update)
+     }
+ 
+     private fun adoptBackgroundSession(): Boolean {
+@@ -3345,8 +3618,16 @@ class CarPlayHostActivity : ComponentActivity() {
+         if (CarPlayBackgroundSession.hasSession() && !CarPlayBackgroundSession.isOwner(this)) return
+         if (shuttingDown.get() || menuOpen || handshakeResetInProgress || controller != null) return
+         val controllerGeneration = restartGeneration
+-        val config = createRuntimeConfig()
+-        val airPlayConfig = createAirPlayConfig(size)
++        val prepared = try {
++            createRuntimeConfig() to createAirPlayConfig(size)
++        } catch (error: IllegalArgumentException) {
++            val failed = CarPlayStatus.Failed(error.message ?: "Invalid saved connection settings")
++            renderConnectionStatus(failed, statusTitle(failed))
++            appendLog("Connection settings validation failed: ${error.javaClass.simpleName}")
++            appendLog(statusTitle(failed))
++            return
++        }
++        val (config, airPlayConfig) = prepared
+         val locationProvider: Iap2LocationProvider? =
+             when {
+                 !config.locationReportingEnabled -> null
+@@ -3855,41 +4136,287 @@ class CarPlayHostActivity : ComponentActivity() {
+         else "action=$action"
+ 
+     private fun setConnectionStage(message: String) {
+-        latestStage = message
+-        stageStatusView?.text = friendlyStage(message)
++        currentConnectionStatus = null
++        currentStageStartedAtMillis = 0L
++        mainHandler.removeCallbacks(showStageElapsedNotice)
++        val safe = DiagnosticRedactor.redact(message)
++        val visibleMessage = safe ?: connectionUiText("连接状态暂不可显示", "Connection status unavailable")
++        stageStatusView?.text = visibleMessage
++        wideStageView?.text = visibleMessage
++        wideGuidanceView?.text = connectionUiText(
++            "当前没有新的结构化阶段信息。请查看右侧日志中的明确错误或进度。",
++            "No new structured stage is available. Check the explicit progress or errors in the log.",
++        )
++        wideElapsedView?.visibility = View.GONE
++        updateDebugOverlays()
++    }
++
++    private fun renderConnectionStatus(status: CarPlayStatus, title: String) {
++        val changed = currentConnectionStatus != status
++        currentConnectionStatus = status
++        stageStatusView?.text = title
++        wideStageView?.text = title
++        wideGuidanceView?.text = guidanceFor(status)
++
++        if (changed) {
++            currentStageStartedAtMillis = System.currentTimeMillis()
++            mainHandler.removeCallbacks(showStageElapsedNotice)
++            wideElapsedView?.visibility = View.GONE
++            mainHandler.postDelayed(showStageElapsedNotice, STAGE_STALL_NOTICE_MILLIS)
++            when (status) {
++                is CarPlayStatus.Failed -> {
++                    recordExplicitFailure(status.message)
++                    appendLog("Connection failed: ${status.message}")
++                }
++                else -> {
++                    if (isConfirmedConnectionMilestone(status)) {
++                        lastConfirmedStage = title
++                        wideConfirmedStageView?.text = connectionUiText(
++                            "最近确认节点：$title",
++                            "Last confirmed milestone: $title",
++                        )
++                        wideConfirmedStageView?.visibility = View.VISIBLE
++                    }
++                    appendLog(connectionUiText("阶段：$title", "Stage: $title"))
++                }
++            }
++        }
++        if (lastFailureMessage != null && status !is CarPlayStatus.Failed) {
++            wideFailureView?.text = failureCardText(lastFailureMessage!!, lastFailureAdvice.orEmpty())
++            wideFailureView?.visibility = View.VISIBLE
++        }
+         updateDebugOverlays()
+     }
+ 
++    private fun statusTitle(status: CarPlayStatus): String = when (status) {
++        is CarPlayStatus.HotspotReady -> connectionUiText("无线热点已就绪", "Wireless hotspot is ready")
++        is CarPlayStatus.Failed -> getString(
++            R.string.status_failed,
++            failureText(status),
++        )
++        else -> status.describe()
++    }
++
++    private fun failureText(status: CarPlayStatus.Failed): String {
++        val message = status.message.lowercase(Locale.US)
++        val knownReason = when {
++            message.contains("the car hotspot is off") ->
++                connectionUiText("车机热点未开启", "Car hotspot is off")
++            message.contains("h52 anw previous initialization") || message.contains("h52 anw spp initialization failed") ->
++                connectionUiText("原厂蓝牙 SPP 初始化失败或尚未确认", "Factory SPP initialization failed or is unconfirmed")
++            message.contains("h52 anw service") || message.contains("h52 anw binder unavailable") ->
++                connectionUiText("无法访问原厂蓝牙服务", "Factory Bluetooth service is unavailable")
++            message.contains("h52 factory bluetooth is not on") ->
++                connectionUiText("原厂蓝牙未开启", "Factory Bluetooth is off")
++            message.contains("h52 anw connect request rejected") || message.contains("h52 anw connection not confirmed") ->
++                connectionUiText("原厂蓝牙数据通路未建立", "Factory Bluetooth data connection was not confirmed")
++            message.contains("h52 anw spp link disconnected") ->
++                connectionUiText("原厂蓝牙数据通路已断开", "Factory Bluetooth data connection was disconnected")
++            message.contains("waiting for the manual hotspot") ->
++                connectionUiText("未找到可用的热点网络接口", "No usable hotspot network interface was found")
++            else -> null
++        }
++        if (knownReason != null) return knownReason
++        if (status.message.startsWith("manualHotspotSsid is required")) {
++            return connectionUiText("尚未配置车机热点名称", "Car hotspot name is not configured")
++        }
++        if (status.message.startsWith("Manual hotspot SSID does not match")) {
++            return connectionUiText("保存的热点名称与车机配置不一致", "Saved hotspot name differs from the car configuration")
++        }
++        val mapped = AndroidBluetoothFailureCopy.forControllerMessage(this, status.message) ?: status.message
++        return DiagnosticRedactor.redact(mapped)
++            ?: connectionUiText("错误详情已隐藏", "Error details were hidden")
++    }
++
++    private fun recordExplicitFailure(message: String) {
++        val safe = DiagnosticRedactor.redact(message)
++            ?: connectionUiText("错误详情已隐藏", "Error details were hidden")
++        lastFailureMessage = safe
++        val advice = ConnectionRecoveryAdvice.forFailure(message, geelyBluetoothEnabled)
++        lastFailureAdvice = connectionUiText(advice.chinese, advice.english)
++        wideFailureView?.text = failureCardText(safe, lastFailureAdvice.orEmpty())
++        wideFailureView?.visibility = View.VISIBLE
++    }
++
++    private fun isConfirmedConnectionMilestone(status: CarPlayStatus): Boolean = when (status) {
++        CarPlayStatus.MfiReady,
++        is CarPlayStatus.HotspotReady,
++        CarPlayStatus.BluetoothReady,
++        CarPlayStatus.WirelessIdentified,
++        CarPlayStatus.WirelessAuthenticated,
++        CarPlayStatus.RunningWireless,
++        CarPlayStatus.WirelessActive,
++        CarPlayStatus.RunningControl -> true
++        else -> false
++    }
++
++    private fun failureCardText(message: String, advice: String): String = connectionUiText(
++        "最近一次失败：$message\n建议：$advice",
++        "Most recent failure: $message\nNext step: $advice",
++    )
++
++    private fun guidanceFor(status: CarPlayStatus): String = when (status) {
++        CarPlayStatus.DiscoveringMfi -> connectionUiText(
++            "正在查找 MFi 认证设备。保持当前连接方式并查看右侧日志。",
++            "Looking for the MFi authentication device. Keep the current connection in place and check the log.",
++        )
++        CarPlayStatus.WaitingForMfi -> connectionUiText(
++            "仍在等待 MFi 协处理器。检查其连接与供电，再查看最新日志。",
++            "Still waiting for the MFi coprocessor. Check its connection and power, then review the latest log.",
++        )
++        CarPlayStatus.RequestingMfiPermission -> connectionUiText(
++            "请在系统弹窗中允许访问 USB 设备。",
++            "Allow access to the USB device in the system prompt.",
++        )
++        CarPlayStatus.MfiReady -> connectionUiText(
++            "MFi 认证设备已就绪，正在继续连接流程。",
++            "The MFi authentication device is ready. Connection setup is continuing.",
++        )
++        CarPlayStatus.StartingHotspot -> connectionUiText(
++            "正在启动无线热点。请查看右侧日志确认后续阶段。",
++            "Starting the wireless hotspot. Check the log for the next confirmed stage.",
++        )
++        is CarPlayStatus.HotspotReady -> connectionUiText(
++            "热点已就绪，正在等待 iPhone 建立无线连接。",
++            "The hotspot is ready; waiting for the iPhone to establish a wireless connection.",
++        )
++        CarPlayStatus.WaitingForPairedIphone -> connectionUiText(
++            "请确认 iPhone 已与车机配对并处于附近。",
++            "Confirm the iPhone is paired with the head unit and nearby.",
++        )
++        CarPlayStatus.ConnectingBluetooth -> connectionUiText(
++            "正在建立蓝牙数据连接。若仍等待，请确认 iPhone 已开机且已配对。",
++            "Establishing the Bluetooth data connection. If it keeps waiting, confirm the iPhone is on and paired.",
++        )
++        CarPlayStatus.BluetoothReady -> connectionUiText(
++            "蓝牙数据通道已确认，正在打开 iAP2 连接。",
++            "The Bluetooth byte transport is confirmed; opening the iAP2 connection.",
++        )
++        CarPlayStatus.WirelessIdentified -> connectionUiText(
++            "iAP2 设备识别已通过，正在等待认证。",
++            "iAP2 identification succeeded; waiting for authentication.",
++        )
++        CarPlayStatus.WirelessAuthenticated -> connectionUiText(
++            "iAP2 认证已通过，正在继续无线配置。",
++            "iAP2 authentication succeeded; continuing wireless setup.",
++        )
++        CarPlayStatus.WaitingForWifiJoin -> connectionUiText(
++            "Wi-Fi 配置已发送；这不表示 iPhone 已加入热点。请查看后续日志。",
++            "The Wi-Fi configuration was sent; this does not confirm the iPhone joined the hotspot. Check the next log entries.",
++        )
++        CarPlayStatus.RunningWireless -> connectionUiText(
++            "无线控制链路已运行，正在等待媒体会话。",
++            "The wireless control link is running; waiting for the media session.",
++        )
++        CarPlayStatus.WirelessActive -> connectionUiText(
++            "无线 CarPlay 已确认活动，等待视频画面显示。",
++            "Wireless CarPlay is confirmed active; waiting for video.",
++        )
++        CarPlayStatus.DiscoveringIphone -> connectionUiText(
++            "正在查找通过 USB 连接的 iPhone。",
++            "Looking for an iPhone connected over USB.",
++        )
++        CarPlayStatus.WaitingForIphone -> connectionUiText(
++            "请用 USB 数据线连接并解锁 iPhone。",
++            "Connect the iPhone with a USB data cable and unlock it.",
++        )
++        CarPlayStatus.RequestingIphonePermission -> connectionUiText(
++            "请在系统弹窗中允许访问 iPhone USB 设备。",
++            "Allow access to the iPhone USB device in the system prompt.",
++        )
++        CarPlayStatus.WaitingForReenumeration -> connectionUiText(
++            "USB 设备正在重新枚举。保持数据线连接并等待下一阶段。",
++            "The USB device is re-enumerating. Keep the cable connected and wait for the next stage.",
++        )
++        CarPlayStatus.SelectingConfiguration -> connectionUiText(
++            "正在选择 iPhone USB 配置。请保持连接。",
++            "Selecting the iPhone USB configuration. Keep it connected.",
++        )
++        CarPlayStatus.OpeningDataPaths -> connectionUiText(
++            "正在打开 USB 数据通道。请保持连接并查看日志。",
++            "Opening USB data paths. Keep the connection in place and check the log.",
++        )
++        CarPlayStatus.Pairing -> connectionUiText(
++            "正在与 iPhone 配对。按 iPhone 上显示的信任提示操作。",
++            "Pairing with the iPhone. Respond to any trust prompt shown on the phone.",
++        )
++        CarPlayStatus.ConnectingControl -> connectionUiText(
++            "正在建立 iAP2 控制连接。请保持 iPhone 解锁并查看后续日志。",
++            "Establishing the iAP2 control connection. Keep the iPhone unlocked and check the next log entries.",
++        )
++        CarPlayStatus.AttachingNetwork -> connectionUiText(
++            "控制连接已建立，正在准备网络通道。",
++            "The control connection is ready; preparing the network path.",
++        )
++        CarPlayStatus.RunningControl -> connectionUiText(
++            "CarPlay 控制通道已运行，正在等待媒体会话。",
++            "The CarPlay control channel is running; waiting for the media session.",
++        )
++        CarPlayStatus.ControlEnded -> connectionUiText(
++            "控制连接已结束。请查看右侧日志中的后续状态。",
++            "The control connection ended. Check the subsequent state in the log.",
++        )
++        is CarPlayStatus.Failed -> {
++            val advice = ConnectionRecoveryAdvice.forFailure(status.message, geelyBluetoothEnabled)
++            connectionUiText(advice.chinese, advice.english)
++        }
++    }
++
++    private fun connectionUiText(chinese: String, english: String): String =
++        if (resources.configuration.locale?.language == "zh") chinese else english
++
+     private fun updateDebugOverlays() {
+-        statusScrollView?.visibility = View.GONE
+-        connectionPanel?.visibility = if (activeScreenStreamTypes.isEmpty()) View.VISIBLE else View.GONE
+-    }
+-
+-    private fun friendlyStage(message: String): String = when {
+-        message.contains("Turn on Wi-Fi", true) -> getString(R.string.turn_on_wi_fi_in_the_head_unit_s_settings_to_connect)
+-        message.contains("Allow precise Location", true) -> getString(R.string.allow_precise_location_for_diplay_in_the_head_unit_s_app_p)
+-        message.contains("Allow Nearby devices", true) -> getString(R.string.allow_nearby_devices_for_diplay_in_the_head_unit_s_app_per)
+-        message.contains("createGroup failed", true) -> getString(R.string.the_head_unit_couldn_t_start_carplay_wi_fi_check_wi_fi_and)
+-        message.contains("needs a reset", true) -> getString(R.string.a_previous_wi_fi_direct_connection_is_still_running_reset)
+-        message.contains("socket", true) || message.contains("RFCOMM", true) -> getString(R.string.your_iphone_isn_t_available_unlock_it_and_check_bluetooth)
+-        message.contains("unsupported", true) || message.contains("not supported", true) -> getString(R.string.this_head_unit_may_not_support_wireless_carplay_try_a_usb)
+-        message.contains("denied", true) || message.contains("permission", true) -> getString(R.string.allow_the_connection_permission_to_continue)
+-        message.contains("Failed", true) || message.contains("error", true) -> getString(R.string.connection_interrupted_retrying)
+-        message.contains("Waiting for iPhone", true) || message.contains("Discovering iPhone", true) -> getString(R.string.connect_your_iphone_with_a_usb_cable)
+-        message.contains("paired", true) -> getString(R.string.looking_for_your_paired_iphone)
+-        message.contains("Bluetooth", true) -> getString(R.string.connecting_to_your_iphone)
+-        message.contains("reconnect", true) || message.contains("ended", true) -> getString(R.string.reconnecting_to_your_iphone)
+-        message.contains("active", true) || message.contains("running", true) -> getString(R.string.opening_carplay)
+-        else -> getString(R.string.getting_carplay_ready)
++        val wide = isWideConnectionSurface()
++        val mainVideoActive = SCREEN_TYPE_MAIN in activeScreenStreamTypes
++        connectionPanel?.visibility =
++            if (!wide && activeScreenStreamTypes.isEmpty()) View.VISIBLE else View.GONE
++        wideConnectionPanel?.visibility = if (wide && !mainVideoActive) View.VISIBLE else View.GONE
++        statusScrollView?.visibility = if (wide && !mainVideoActive) View.VISIBLE else View.GONE
++        updateLatestLogButton()
++    }
++
++    private fun isWideConnectionSurface(): Boolean {
++        val config = resources.configuration
++        val widthDp = config.screenWidthDp
++        val heightDp = config.screenHeightDp
++        return widthDp >= WIDE_CONNECTION_MIN_WIDTH_DP && heightDp > 0 &&
++            widthDp.toFloat() / heightDp.toFloat() >= WIDE_CONNECTION_MIN_ASPECT
+     }
+ 
+     private fun appendLog(message: String) {
+-        val safe = DiagnosticRedactor.redact(message) ?: return
+-        sessionLog?.append(formattedLogLine(safe, System.currentTimeMillis()))
++        val safe = redactSingleLogLine(message) ?: return
++        val now = System.currentTimeMillis()
++        sessionLog?.append(formattedLogLine(safe, now))
++        enqueueUiLogLine(safe, now)
+     }
+ 
+     private fun appendFileLog(message: String) {
+-        sessionLog?.append(formattedLogLine(message, System.currentTimeMillis()))
++        val safe = redactSingleLogLine(message) ?: return
++        sessionLog?.append(formattedLogLine(safe, System.currentTimeMillis()))
++    }
++
++    /** Adds a current-generation connection diagnostic already written to its async file log. */
++    private fun appendUiLogOnly(message: String) {
++        val safe = redactSingleLogLine(message) ?: return
++        enqueueUiLogLine(safe, System.currentTimeMillis())
++    }
++
++    private fun redactSingleLogLine(message: String): String? = DiagnosticRedactor.redact(message)
++        ?.replace('\r', ' ')
++        ?.replace('\n', ' ')
++
++    private fun enqueueUiLogLine(message: String, timestampMillis: Long) {
++        if (hostUiDestroyed) return
++        val update = Runnable {
++            if (hostUiDestroyed) return@Runnable
++            while (logLines.size >= MAX_VISIBLE_LOG_LINES) logLines.removeFirst()
++            logLines.addLast(LogEntry(timestampMillis, formattedLogLine(message, timestampMillis)))
++            if (!logRefreshScheduled) {
++                logRefreshScheduled = true
++                mainHandler.postDelayed(refreshPendingLogView, LOG_UI_REFRESH_INTERVAL_MILLIS)
++            }
++        }
++        if (Looper.myLooper() == Looper.getMainLooper()) update.run() else mainHandler.post(update)
+     }
+ 
+     private fun formattedLogLine(message: String, nowMillis: Long): String =
+@@ -3914,7 +4441,8 @@ class CarPlayHostActivity : ComponentActivity() {
+             logLines.removeFirst()
+         }
+         statusView?.text = logLines.joinToString("\n") { it.text }
+-        scrollLogsToBottom()
++        if (logFollowLatest) scrollLogsToBottom(force = true)
++        updateLatestLogButton()
+ 
+         mainHandler.removeCallbacks(expireOldLogLines)
+         logLines.firstOrNull()?.let { oldest ->
+@@ -3924,9 +4452,27 @@ class CarPlayHostActivity : ComponentActivity() {
+         }
+     }
+ 
+-    private fun scrollLogsToBottom() {
++    private fun scrollLogsToBottom(force: Boolean = false) {
++        if (!force && !logFollowLatest) return
+         statusScrollView?.post {
++            if (hostUiDestroyed) return@post
++            programmaticLogScroll = true
+             statusScrollView?.fullScroll(View.FOCUS_DOWN)
++            statusScrollView?.post {
++                programmaticLogScroll = false
++                updateLatestLogButton()
++            }
++        }
++    }
++
++    private fun updateLatestLogButton() {
++        val button = latestLogButton ?: return
++        val wideVisible = statusScrollView?.visibility == View.VISIBLE
++        button.visibility = if (wideVisible) View.VISIBLE else View.GONE
++        button.text = if (logFollowLatest) {
++            connectionUiText("自动跟随中", "Following latest")
++        } else {
++            connectionUiText("回到最新", "Back to latest")
+         }
+     }
+ 
+@@ -3995,10 +4541,13 @@ class CarPlayHostActivity : ComponentActivity() {
+         CarPlayStatus.RequestingMfiPermission -> getString(R.string.requesting_mfi_usb_permission)
+         CarPlayStatus.MfiReady -> getString(R.string.mfi_authentication_ready)
+         CarPlayStatus.StartingHotspot -> getString(R.string.starting_wireless_hotspot)
+-        is CarPlayStatus.HotspotReady ->
+-            getString(R.string.status_hotspot_ready, hotspotBackendLabel(backend), ssid, hotspotBandLabel(band), if (channel == 0) getString(R.string.auto_value) else channel.toString())
++        is CarPlayStatus.HotspotReady -> connectionUiText("无线热点已就绪", "Wireless hotspot is ready")
+         CarPlayStatus.WaitingForPairedIphone -> getString(R.string.waiting_for_paired_iphone)
+         CarPlayStatus.ConnectingBluetooth -> getString(R.string.connecting_bluetooth)
++        CarPlayStatus.BluetoothReady -> connectionUiText("蓝牙数据通道已就绪", "Bluetooth data transport is ready")
++        CarPlayStatus.WirelessIdentified -> connectionUiText("iAP2 设备识别已通过", "iAP2 identification succeeded")
++        CarPlayStatus.WirelessAuthenticated -> connectionUiText("iAP2 认证已通过", "iAP2 authentication succeeded")
++        CarPlayStatus.WaitingForWifiJoin -> connectionUiText("已发送 Wi-Fi 配置，等待后续确认", "Wi-Fi configuration sent; awaiting confirmation")
+         CarPlayStatus.RunningWireless -> getString(R.string.wireless_carplay_control_running)
+         CarPlayStatus.WirelessActive -> getString(R.string.wireless_carplay_active)
+         CarPlayStatus.DiscoveringIphone -> getString(R.string.discovering_iphone)
+@@ -4013,10 +4562,7 @@ class CarPlayHostActivity : ComponentActivity() {
+             if (wirelessEnabled) getString(R.string.starting_airplay_service) else getString(R.string.status_attaching_ncm)
+         CarPlayStatus.RunningControl -> getString(R.string.carplay_control_running)
+         CarPlayStatus.ControlEnded -> getString(R.string.carplay_control_window_ended)
+-        is CarPlayStatus.Failed -> getString(
+-            R.string.status_failed,
+-            AndroidBluetoothFailureCopy.forControllerMessage(this@CarPlayHostActivity, message) ?: message,
+-        )
++        is CarPlayStatus.Failed -> getString(R.string.status_failed, failureText(this))
+     }
+ 
+     private companion object {
+@@ -4025,6 +4571,11 @@ class CarPlayHostActivity : ComponentActivity() {
+         const val SCREEN_TYPE_ALT = 111
+         private const val CENTER_MAP_IDLE_MILLIS = 3_000L // a reconnect is quicker; a session end is not
+         const val LOG_RETENTION_MILLIS = 5 * 60_000L
++        const val MAX_VISIBLE_LOG_LINES = 400
++        const val LOG_UI_REFRESH_INTERVAL_MILLIS = 250L
++        const val STAGE_STALL_NOTICE_MILLIS = 30_000L
++        const val WIDE_CONNECTION_MIN_WIDTH_DP = 900
++        const val WIDE_CONNECTION_MIN_ASPECT = 1.6f
+         const val DISPLAY_CHANGE_DEBOUNCE_MILLIS = 500L
+         const val CONFIGURATION_POLL_INTERVAL_MILLIS = 2_000L
+         const val RECONNECT_DELAY_MILLIS = 2_000L
+diff --git a/common/src/main/java/com/shilapi/xcertplay/ConnectionRecoveryAdvice.kt b/common/src/main/java/com/shilapi/xcertplay/ConnectionRecoveryAdvice.kt
+new file mode 100644
+index 0000000..c07629d
+--- /dev/null
++++ b/common/src/main/java/com/shilapi/xcertplay/ConnectionRecoveryAdvice.kt
+@@ -0,0 +1,49 @@
++package com.shilapi.xcertplay
++
++import java.util.Locale
++
++/** Suggestions depend on explicit failures, never elapsed time or arbitrary keyword guesses. */
++internal object ConnectionRecoveryAdvice {
++    data class Advice(val chinese: String, val english: String)
++    fun forFailure(message: String, factoryBluetooth: Boolean = false): Advice {
++        val error = message.lowercase(Locale.US)
++        return when {
++            error.contains("h52 anw previous initialization") || error.contains("h52 anw spp initialization failed") -> Advice(
++                "原厂 SPP 初始化失败或状态未确认。请通过原厂界面重启蓝牙；若仍不恢复，重启车机后再试。保存报告可进一步核对初始化结果。",
++                "Factory SPP initialization failed or is unconfirmed. Restart Bluetooth through the factory UI; if necessary restart the head unit, then retry. Save the report for analysis.")
++            error.contains("h52 anw service") || error.contains("h52 anw binder unavailable") -> Advice(
++                "请检查吉利原厂蓝牙界面是否正常开启，再重新检测并选择已配对的 iPhone。服务仍不可用时请保存报告。",
++                "Check that the Geely factory Bluetooth UI is on, then refresh and select the paired iPhone. Save a report if the service remains unavailable.")
++            error.contains("h52 factory bluetooth is not on") -> Advice(
++                "请在吉利原厂蓝牙界面开启蓝牙，再回到 DiPlay 重试。",
++                "Turn Bluetooth on in the Geely factory UI, then retry in DiPlay.")
++            error.contains("bluetooth is not enabled") || error.contains("bluetooth adapter is unavailable") -> Advice(
++                if (factoryBluetooth) "当前原厂连接模式未获得可用通路。请检查原厂蓝牙并重新选择 iPhone，保存报告核对实际连接模式。" else "原生 Android 蓝牙通路不可用。H52 车机可在设置开启“尝试 H52 原厂蓝牙连接”，再从原厂配对列表重新选择 iPhone。其他设备请检查系统蓝牙。",
++                if (factoryBluetooth) "The selected factory route is unavailable. Check factory Bluetooth, select the iPhone again, and save a report to verify the active route." else "The Android Bluetooth route is unavailable. On H52, enable the experimental factory Bluetooth route and select the iPhone again. On other devices check system Bluetooth.")
++            error.contains("h52 anw connect request rejected") || error.contains("h52 anw connection not confirmed") || error.contains("h52 anw spp link disconnected") -> Advice(
++                "请确认 iPhone 在附近、蓝牙已开启且原厂配对有效，然后重试。原厂配对成功不代表 SPP 已建立；若仍失败，保存报告，暂不能确认是手机还是厂商通路问题。",
++                "Check that the iPhone is nearby, Bluetooth is on and factory pairing is valid, then retry. Pairing does not prove SPP is ready; save a report if it still fails. The cause is not yet confirmed.")
++            error.contains("the car hotspot is off") -> Advice(
++                "请在 DiPlay 热点设置或车机原厂界面开启车机热点，再点击“读取车机热点信息”并重试。WiFi 客户端开启不等于热点开启。",
++                "Enable the car hotspot in DiPlay or the factory settings, read its configuration, and retry. Client Wi-Fi being on does not mean the hotspot is on.")
++            error.contains("manualhotspotssid is required") || error.contains("manualhotspotpassphrase") -> Advice(
++                "车机热点信息尚未完整配置。请在设置点击“读取车机热点信息”，或填写原厂热点名称、密码和安全类型，再重试。",
++                "Car hotspot information is incomplete. Read the factory hotspot settings, or enter its SSID, password and security type, then retry.")
++            error.contains("manual hotspot ssid does not match") || error.contains("manual hotspot security") || error.contains("manual hotspot is not running on") || error.contains("manual hotspot channel") || error.contains("manual hotspot band") -> Advice(
++                "保存的热点信息与车机配置不一致。请点击“读取车机热点信息”重新填入；无法读取时，核对原厂热点名称、密码和安全类型。",
++                "The saved hotspot information differs from the car configuration. Read the car hotspot information again, or check the factory SSID, password and security settings manually.")
++            error.contains("waiting for the manual hotspot") -> Advice(
++                "没有确认可用的热点网络接口。请检查原厂热点实际开启，并让 iPhone 加入该热点；仍失败时保存报告，不能据此认定密码错误。",
++                "No usable hotspot network interface was confirmed. Check that the factory hotspot is on and join it from the iPhone. Save a report if it persists; this does not prove the password is wrong.")
++            error.contains("securityexception") || error.contains("permission denied") || error.contains("permission denial") -> Advice(
++                "接口明确拒绝了权限。请检查应用权限并保存报告；若固件限制该接口，请使用原厂设置完成对应操作。",
++                "The interface explicitly denied permission. Check app permissions and save a report; use the factory settings if the firmware restricts the operation.")
++            error.contains("wireless carplay control channel closed before tunnel iap2 ready") -> Advice(
++                "蓝牙启动阶段结束前，无线控制通道尚未就绪。请检查 iPhone 的 CarPlay 允许提示及是否加入车机热点，再重试并保存报告。",
++                "The wireless control tunnel was not ready before Bluetooth bootstrap ended. Check the iPhone CarPlay prompts and its car-hotspot connection, then retry and save a report.")
++            else -> Advice(
++                "原因尚未确认。请保留最近失败信息，检查最后确认阶段，必要时重试；可返回 DiPlay 保存诊断报告进一步分析。",
++                "The cause is not confirmed. Keep the latest failure and last confirmed stage, retry if appropriate, and return to DiPlay to save a diagnostic report.")
++        }
++    }
++}
+diff --git a/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt b/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt
+index 3092e4b..c3f920c 100644
+--- a/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt
++++ b/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt
+@@ -44,6 +44,14 @@ import com.shilapi.xcertplay.hud.BydNavigationOutputs
+ import com.shilapi.xcertplay.hud.BydOutputSettings
+ import com.shilapi.xcertplay.host.R
+ import com.shilapi.xcertplay.orchestration.WirelessHotspotMode
++import com.shilapi.xcertplay.network.CarHotspotConfiguration
++import com.shilapi.xcertplay.network.CarHotspotFailure
++import com.shilapi.xcertplay.network.CarHotspotReadResult
++import com.shilapi.xcertplay.network.CarHotspotStartResult
++import com.shilapi.xcertplay.network.CarHotspotState
++import com.shilapi.xcertplay.network.CarHotspotTools
++import com.shilapi.xcertplay.orchestration.ManualHotspotBand
++import com.shilapi.xcertplay.orchestration.ManualHotspotSecurity
+ import com.shilapi.xcertplay.transport.EvChargingConnectors
+ import java.io.File
+ import java.lang.ref.WeakReference
+@@ -54,6 +62,14 @@ import java.util.concurrent.atomic.AtomicBoolean
+ import java.util.concurrent.Executors
+ import kotlin.math.roundToInt
+ 
++private enum class CarHotspotAction { READ_CONFIGURATION, ENABLE, READ_STATE }
++
++private sealed class CarHotspotActionResult {
++    class Read(val result: CarHotspotReadResult) : CarHotspotActionResult()
++    class Start(val result: CarHotspotStartResult) : CarHotspotActionResult()
++    class State(val state: CarHotspotState?) : CarHotspotActionResult()
++}
++
+ /** DiAuto's visual language, with a connection flow for an independent CarPlay receiver. */
+ class DiPlayActivity : ComponentActivity() {
+     private val handler = Handler(Looper.getMainLooper())
+@@ -78,6 +94,14 @@ class DiPlayActivity : ComponentActivity() {
+     private var exportButton: Button? = null
+     private var adbStatus: TextView? = null
+     private var adbCheckGeneration = 0
++    private var hotspotToolsStatusView: TextView? = null
++    private var hotspotToolsMessage: String? = null
++    private var carHotspotEnabledSnapshot: Boolean? = null
++    private var hotspotOperationGeneration = 0
++    private var hotspotOperationTimeout: Runnable? = null
++    private var hotspotTimedOutGeneration: Int? = null
++    private var hotspotOperationCancellation: AtomicBoolean? = null
++    private var activityResumed = false
+     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+         connect(notificationTransport)
+     }
+@@ -153,12 +177,18 @@ class DiPlayActivity : ComponentActivity() {
+ 
+     override fun onStop() {
+         if (!isChangingConfigurations && geelyPhoneLookupDialog != null) cancelGeelyPhoneLookup()
++        activityResumed = false
++        hotspotOperationCancellation?.set(true)
++        hotspotOperationGeneration++
++        hotspotOperationTimeout?.let(handler::removeCallbacks)
++        hotspotOperationTimeout = null
+         super.onStop()
+         if (!isFinishing && !isChangingConfigurations) CenterMapOverlay.scheduleShow()
+     }
+ 
+     override fun onResume() {
+         super.onResume()
++        activityResumed = true
+         if (Build.VERSION.SDK_INT < 33 && AppLocale.preference(this) != languagePreferenceAtCreate) {
+             recreate()
+             return
+@@ -173,17 +203,26 @@ class DiPlayActivity : ComponentActivity() {
+                 handler.post { connect(AirPlayPersistence.loadWirelessEnabled(this)) }
+             }
+         }
++        if (AirPlayPersistence.loadWirelessHotspotMode(this) == WirelessHotspotMode.MANUAL) {
++            submitCarHotspotAction(CarHotspotAction.READ_STATE)
++        }
+     }
+-    override fun onPause() { handler.removeCallbacks(tick); super.onPause() }
++    override fun onPause() { activityResumed = false; handler.removeCallbacks(tick); super.onPause() }
+ 
+     override fun onDestroy() {
+         cancelGeelyPhoneLookup()
+         cancelBluetoothStatusProbe()
++        hotspotOperationGeneration++
++        hotspotOperationCancellation?.set(true)
++        hotspotOperationTimeout?.let(handler::removeCallbacks)
++        hotspotOperationTimeout = null
++        hotspotToolsStatusView = null
+         super.onDestroy()
+     }
+ 
+     private fun render() {
+         status = null; connectButton = null; disconnectButton = null; lastRunning = null
++        hotspotToolsStatusView = null
+         val scroll = ScrollView(this).apply { setBackgroundColor(BG); isFillViewport = true; clipToPadding = false }
+         val content = column().apply { setPadding(dp(32), dp(24), dp(32), dp(32)) }
+         scroll.addView(content)
+@@ -560,10 +599,10 @@ class DiPlayActivity : ComponentActivity() {
+         }
+     }
+ 
+-    // The car hotspot link needs the hotspot on; DiPlay only checks it (turning it on needs ADB-only permission).
++    // The cached AP state is refreshed on a background worker; connection checks stay on the UI thread.
+     private fun carHotspotOff(): Boolean =
+         AirPlayPersistence.loadWirelessHotspotMode(this) == WirelessHotspotMode.MANUAL &&
+-            com.shilapi.xcertplay.network.CarHotspotStatus.isEnabled(this) == false
++            carHotspotEnabledSnapshot == false
+ 
+     private fun carHotspotOffDialog() {
+         AlertDialog.Builder(this).setTitle(getString(R.string.car_hotspot_is_off))
+@@ -573,6 +612,182 @@ class DiPlayActivity : ComponentActivity() {
+             .setNegativeButton(getString(R.string.cancel), null).show()
+     }
+ 
++    private fun confirmEnableCarHotspot() {
++        AlertDialog.Builder(this)
++            .setTitle(getString(R.string.hotspot_tools_enable_title))
++            .setMessage(getString(R.string.hotspot_tools_enable_warning))
++            .setPositiveButton(getString(R.string.hotspot_tools_enable_confirm)) { _, _ ->
++                submitCarHotspotAction(CarHotspotAction.ENABLE)
++            }
++            .setNegativeButton(getString(R.string.cancel), null)
++            .show()
++    }
++
++    private fun submitCarHotspotAction(action: CarHotspotAction) {
++        if (!hotspotOperationBusy.compareAndSet(false, true)) {
++            if (action != CarHotspotAction.READ_STATE) {
++                setHotspotToolsMessage(getString(R.string.hotspot_tools_busy))
++            }
++            return
++        }
++
++        val requestId = ++hotspotOperationGeneration
++        val cancelled = AtomicBoolean(false)
++        hotspotOperationCancellation = cancelled
++        hotspotTimedOutGeneration = null
++        val ownerRef = WeakReference(this)
++        val operationTimeoutMillis = if (action == CarHotspotAction.READ_STATE) {
++            HOTSPOT_STATE_UI_TIMEOUT_MILLIS
++        } else {
++            HOTSPOT_OPERATION_UI_TIMEOUT_MILLIS
++        }
++        val timeout = Runnable {
++            val owner = ownerRef.get() ?: return@Runnable
++            if (owner.hotspotOperationGeneration == requestId && owner.activityResumed) {
++                cancelled.set(true)
++                owner.hotspotTimedOutGeneration = requestId
++                if (action != CarHotspotAction.READ_STATE) {
++                    owner.setHotspotToolsMessage(owner.getString(R.string.hotspot_tools_pending_timeout))
++                }
++            }
++        }
++        hotspotOperationTimeout = timeout
++        handler.postDelayed(timeout, operationTimeoutMillis)
++
++        val appContext = applicationContext
++        hotspotToolsExecutor.execute {
++            val outcome = try {
++                when (action) {
++                    CarHotspotAction.READ_CONFIGURATION -> CarHotspotActionResult.Read(
++                        CarHotspotTools.read(appContext),
++                    )
++                    CarHotspotAction.ENABLE -> CarHotspotActionResult.Start(
++                        CarHotspotTools.start(
++                            appContext,
++                            timeoutMillis = CarHotspotTools.DEFAULT_START_TIMEOUT_MILLIS,
++                            cancelled = cancelled::get,
++                        ),
++                    )
++                    CarHotspotAction.READ_STATE -> CarHotspotActionResult.State(
++                        CarHotspotTools.readState(appContext),
++                    )
++                }
++            } catch (_: Throwable) {
++                when (action) {
++                    CarHotspotAction.READ_CONFIGURATION -> CarHotspotActionResult.Read(
++                        CarHotspotReadResult.Failure(CarHotspotFailure.OPERATION_FAILED),
++                    )
++                    CarHotspotAction.ENABLE -> CarHotspotActionResult.Start(
++                        CarHotspotStartResult.Failure(CarHotspotFailure.OPERATION_FAILED),
++                    )
++                    CarHotspotAction.READ_STATE -> CarHotspotActionResult.State(null)
++                }
++            }
++            hotspotOperationBusy.set(false)
++            hotspotMainHandler.post {
++                val owner = ownerRef.get() ?: return@post
++                if (owner.isFinishing || owner.isDestroyed || !owner.activityResumed ||
++                    owner.hotspotOperationGeneration != requestId ||
++                    owner.hotspotTimedOutGeneration == requestId) return@post
++                owner.handler.removeCallbacks(timeout)
++                owner.hotspotOperationTimeout = null
++                owner.hotspotOperationCancellation = null
++                owner.completeCarHotspotAction(outcome)
++            }
++        }
++    }
++
++    private fun completeCarHotspotAction(outcome: CarHotspotActionResult) {
++        when (outcome) {
++            is CarHotspotActionResult.Read -> when (val result = outcome.result) {
++                is CarHotspotReadResult.Available -> {
++                    persistCarHotspotConfiguration(result.configuration)
++                    pendingCarHotspotSetup = false
++                    AirPlayPersistence.saveWirelessHotspotMode(this, WirelessHotspotMode.MANUAL)
++                    hotspotToolsMessage = formatHotspotConfiguration(result.configuration)
++                    render()
++                }
++                is CarHotspotReadResult.Failure ->
++                    setHotspotToolsMessage(hotspotFailureMessage(result.reason))
++            }
++            is CarHotspotActionResult.Start -> when (val result = outcome.result) {
++                is CarHotspotStartResult.AlreadyEnabled -> {
++                    carHotspotEnabledSnapshot = true
++                    persistCarHotspotConfiguration(result.configuration)
++                    setHotspotToolsMessage(getString(R.string.hotspot_tools_already_enabled))
++                }
++                is CarHotspotStartResult.Enabled -> {
++                    carHotspotEnabledSnapshot = true
++                    persistCarHotspotConfiguration(result.configuration)
++                    setHotspotToolsMessage(getString(R.string.hotspot_tools_enabled))
++                }
++                is CarHotspotStartResult.Failure ->
++                    setHotspotToolsMessage(hotspotFailureMessage(result.reason))
++            }
++            is CarHotspotActionResult.State -> {
++                val wasEnabled = carHotspotEnabledSnapshot
++                carHotspotEnabledSnapshot = outcome.state?.let { it == CarHotspotState.ENABLED }
++                if (wasEnabled != carHotspotEnabledSnapshot &&
++                    (page == "home" || page == "settings" || page == "connection")) {
++                    render()
++                }
++            }
++        }
++    }
++
++    private fun persistCarHotspotConfiguration(configuration: CarHotspotConfiguration) {
++        AirPlayPersistence.saveManualHotspotProfile(
++            this,
++            configuration.ssid,
++            configuration.passphrase,
++            configuration.security,
++            configuration.band ?: ManualHotspotBand.AUTO,
++            configuration.channel ?: 0,
++        )
++    }
++
++    private fun formatHotspotConfiguration(configuration: CarHotspotConfiguration): String {
++        val security = getString(
++            if (configuration.security == ManualHotspotSecurity.OPEN) {
++                R.string.hotspot_tools_security_open
++            } else {
++                R.string.hotspot_tools_security_wpa
++            },
++        )
++        val band = when (configuration.band) {
++            ManualHotspotBand.GHZ_2_4 -> getString(R.string.hotspot_tools_band_24)
++            ManualHotspotBand.GHZ_5 -> getString(R.string.hotspot_tools_band_5)
++            ManualHotspotBand.AUTO -> getString(R.string.hotspot_tools_band_auto)
++            null -> getString(R.string.hotspot_tools_unavailable)
++        }
++        val channel = configuration.channel?.let {
++            getString(R.string.hotspot_tools_channel_value, it)
++        } ?: getString(R.string.hotspot_tools_unavailable)
++        return getString(R.string.hotspot_tools_read_result, configuration.ssid, security, band, channel)
++    }
++
++    private fun hotspotFailureMessage(failure: CarHotspotFailure): String = getString(when (failure) {
++        CarHotspotFailure.CONFIGURATION_UNAVAILABLE -> R.string.hotspot_tools_configuration_unavailable
++        CarHotspotFailure.UNSUPPORTED_CONFIGURATION -> R.string.hotspot_tools_configuration_unsupported
++        CarHotspotFailure.PERMISSION_DENIED -> R.string.hotspot_tools_permission_denied
++        CarHotspotFailure.STATE_UNAVAILABLE -> R.string.hotspot_tools_state_unavailable
++        CarHotspotFailure.STATE_TRANSITION_IN_PROGRESS -> R.string.hotspot_tools_transition_in_progress
++        CarHotspotFailure.FIRMWARE_REPORTED_FAILURE -> R.string.hotspot_tools_firmware_failed
++        CarHotspotFailure.REQUEST_REJECTED -> R.string.hotspot_tools_request_rejected
++        CarHotspotFailure.START_TIMED_OUT -> R.string.hotspot_tools_start_timeout
++        CarHotspotFailure.OPERATION_CANCELLED -> R.string.hotspot_tools_operation_cancelled
++        CarHotspotFailure.OPERATION_INTERRUPTED -> R.string.hotspot_tools_operation_cancelled
++        CarHotspotFailure.OPERATION_FAILED -> R.string.hotspot_tools_operation_failed
++    })
++
++    private fun setHotspotToolsMessage(message: String) {
++        hotspotToolsMessage = message
++        hotspotToolsStatusView?.apply {
++            text = message
++            contentDescription = getString(R.string.hotspot_tools_status_content_description, message)
++        }
++    }
++
+     // BYD maps the AOSP tether action to its own hotspot screen; other firmware falls back to Wi-Fi settings.
+     // BYD shows that screen as a dialog and closes it unless its own settings or the car home screen is on top,
+     // so the home screen goes first.
+@@ -622,12 +837,18 @@ class DiPlayActivity : ComponentActivity() {
+ 
+     private fun wirelessLinkControls(parent: LinearLayout) {
+         val mode = if (pendingCarHotspotSetup) WirelessHotspotMode.MANUAL else AirPlayPersistence.loadWirelessHotspotMode(this)
+-        val modes = listOf(WirelessHotspotMode.MANUAL, WirelessHotspotMode.WIFI_P2P)
+-        val titles = listOf(getString(R.string.built_in_car_hotspot), getString(R.string.wifi_direct))
+-        val descriptions = listOf(
+-            getString(R.string.hotspot_mode_manual_desc),
+-            getString(R.string.hotspot_mode_p2p_desc)
+-        )
++        val p2pSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
++        val modes = if (p2pSupported) {
++            listOf(WirelessHotspotMode.MANUAL, WirelessHotspotMode.WIFI_P2P)
++        } else {
++            listOf(WirelessHotspotMode.MANUAL)
++        }
++        val titles = modes.map { candidate ->
++            getString(if (candidate == WirelessHotspotMode.MANUAL) R.string.built_in_car_hotspot else R.string.wifi_direct)
++        }
++        val descriptions = modes.map { candidate ->
++            getString(if (candidate == WirelessHotspotMode.MANUAL) R.string.hotspot_mode_manual_desc else R.string.hotspot_mode_p2p_desc)
++        }
+         val wide = resources.configuration.screenWidthDp >= 850
+         val choices = if (wide) row().apply { gravity = Gravity.TOP } else column()
+         parent.addView(choices)
+@@ -647,10 +868,38 @@ class DiPlayActivity : ComponentActivity() {
+             }, matchButton(12, 60))
+             option.addView(label(descriptions[index], 15, MUTED).apply { setPadding(0, dp(6), 0, dp(12)) })
+         }
++        if (!p2pSupported) {
++            parent.addView(label(getString(R.string.hotspot_tools_p2p_unavailable), 14, MUTED).apply {
++                setPadding(0, dp(4), 0, dp(8))
++            })
++        }
+         if (mode == WirelessHotspotMode.MANUAL) {
+             parent.addView(label(getString(R.string.hotspot_setup), 22, TEXT, true))
+             parent.addView(label(getString(R.string.s_1_open_car_hotspot_settings_turn_the_hotspot_on_and_sele), 16, MUTED).apply { setPadding(0, dp(8), 0, dp(12)) })
+             parent.addView(button(getString(R.string.open_car_hotspot_settings), false) { openCarWifiSettings() }, matchButton(0, 60))
++            val readHotspotButton = button(getString(R.string.hotspot_tools_read_button), false) {
++                submitCarHotspotAction(CarHotspotAction.READ_CONFIGURATION)
++            }.apply { contentDescription = getString(R.string.hotspot_tools_read_button) }
++            parent.addView(readHotspotButton, matchButton(12, 60))
++            val enableHotspotButton = button(getString(R.string.hotspot_tools_enable_button), true) {
++                confirmEnableCarHotspot()
++            }.apply { contentDescription = getString(R.string.hotspot_tools_enable_button) }
++            parent.addView(enableHotspotButton, matchButton(12, 60))
++            parent.addView(label(getString(R.string.hotspot_tools_5ghz_unavailable), 14, MUTED).apply {
++                setPadding(0, dp(10), 0, 0)
++            })
++            val hotspotStatus = label(hotspotToolsMessage ?: getString(R.string.hotspot_tools_idle), 14, MUTED).apply {
++                hotspotToolsStatusView = this
++                contentDescription = getString(
++                    R.string.hotspot_tools_status_content_description,
++                    hotspotToolsMessage ?: getString(R.string.hotspot_tools_idle),
++                )
++                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
++                    accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
++                }
++                setPadding(0, dp(8), 0, dp(4))
++            }
++            parent.addView(hotspotStatus)
+             parent.addView(button(if (pendingCarHotspotSetup) getString(R.string.save_hotspot_details_and_use_this_mode) else "${getString(R.string.edit_saved_hotspot_prefix)}${storedSsid()}", false) {
+                 askHotspotCredentials { ssid, password ->
+                     saveHotspotCredentials(ssid, password)
+@@ -791,12 +1040,14 @@ class DiPlayActivity : ComponentActivity() {
+         com.shilapi.xcertplay.orchestration.ManualHotspotValidation.error(ssid, password)?.let { getString(it.messageResource()) }
+ 
+     private fun saveHotspotCredentials(ssid: String, password: String) {
+-        AirPlayPersistence.saveManualHotspotSsid(this, ssid)
+-        AirPlayPersistence.saveManualHotspotPassphrase(this, password)
+-        AirPlayPersistence.saveManualHotspotSecurity(this,
+-            com.shilapi.xcertplay.orchestration.ManualHotspotValidation.securityFor(password))
+-        AirPlayPersistence.saveManualHotspotBand(this, com.shilapi.xcertplay.orchestration.ManualHotspotBand.AUTO)
+-        AirPlayPersistence.saveManualHotspotChannel(this, 0)
++        AirPlayPersistence.saveManualHotspotProfile(
++            this,
++            ssid,
++            password,
++            com.shilapi.xcertplay.orchestration.ManualHotspotValidation.securityFor(password),
++            ManualHotspotBand.AUTO,
++            0,
++        )
+     }
+ 
+     private fun askHotspotCredentials(done: (String, String) -> Unit) {
+@@ -1691,6 +1942,13 @@ class DiPlayActivity : ComponentActivity() {
+     private fun space(height: Int) = View(this).apply { layoutParams = LinearLayout.LayoutParams(1, dp(height)) }
+     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
+     companion object {
++        private val hotspotOperationBusy = AtomicBoolean(false)
++        private val hotspotToolsExecutor = Executors.newSingleThreadExecutor { task ->
++            Thread(task, "diplay-car-hotspot-tools").apply { isDaemon = true }
++        }
++        private val hotspotMainHandler = Handler(Looper.getMainLooper())
++        private const val HOTSPOT_STATE_UI_TIMEOUT_MILLIS = 8_000L
++        private const val HOTSPOT_OPERATION_UI_TIMEOUT_MILLIS = 20_000L
+         private val geelyPhoneLookupBusy = AtomicBoolean(false)
+         private val geelyPhoneLookupExecutor = Executors.newSingleThreadExecutor { task ->
+             Thread(task, "diplay-h52-paired-phones").apply { isDaemon = true }
+diff --git a/common/src/main/res/values-zh-rCN/hotspot_tools.xml b/common/src/main/res/values-zh-rCN/hotspot_tools.xml
+new file mode 100644
+index 0000000..0dab763
+--- /dev/null
++++ b/common/src/main/res/values-zh-rCN/hotspot_tools.xml
+@@ -0,0 +1,33 @@
++<resources>
++    <string name="hotspot_tools_read_button">读取车机热点信息</string>
++    <string name="hotspot_tools_enable_button">开启车机热点</string>
++    <string name="hotspot_tools_enable_title">开启车机热点？</string>
++    <string name="hotspot_tools_enable_warning">如果热点当前关闭，开启它可能会关闭车机正在使用的 Wi‑Fi 客户端连接，并中断依赖该连接的服务。DiPlay 会保留现有热点配置，不会自行关闭 Wi‑Fi。是否继续？</string>
++    <string name="hotspot_tools_enable_confirm">开启热点</string>
++    <string name="hotspot_tools_5ghz_unavailable">此固件没有经过验证的 5 GHz 热点频段设置接口。DiPlay 不会更改频段。</string>
++    <string name="hotspot_tools_p2p_unavailable">此 Android 版本不支持 DiPlay 的 Wi‑Fi Direct 模式，请使用车机自带热点。</string>
++    <string name="hotspot_tools_idle">可读取当前车机热点设置；开启前请先阅读 Wi‑Fi 提示。</string>
++    <string name="hotspot_tools_status_content_description">车机热点状态：%1$s</string>
++    <string name="hotspot_tools_busy">热点操作仍在等待中，请等它结束后再试。</string>
++    <string name="hotspot_tools_pending_timeout">操作仍未返回，当前结果未知。请先检查车机热点状态，再决定是否重试。</string>
++    <string name="hotspot_tools_read_result">已读取车机热点：SSID“%1$s”；安全类型：%2$s；频段：%3$s；信道：%4$s。密码已保存到默认遮罩的输入框。</string>
++    <string name="hotspot_tools_security_open">开放</string>
++    <string name="hotspot_tools_security_wpa">WPA/WPA2</string>
++    <string name="hotspot_tools_band_24">2.4 GHz</string>
++    <string name="hotspot_tools_band_5">5 GHz</string>
++    <string name="hotspot_tools_band_auto">自动</string>
++    <string name="hotspot_tools_channel_value">信道 %1$d</string>
++    <string name="hotspot_tools_unavailable">无法获取</string>
++    <string name="hotspot_tools_already_enabled">车机热点已经开启。DiPlay 保留其运行状态，没有重启热点。</string>
++    <string name="hotspot_tools_enabled">车机已报告热点开启。</string>
++    <string name="hotspot_tools_configuration_unavailable">无法读取当前热点配置，没有进行更改。</string>
++    <string name="hotspot_tools_configuration_unsupported">无法以支持的格式读取热点安全类型或密码，没有进行更改。</string>
++    <string name="hotspot_tools_permission_denied">Android 拒绝访问热点服务，没有进行更改。</string>
++    <string name="hotspot_tools_state_unavailable">无法读取热点状态，没有进行更改。</string>
++    <string name="hotspot_tools_transition_in_progress">车机正在更改热点状态，请等待完成后再试。</string>
++    <string name="hotspot_tools_firmware_failed">车机报告热点开启失败。</string>
++    <string name="hotspot_tools_request_rejected">车机拒绝了热点开启请求。</string>
++    <string name="hotspot_tools_start_timeout">超时前车机没有报告热点已开启。请先检查热点状态，再决定是否重试。</string>
++    <string name="hotspot_tools_operation_cancelled">在确认开启请求前，操作已取消。</string>
++    <string name="hotspot_tools_operation_failed">热点操作失败。如果车机已接受开启请求，热点状态仍可能变化；请先检查状态再重试。</string>
++</resources>
+diff --git a/common/src/main/res/values/hotspot_tools.xml b/common/src/main/res/values/hotspot_tools.xml
+new file mode 100644
+index 0000000..054d801
+--- /dev/null
++++ b/common/src/main/res/values/hotspot_tools.xml
+@@ -0,0 +1,33 @@
++<resources>
++    <string name="hotspot_tools_read_button">Read car hotspot info</string>
++    <string name="hotspot_tools_enable_button">Enable car hotspot</string>
++    <string name="hotspot_tools_enable_title">Enable the car hotspot?</string>
++    <string name="hotspot_tools_enable_warning">If the hotspot is off, enabling it may turn off the car’s current Wi-Fi client connection and disconnect services using that connection. DiPlay will keep the existing hotspot configuration and will not turn Wi-Fi off itself. Continue?</string>
++    <string name="hotspot_tools_enable_confirm">Enable hotspot</string>
++    <string name="hotspot_tools_5ghz_unavailable">This firmware has no verified setting for choosing a 5 GHz hotspot band. DiPlay will not change the band.</string>
++    <string name="hotspot_tools_p2p_unavailable">Wi-Fi Direct mode is unavailable on this Android version. Use the car’s built-in hotspot mode.</string>
++    <string name="hotspot_tools_idle">Read the current car hotspot settings, or enable it after reviewing the Wi-Fi warning.</string>
++    <string name="hotspot_tools_status_content_description">Car hotspot status: %1$s</string>
++    <string name="hotspot_tools_busy">A hotspot operation is still pending. Wait for it to finish before trying again.</string>
++    <string name="hotspot_tools_pending_timeout">The operation is still pending. Its result is unknown; check the car hotspot status before trying again.</string>
++    <string name="hotspot_tools_read_result">Read car hotspot: SSID “%1$s”; security %2$s; band %3$s; channel %4$s. Password is saved in the masked field.</string>
++    <string name="hotspot_tools_security_open">open</string>
++    <string name="hotspot_tools_security_wpa">WPA/WPA2</string>
++    <string name="hotspot_tools_band_24">2.4 GHz</string>
++    <string name="hotspot_tools_band_5">5 GHz</string>
++    <string name="hotspot_tools_band_auto">automatic</string>
++    <string name="hotspot_tools_channel_value">channel %1$d</string>
++    <string name="hotspot_tools_unavailable">unavailable</string>
++    <string name="hotspot_tools_already_enabled">The car hotspot is already enabled. DiPlay left it running without restarting it.</string>
++    <string name="hotspot_tools_enabled">The car reported that its hotspot is enabled.</string>
++    <string name="hotspot_tools_configuration_unavailable">Could not read the current hotspot configuration. Nothing was changed.</string>
++    <string name="hotspot_tools_configuration_unsupported">The hotspot security or password could not be read in a supported form. Nothing was changed.</string>
++    <string name="hotspot_tools_permission_denied">Android denied access to the hotspot service. Nothing was changed.</string>
++    <string name="hotspot_tools_state_unavailable">Could not read the hotspot state. Nothing was changed.</string>
++    <string name="hotspot_tools_transition_in_progress">The hotspot is already changing state. Wait for the car to finish before trying again.</string>
++    <string name="hotspot_tools_firmware_failed">The car reported a hotspot start failure.</string>
++    <string name="hotspot_tools_request_rejected">The car rejected the hotspot start request.</string>
++    <string name="hotspot_tools_start_timeout">The car did not report an enabled hotspot before the timeout. Check its state before trying again.</string>
++    <string name="hotspot_tools_operation_cancelled">The operation was canceled before a start request could be confirmed.</string>
++    <string name="hotspot_tools_operation_failed">The hotspot operation failed. Nothing was changed unless the car accepted a start request; check its state before retrying.</string>
++</resources>
+diff --git a/common/src/test/java/com/shilapi/xcertplay/ConnectionRecoveryAdviceTest.kt b/common/src/test/java/com/shilapi/xcertplay/ConnectionRecoveryAdviceTest.kt
+new file mode 100644
+index 0000000..8c1e565
+--- /dev/null
++++ b/common/src/test/java/com/shilapi/xcertplay/ConnectionRecoveryAdviceTest.kt
+@@ -0,0 +1,40 @@
++package com.shilapi.xcertplay
++
++import org.junit.Assert.*
++import org.junit.Test
++
++class ConnectionRecoveryAdviceTest {
++    @Test fun missingHotspotConfigurationHasSetupAdvice() {
++        assertTrue(ConnectionRecoveryAdvice.forFailure("manualHotspotSsid is required in manual hotspot mode").chinese.contains("读取车机热点信息"))
++    }
++    @Test fun credentialsInMismatchAreNeverEchoed() {
++        val text = ConnectionRecoveryAdvice.forFailure("Manual hotspot SSID does not match the active local AP configuration: 'private-network'")
++        assertTrue(text.chinese.contains("读取车机热点信息"))
++        assertFalse(text.toString().contains("private-network"))
++    }
++    @Test fun unknownTimeoutDoesNotBecomeBluetoothOrPasswordDiagnosis() {
++        val text = ConnectionRecoveryAdvice.forFailure("Unknown socket timed out")
++        assertTrue(text.chinese.contains("原因尚未确认"))
++        assertFalse(text.chinese.contains("密码错误"))
++    }
++    @Test fun initializedFlagFailureDoesNotRecommendRepeatedInitialization() {
++        val text = ConnectionRecoveryAdvice.forFailure("H52 ANW previous initialization failed or timed out; restart vehicle Bluetooth before retrying")
++        assertTrue(text.chinese.contains("重启"))
++        assertFalse(text.chinese.contains("原生 Android"))
++    }
++    @Test fun pairedPhoneIsNotReportedAsSuccessfulSpp() {
++        val text = ConnectionRecoveryAdvice.forFailure("H52 ANW connection not confirmed before timeout or cancellation")
++        assertTrue(text.chinese.contains("不代表 SPP 已建立"))
++    }
++    @Test fun nativeFailureWithFactoryEnabledDoesNotTellUserToEnableNativeBluetooth() {
++        val text = ConnectionRecoveryAdvice.forFailure("Bluetooth is not enabled", true)
++        assertTrue(text.chinese.contains("实际连接模式"))
++        assertFalse(text.chinese.contains("设置开启"))
++    }
++    @Test fun hotspotOffDistinguishesStationFromAp() {
++        assertTrue(ConnectionRecoveryAdvice.forFailure("The car hotspot is off. Turn it on in the car settings and connect again.").chinese.contains("客户端开启不等于热点开启"))
++    }
++    @Test fun explicitPermissionDenialHasConcreteAdvice() {
++        assertTrue(ConnectionRecoveryAdvice.forFailure("java.lang.SecurityException: Permission denial").chinese.contains("应用权限"))
++    }
++}
+diff --git a/docs/geely-android43/CONNECTION-UI-IMPLEMENTATION.md b/docs/geely-android43/CONNECTION-UI-IMPLEMENTATION.md
+new file mode 100644
+index 0000000..22a80cd
+--- /dev/null
++++ b/docs/geely-android43/CONNECTION-UI-IMPLEMENTATION.md
+@@ -0,0 +1,134 @@
++# H52 热点工具与宽屏连接诊断
++
++## 功能与证据边界
++
++H52.105 原厂热点与客户端 WiFi 共用 WifiManager 服务，但 AP 开启状态和客户端 WiFi 开启状态不同。热点配置读取与热点启动必须独立于蓝牙接入开关。读取按钮把原厂 AP 配置填入现有设置，不修改原厂配置；启动按钮由用户确认后执行，仅复用原厂配置，不改名、密码或厂商附加字段。
++
++5 GHz AP 暂未找到经过验证的控制接口：105 的 WifiConfiguration 没有 apBand/apChannel，标准 AP 配置到 netd 的链路没有频段参数。客户端的频段偏好不是 AP 频段控制。软件不能把自动频段或客户端 5 GHz 偏好宣称为已开启 5 GHz 热点。
++
++## 真实连接阶段
++
++shared/orchestration/CarPlayController.kt 的 CarPlayStatus 新增 BluetoothReady、WirelessIdentified、WirelessAuthenticated、WaitingForWifiJoin。BluetoothReady 只在蓝牙字节流成功返回后报告；它不代表 iAP2 握手成功。
++
++shared/transport/Iap2WirelessControlClient.kt 的 run 新增可选 typed onStage 回调。Identification identify 返回后才报告 IDENTIFIED；MFI run 返回后才报告 AUTHENTICATED；0x5703 的 send 成功返回后才报告 WIFI_CONFIG_SENT 或 POST_TRANSPORT_WIFI_CONFIG_SENT。Controller 将这些已发生事件投递为 UI 阶段，避免从日志关键词猜测。
++
++WaitingForWifiJoin 仅表示热点配置已通过 iAP2 发送，不能证明 iPhone 已入网或 AirPlay 已连通。超过等待时间的建议只能称原因尚未确认，不能把计时器当故障检测。
++
++## 界面约束
++
++宽屏左侧状态/建议/操作，右侧带时间的脱敏日志；按有效 dp 和宽高比选择布局，不硬编码物理像素。窄屏保持可用。视频开始后连接层隐藏、CarPlay 全屏。当前阶段与最近失败均保留，避免自动重试覆盖故障证据。日志有界、合并刷新，用户上翻暂停跟随，回最新恢复。
++
++密码和认证材料不进入运行日志/导出诊断；源码不包含原始认证材料，完整测试 APK 保留已授权的本地认证材料。
++
++## 验证
++
++实现已完成，最终 APK 哈希及测试范围如下。模拟器可以验证 API18 调用失败处理、界面布局和状态呈现；不能验证 H52 AP 硬件或实际 iPhone 握手。
++
++## 热点工具实现与边界
++
++`shared/src/main/java/com/shilapi/xcertplay/network/CarHotspotTools.kt` 提供 `read/readState/start`，反射访问隐藏 WifiManager API。`configurationFrom` 保留 AP SSID/PSK原始字符（包括首尾引号），支持 NONE/WPA_PSK/WPA2_PSK，拒绝未验证的安全配置；AP band缺字段/未知值返回null；保留原始WifiConfiguration对象再传setter，避免损失maxNumSta等OEM字段。
++
++`start` 已开启或启动中时不再发送setter；配置/状态不可读取时拒绝修改；只请求一次开启，accepted之后继续轮询，不把请求接受等同热点就绪。取消谓词在setter前检查，超时/离开界面后不会从迟到读取继续发起新开启请求；已经执行的远端setter无法撤回，界面提示结果需检查。UI通过单个全局worker/busy门串行，超时不释放busy直到worker真正退出，weak reference和generation过滤过期结果。
++
++`common/.../DiPlayActivity.kt` 在车机热点模式提供读取/开启按钮，开启前显示WiFi互斥警告，读取成功通过 `AirPlayPersistence.saveManualHotspotProfile` 同一次prefs更新保存完整配置，清除pending setup并刷新界面。Android API18不展示DiPlay不能执行的P2P模式。密码默认遮罩，开启按钮保持当前车机配置，不修改频段。
++
++`common/.../ConnectionRecoveryAdvice.kt` 对明确的已知错误提供固定处理建议，不回显SSID/PSK。未知socket超时保持原因尚未确认，不归因密码或蓝牙。Host配置构造的IllegalArgumentException在连接页显示失败和设置建议，不再让缺SSID直接崩溃，也不自动循环重复无效配置。
++
++`mobile/src/debug/.../Api18CompatProbeActivity.kt` 的 `hotspot_read` 是只读运行时探针，不调用setter、不输出SSID/密码，分别记录配置可读与AP状态。模拟器的读取或开启结果不能替代H52实车验证。
++
++## 原始参考
++
++AOSP WifiConfiguration 的旧热点自动频段值是AP_BAND_ANY=-1，详见 [AOSP源文件](https://android.googlesource.com/platform/frameworks/base/+/dcbed5f/wifi/java/android/net/wifi/WifiConfiguration.java)。H52.105本身没有此AP频段字段，不能把这一常量当作H52可控制5 GHz的证据。
++
++## 方法级源码索引
++
++### common/src/main/java/com/shilapi/xcertplay/CarPlayHostActivity.kt
++
++| 方法 | 行号 |
++|---|---:|
++| `buildWideConnectionPanel` | 1105 |
++| `createStatusReporter` | 3540 |
++| `startCarPlay` | 3617 |
++| `renderConnectionStatus` | 4154 |
++| `failureText` | 4200 |
++| `guidanceFor` | 4258 |
++| `updateDebugOverlays` | 4368 |
++| `isWideConnectionSurface` | 4378 |
++| `appendLog` | 4386 |
++| `enqueueUiLogLine` | 4408 |
++| `refreshLogView` | 4438 |
++| `scrollLogsToBottom` | 4455 |
++
++### common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt
++
++| 方法 | 行号 |
++|---|---:|
++| `confirmEnableCarHotspot` | 615 |
++| `submitCarHotspotAction` | 626 |
++| `completeCarHotspotAction` | 700 |
++| `persistCarHotspotConfiguration` | 738 |
++| `exportDiagnostics` | 1687 |
++
++### common/src/main/java/com/shilapi/xcertplay/AirPlayPersistence.kt
++
++| 方法 | 行号 |
++|---|---:|
++| `saveManualHotspotProfile` | 363 |
++
++### common/src/main/java/com/shilapi/xcertplay/ConnectionRecoveryAdvice.kt
++
++| 方法 | 行号 |
++|---|---:|
++| `forFailure` | 8 |
++
++### shared/src/main/java/com/shilapi/xcertplay/network/CarHotspotTools.kt
++
++| 方法 | 行号 |
++|---|---:|
++| `read` | 30 |
++| `readState` | 36 |
++| `start` | 40 |
++| `read` | 50 |
++| `readState` | 60 |
++| `configurationFrom` | 62 |
++| `start` | 111 |
++| `awaitEnabled` | 174 |
++| `readState` | 288 |
++| `requestEnable` | 289 |
++| `readState` | 302 |
++| `requestEnable` | 312 |
++
++### shared/src/main/java/com/shilapi/xcertplay/orchestration/CarPlayController.kt
++
++| 方法 | 行号 |
++|---|---:|
++| `startWireless` | 885 |
++| `startWirelessHotspot` | 1806 |
++| `debugLogMessage` | 2247 |
++
++### shared/src/main/java/com/shilapi/xcertplay/transport/Iap2WirelessControlClient.kt
++
++| 方法 | 行号 |
++|---|---:|
++| `run` | 23 |
++
++### mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt
++
++| 方法 | 行号 |
++|---|---:|
++| `runProbes` | 86 |
++
++
++## 最终验收与交付
++
++shared453 + common152 = 605 项单元测试通过，0失败/错误/跳过；最后仅调整常见错误标题的中文显示，随后重新编译最终APK并完成API18界面回归。实际安卓4.3模拟器使用1920×720/density160，另测试480×800窄屏回退。
++
++最终APK回归覆盖：宽屏分栏/时间戳日志/阶段建议、热点名称缺失不崩溃且提示读取配置、热点配置实际读取成功且未知频段/信道不伪报、开启确认与取消、开启失败处理、日志上翻暂停/新日志不强制滚动/回最新恢复、手动重试和自动重试期间保留失败建议。
++
++实际API18只读探针读取配置成功（WPA2），band/channel不可获得；热点开启在模拟器上报告失败，不是H52硬件开启验证。ANW Binder/Parcel/回调字节流mock探针通过，不能证明真实H52/iPhone无线握手。主视频到达后全屏的分支已代码审查，本轮没有真实CarPlay视频会话验证。
++
++Windows内存不足曾导致测试JVM失败；关闭测试模拟器并以单worker、Gradle512MB/测试256MB SerialGC重新执行后通过。构建弃用提示仍存在，未宣称全量lint通过。
++
++APK：`DiPlay-0.2.10-Geely-Android43-H52-WiFiLog-test.apk`，18,307,246 bytes。SHA256：`5073e0b906b8811b1ae5bf8f364fb5cea29148f726cce558a866abdaa1540c26`。认证私钥/证书已确认随APK保留；源码不含原始凭据。
++
++实车使用：在原厂界面配对iPhone；DiPlay连接设置开启H52原厂蓝牙尝试开关并选原厂配对手机；点击读取车机热点信息；热点未开启时点击开启车机热点并阅读确认提示（失败则用原厂界面开启）；启动无线连接。连接页左侧按实际阶段和建议操作，右侧可上翻查看日志，回到最新恢复跟随。返回DiPlay的设置可保存完整报告到用户内存根目录 `/sdcard/DiPlay-诊断报告-日期时间.txt`。
+diff --git a/docs/geely-android43/H52-WIFI-REVIEW.md b/docs/geely-android43/H52-WIFI-REVIEW.md
+new file mode 100644
+index 0000000..c5cd4c6
+--- /dev/null
++++ b/docs/geely-android43/H52-WIFI-REVIEW.md
+@@ -0,0 +1,187 @@
++# H52 Wi‑Fi / SoftAP 状态与 DiPlay 连接路径审查
++
++审查日期：2026-10-04
++主固件：H52.10500（API 18，实际车辆版本）
++对照固件：H52.12000
++范围：固件静态反编译与现有 DiPlay 源码只读审查；未连接车机、未运行 ADB、未修改 App 或 APK。
++
++## 结论
++
++H52.10500 的证据不支持“Wi‑Fi 也像蓝牙一样存在 OEM 电源状态与 Android 标准状态分离”的判断。Android station/client Wi‑Fi 和车机 SoftAP 热点是同一 Android Wi‑Fi 服务提供的两种状态。吉利原厂 Settings/KC2 Wi‑Fi 页面分别读取 WifiManager.getWifiState() 与 getWifiApState()；ECarX Wi‑Fi 包也通过 Context.getSystemService("wifi") 取得相同 WifiManager。没有发现所审查的原厂路径改为独立 Wi‑Fi power Binder。
++
++这意味着“普通 Wi‑Fi 显示开启，但 DiPlay 说车机热点未开启”本身不构成状态分裂证据：前者可能是 station/client 状态开启，后者要求 SoftAP AP 状态等于 13。H52 原厂 Settings 明确会在打开热点前关闭 station Wi‑Fi，进一步证明两种状态有独立语义且在此固件上可能互斥。
++
++静态固件证据也不能证明实车此刻的 AP 状态、接口名或地址。如果车机原厂明确显示的是热点开启，而标准 getWifiApState() 不是 13，或 AP 接口不存在，才需要车机侧只读运行日志判断该车当前 system_server、状态机与设置页面是否出现实际不一致。
++
++## H52.10500：标准 Wi‑Fi 服务与原厂调用链
++
++### Android framework 与 Binder 服务
++
++H52.10500 的 framework WifiManager 实现位于：
++
++F:/CarPlay/_firmware_review/Geely-Bluetooth/H52-10500/wifi_review/framework/android/net/wifi/WifiManager.smali
++
++- getWifiApConfiguration() :1480–1488 调用 IWifiManager.getWifiApConfiguration()。
++- getWifiApState() :1547–1563 调用 IWifiManager.getWifiApEnabledState()。
++- isWifiApEnabled() :1790–1806 只是判断 getWifiApState() 是否等于 13。
++- setWifiApEnabled() :2113–2125 将请求委托给 IWifiManager；方法返回只代表 Binder 调用没有同步异常，不能当作热点已经就绪。
++- AP 状态常量：DISABLING=10、DISABLED=11、ENABLING=12、ENABLED=13、FAILED=14；动作是 android.net.wifi.WIFI_AP_STATE_CHANGED_ACTION，额外字段名为 wifi_state（同文件 :85–101、:159–169）。
++
++对应 Binder descriptor 为 android.net.wifi.IWifiManager，定义于：
++
++F:/CarPlay/_firmware_review/Geely-Bluetooth/H52-10500/wifi_review/framework/android/net/wifi/IWifiManager$Stub.smali
++
++- getWifiApEnabledState transaction 为 0x1e（字段 :61）。
++- getWifiApConfiguration transaction 为 0x1f（字段 :59）。
++- setWifiApEnabled transaction 为 0x1d（字段 :99）。
++- setWifiApConfiguration transaction 为 0x20（字段 :97）。
++
++只读 getter 的 Proxy 实现在 IWifiManager$Stub$Proxy.smali：getWifiApConfiguration() :1264 起，request 只写 interface token，transact 0x1f，reply 先 readException()、再读 Parcelable presence 标志和 WifiConfiguration；getWifiApEnabledState() :1353 起，request 同样只有 token，transact 0x1e，reply 读取 int。无须新增 OEM Binder 或 ANW SDK 才能查询这两个状态。
++
++服务端是 system_server 的 WifiService：
++
++F:/CarPlay/_firmware_review/Geely-Bluetooth/H52-10500/wifi_review/services/com/android/server/wifi/WifiService.smali
++
++- enforceAccessPermission() :530–545 只检查 android.permission.ACCESS_WIFI_STATE。
++- enforceChangePermission() :547–562 只检查 android.permission.CHANGE_WIFI_STATE。
++- getWifiApConfiguration() :2407–2422 检查 ACCESS_WIFI_STATE 后调用 WifiStateMachine.syncGetWifiApConfiguration()。
++- getWifiApEnabledState() :2424–2439 检查 ACCESS_WIFI_STATE 后调用 WifiStateMachine.syncGetWifiApState()。
++- setWifiApConfiguration() :3089–3111 检查 CHANGE_WIFI_STATE 后调用状态机。
++- setWifiApEnabled() :3113–3190 检查 CHANGE_WIFI_STATE 后向 WifiController 发送消息；在该方法中未看到签名权限、ADB 授权或额外 TETHER_PRIVILEGED 检查。这是异步控制请求，状态仍应通过 getter/broadcast 确认。
++
++H52.10500 framework-res AndroidManifest.xml :211–213 声明 ACCESS_WIFI_STATE protectionLevel=normal，CHANGE_WIFI_STATE protectionLevel=dangerous。Android API 18 对 dangerous 权限采用安装时授权模型；DiPlay shared manifest :7–8 已声明这两个权限，mobile 模块 minSdk=18。现代 Android 的运行时权限规则或较新系统对热点管理的额外约束，不能直接套到 H52.10500 API 18 服务实现上。
++
++这些结论证明本固件 service 代码允许持有 CHANGE_WIFI_STATE 的普通包请求 setter；它不表示 DiPlay 当前调用了该 setter。DiPlay 当前只通过 OEM Settings 页面让用户开热点，不能把“开启热点需要 ADB-only permission”这条源代码注释当作 H52.10500 API18 的实证结论。该注释在 DiPlayActivity.kt :563，与这台固件的服务端权限实现不符。
++
++### 原厂界面分别读取 station 与 AP 状态
++
++原生 Android Settings 的 WifiApEnabler 位于：
++
++F:/CarPlay/_firmware_review/Geely-Bluetooth/H52-10500/wifi_review/settings/com/android/settings/wifi/WifiApEnabler.smali
++
++- 构造器 :60–68 从 Context.getSystemService("wifi") 获取 WifiManager。
++- :93–104 注册标准 WIFI_AP_STATE_CHANGED 与 TETHER_STATE_CHANGED 广播。
++- setSoftapEnabled(Z) :562–615 先读 getWifiState()；准备打开热点且 station state 为 2 或 3 时，先执行 setWifiEnabled(false) (:582–607)，再调用 setWifiApEnabled(null, enable) (:611–615)。
++- 热点 UI 的状态更新由标准 AP 状态广播驱动，不是另一个厂商 Wi‑Fi power service。
++
++KC2 原厂设置页面也清楚地区分两项状态：
++
++F:/CarPlay/_firmware_review/Geely-Bluetooth/H52-10500/wifi_review/kc2setting_wifi/com/neusoft/shockwave/setting/wifi/ConnectHomeFragment.smali
++
++- station UI :482–505 读取 WifiManager.getWifiState()，仅 state 2/3 显示为开启。
++- AP UI :547–568 读取 WifiManager.getWifiApState()，其中只把 13 视为 AP 开启。
++- 页面刷新分别再次读取这两个 getter：station :840 起、AP :866 起。
++- :1050–1067 同时监听标准 WIFI_STATE_CHANGED、WIFI_AP_STATE_CHANGED 等广播；同一监听代码里的厂商 .anw action 是蓝牙状态广播，Wi‑Fi 仍走 Android 标准 action。
++
++因此用户需分清原厂 UI 上的“Wi‑Fi”station 开关与“热点/AP”开关。如果实车只看到 station Wi‑Fi 开启，而 DiPlay 手动热点模式提示 SoftAP 未开启，固件代码行为与该现象相符。
++
++### ECarX 与 KC2 代码不是独立 Wi‑Fi 状态栈
++
++10500 的 ECarX WifiApBean 位于：
++
++F:/CarPlay/_firmware_review/Geely-Bluetooth/H52-10500/ecarx_adapter_full_smali/com/ecarx/xui/adaptapi/wifiap/specific/WifiApBean.smali
++
++- 构造器 :75–111 通过 getSystemService("wifi") 获取 WifiManager，并调用 getWifiApConfiguration()。
++- getWifiApClients() :208–225 调用 WifiManager 的 AP station-list 扩展接口。
++- setMaxConnections() :331–368 判断标准 getWifiApState()==13，并通过 setWifiApEnabled()/setWifiApConfiguration() 控制。
++- 自定义 com.neusoft.softap.sta_state_change 和 neu.sta.list 是 AP 客户端列表通知线索；它们不是独立 AP 电源状态 getter。
++
++KC2 WifiBean 位于：
++
++F:/CarPlay/_firmware_review/Geely-Bluetooth/H52-10500/wifi_review/kc2setting_wifi/com/neusoft/optimus/wheeljack/wificonnect/specific/WifiBean.smali
++
++- initialize() :117–145 获取标准 WifiManager。
++- 收到特定 EventBus 操作事件后，:204–237 读取 AP 状态，必要时 setWifiApEnabled(false) 再 setWifiEnabled(true)；反向事件路径 :239–248 可关闭 station Wi‑Fi。
++- :27–68 发出的 0x77a 是应用内部总线操作码。它调度 OEM app 行为，但状态与控制最后仍落到标准 WifiManager。
++
++这段代码证明 OEM 软件有通过标准 WifiManager 处理 radio 模式的事件策略：一个分支会关闭 AP 并开启 station，另一分支会关闭 station。静态代码不能证明某个用户动作或实车当前时刻必定触发了哪一分支。对所检查的 ANW 蓝牙服务材料没有发现对应 Wi‑Fi/SoftAP Binder API；不需要以蓝牙栈的分离推断 Wi‑Fi 也分离。
++
++## DiPlay 当前 Wi‑Fi/AP 流程
++
++源码根目录：F:/CarPlay/DiPlay-0.2.10-android43-luna/DiPlay-0.2.10
++
++### 手动热点模式状态门
++
++CarHotspotStatus.kt :13–28 取得标准 WifiManager，通过反射调用 getWifiApState() 并严格比较 13；若失败则回退反射调用 isWifiApEnabled()；两者都不可用才返回 null。这里检测的是 car SoftAP，不是 isWifiEnabled()/station 状态。
++
++DiPlayActivity.kt 的 carHotspotOff() :563–566 只有在 MANUAL 模式且检测明确为 false 时返回 true。它既影响首页提示，也用于 connect(wireless) :999 的连接前弹窗。connect 的凭据检查 :991–998 发生在前面。null 不拦截。
++
++CarPlayController.kt startWirelessHotspot() :1787–1813 再执行一次同样的 MANUAL AP-off 检查（:1795–1799）；明确 false 会抛 IOException。其他模式不走此 AP state gate。因此两处 gate 都是 MANUAL-only、false-only；null 状态会继续进入后续步骤，随后由配置/接口/网络层决定是否能连接。
++
++当前两个 API 都把 10/11/12/14 映射为 false；因此 disabled、transitioning、failed 在 UI 上被合并成“热点关闭”。如果 AP 正在启停，这可能产生暂时性拦截。更清楚的诊断应保留原始整数状态并分别呈现 disabled、starting/stopping、failed、unavailable，避免只暴露布尔值。
++
++### DiPlay 的模式选项与原厂设置入口
++
++DiPlayActivity.kt :623–660 在该设置页列出 MANUAL（built-in car hotspot）和 WIFI_P2P 两种选项；MANUAL 页面要求用户打开车机热点并保存 SSID/密码。:576–591 的 openCarWifiSettings() 先发起 com.android.settings.WIFI_TETHER_SETTINGS；未解析到页面或启动失败时回退到 Settings.ACTION_WIRELESS_SETTINGS。它只打开设置页面，不调用 AP setter。客户端 Wi‑Fi 设置按钮另走 ACTION_WIFI_SETTINGS（:593–599），再次区分 station 与热点入口。
++
++API18 不能使用当前 DiPlay 的 P2P/LocalOnly 路径：WifiP2pGroupManager.start() 在 API29 以下直接拒绝（WifiP2pGroupManager.kt :75–78）；CarPlayController.kt :1787–1793 会把 API29 以下的 WIFI_P2P 转换为 LOCAL_ONLY_HOTSPOT，而 LocalOnlyHotspotManager.start() 在 API26 以下拒绝（LocalOnlyHotspotManager.kt :54–57）。正常 preference load 会把 API29 以下存储的 WIFI_P2P 和所有 LOCAL_ONLY_HOTSPOT 规范化为 MANUAL（AirPlayPersistence.kt :281–290）；不过设置 UI 仍列出 WIFI_P2P，容易让人误以为 H52.10500 可用。该车上应以 MANUAL 车机 AP 路径为可实施选项，不要将 Wi‑Fi Direct 开关状态混入 AP gate。
++### MANUAL 模式的配置匹配与接口选择
++
++ManualHotspotManager.kt：
++
++- start() :74–109 读取 AP 配置；如果配置非 null 且系统 SSID 与用户录入的 expected SSID 不同，则在 :82–86 抛 IOException；配置 null 时继续采用用户录入值。之后从实机接口/扫描信息推断 channel、frequency 与安全类型。
++- readLegacyApConfiguration() :337–363 反射调用 getWifiApConfiguration()，读取 SSID 和安全类型，并尝试反射读取 apChannel/apBand。H52.10500 的真实 WifiConfiguration 类没有这两个字段，反射失败分别回退到 channel=0/band=null；它当前也没有读取系统 preSharedKey，因此保存的热点密码不会自动带入。
++- findLocalHotspotInterface() :204–233 枚举 NetworkInterface、筛选活动且非 loopback 接口，并选评分最高者。接口评分规则 :247–263 偏向 ap*/softap、p2p、wlan 前缀及私网 IPv4；没有 H52 专属固定接口名。
++- API 18 没有后续版本 activeNetwork/getLinkProperties，:210–215 明确只在 API 23+排除 primary interface。故 API18依赖枚举与启发式评分；不能从固件中的 wlan0 客户端配置断言 AP 接口也叫 wlan0。
++- H52.10500 /system/etc/dhcpcd/dhcpcd.conf 有 “interface wlan0” 配置条目；静态搜索没有找到 wifi.interface、wifi.tethering.interface 等 AP 接口配置。该条目本身不能确定 AP 接口名或地址，不能据此宣称 AP 地址为 192.168.43.1 或接口为 wlan0。
++- AirPlayPersistence.kt :300–319 将 SSID 和 passphrase 保存进 App 私有 SharedPreferences；源代码路径没有加密层。
++
++CarPlayController.kt :923–955 会在热点 manager 返回后检查可用 host address，并记录 backend、接口名、host address、band/channel 等诊断。:1023–1036 让 Bonjour/mDNS 使用同一 AP 接口地址。ManualHotspotManager 具体地址来自运行时 NetworkInterface，而非某个 H52 常量。调试日志中应避免加入密码或其它 Wi‑Fi secret。
++
++### 配置读取、密码保护与 5 GHz AP 能力
++
++普通应用在 H52.10500 可走标准 WifiManager.getWifiApConfiguration() 读 AP 配置：WifiService.getWifiApConfiguration() :2407–2422 只强制 ACCESS_WIFI_STATE（其 protectionLevel=normal，DiPlay 已声明）。方法虽是 API18 hidden API，运行时可用反射调用；Binder descriptor android.net.wifi.IWifiManager，transaction 0x1f（Stub :59；Proxy :1264 起）。
++
++本固件返回的对象链没有清除密码字段：WifiStateMachine.syncGetWifiApConfiguration() :8933–8955 发送内部 CMD_REQUEST_AP_CONFIG=0x2001b；WifiApConfigStore$DefaultState.processMessage() :36–118 对该请求直接回复 CMD_RESPONSE_AP_CONFIG=0x2001c 并携带当前 mWifiApConfig；WifiApConfigStore.loadApConfiguration() :644–681 将保存的配置密码读入 WifiConfiguration.preSharedKey；该字段是 public（WifiConfiguration.smali :92），Parcel writer :1548–1588 会 writeString(preSharedKey)，Creator :43–104 再 readString 并写回 :103。因而 WPA 类热点有明文密码可供普通有 ACCESS_WIFI_STATE 权限的 App 读取，实际值是否可读仍以设备 getter 未抛错且配置非 null 为条件。配置存储路径为 /data/misc/wifi/softap.conf；服务端代码 :384–386 使用 writeUTF 写配置 PSK。本次没有读取该数据文件或任何车机真实凭据，只核对读写代码。
++
++这支持实现“读取车机热点信息”按钮自动填充 SSID、WPA 安全类型及密码；安全类型可从 WifiConfiguration.allowedKeyManagement/getAuthType 判断。密码应默认保持遮罩、不得进入滚动日志/崩溃日志，也不要因读取按钮自动永久复制到 DiPlay 偏好；由用户明确保存手动热点配置后再沿用现有存储流程。
++
++H52.10500 的 WifiConfiguration 实际字段表（ap_capability_classes/android/net/wifi/WifiConfiguration.smali :59–102）含 SSID、preSharedKey、maxNumSta 等，但没有 apBand 或 apChannel；完整反编译类中对这两个字段无定义。WifiApConfigStore 只保存 version、SSID、authType、preSharedKey、maxNumSta（:330–392），不保存热点频段或信道。因此当前 ManualHotspotManager 尝试反射 apBand/apChannel 会在此车失败并采用 band=null/channel=0；“自动读取频段”不能从这份 AP 配置获得。现有 frequencyFromScanResult() 只有扫描结果 SSID 和 BSSID 与所选本机 AP 接口 MAC 都匹配时才返回频率；API18 的 connectionInfo 路径明确回报自动/未知（:268–278），扫描途径不能视为可靠替代。
++
++H52.10500 framework 另有旧 WifiManager 设备频段偏好：WIFI_FREQUENCY_BAND_AUTO=0、5GHZ=1、2GHZ=2（WifiManager.smali :171–175），setFrequencyBand() :2057–2067；WifiStateMachine.setFrequencyBand() :8367–8397 写 Settings.Global["wifi_frequency_band"] 并送内部状态机消息，WifiNative.setBand() :2337–2365 下发 DRIVER SETBAND。这个单独的 radio/driver band 路径不是 WifiConfiguration 的 AP 字段。SoftAP 启动链由 WifiStateMachine$7 调用 INetworkManagementService.startAccessPoint(config, iface)（ap_capability_classes_extra/android/net/wifi/WifiStateMachine$7.smali :47–64）；NetworkManagementService.startAccessPoint() :6680–6778 交给 netd softap set 的配置参数只有接口、SSID、安全类型、密码、最大客户端数，未传 AP band/channel。不能把普通 Wi‑Fi 频段偏好、station 的 5 GHz 支持或资源文件里的 “5 GHz only” 选项当作车机 SoftAP 可选 5 GHz 的证明。
++
++固件中存在 system/bin/hostapd、hostapd_cli 和 vendor/firmware/fw_bcmdhd_apsta.bin；hostapd 二进制字符串可见通用 hw_mode/country_code 配置关键字。这证明系统打包了 SoftAP/某种 Broadcom APSTA 软件路径，但没有证明该车型的驱动、固件、天线/RF设计或当前法规配置支持 5 GHz AP。NMS 传给 netd 的 SoftAP 命令不含频段或国家码。另有 WifiStateMachine 从 Settings.Global["wifi_country_code"] 读国家码后调用 WifiNative.setCountryCode()（WifiStateMachine.smali :6180–6214；WifiNative.smali :2490–2515 将其转成 DRIVER COUNTRY 命令）；build.prop 的 persist.sys.country=CN 是系统 locale 属性，ro.wifi.channels 为空，不等于运行时已验证的 Wi‑Fi regulatory domain。未检查设备运行时 Settings.Global 值、NVRAM 校准/法规表或实际驱动允许信道，故当前结论是“5 GHz AP 未证实”，不是断言硬件不支持。
++
++当前固件默认设置还明确令 station Wi‑Fi 与 AP 互斥：原生 WifiApEnabler 在开 AP 前关 station。配置热更新也可能中断连接：WifiApConfigStore ActiveState 会 defer CMD_SET_AP_CONFIG 直到离开 active state（WifiApConfigStore$ActiveState.smali :124–136）；ECarX 的 setMaxConnections() :331–368 在 AP 已开启时直接先关再按更新后的 WifiConfiguration 重启 AP。不要把切换频段/修改安全参数视为无缝操作。ECarX WifiAp API 只暴露 max connections、客户端列表和回调（WifiAp.smali 方法表）；其实现仅改 WifiConfiguration.maxNumSta，没有 band/channel setter。
++
++
++### iPhone 加网和 AirPlay 发现不是车机 iPhone hotspot 控制
++
++DiPlay 的无线链路由车机 AP 承载。Iap2WirelessControlClient.kt :121–156 收到 iPhone 的 iAP2 0x5702 REQUEST_ACCESSORY_WIFI_CONFIGURATION 后发送 0x5703 配置；:173–203 在 0x4e0e transport notification 后也会重发配置。accessoryWiFiConfiguration() :242–249 从当前 WirelessHotspotInfo 生成响应。Iap2Endpoint.kt :365–382 对应这两类 endpoint。
++
++接着 DiPlay 在车机所选 AP 地址上启动 AirPlay listener 与 Bonjour/mDNS：CarPlayController.kt :932–955 选 host，:1023–1036 让发现服务使用同一地址/接口；CarPlayBonjour.kt :592 的服务类型为 _airplay._tcp。流程要求 iPhone 获得的 SSID/passphrase 能加入车机 AP，并且 listener 和服务发现可在该 AP 路径上互通。该流程不是打开 iPhone 个人热点，也不是仅靠 station Wi‑Fi 开关便能满足。
++
++MANUAL 模式的主要失配风险是用户输入的密码与车机 AP 密码不同、实际接口被启发式选错、AP 启用但 iPhone 未加入同一网段、或 mDNS/监听没有绑定到真实 AP 路径。状态 13 只证明 framework 报告 AP enabled，不证明 SSID 可加入、接口有地址、iAP2 配置成功或 AirPlay 服务可达。
++
++## API 18 权限与 SDK 边界
++
++- DiPlay shared manifest :3–14 声明 CHANGE_WIFI_STATE、ACCESS_WIFI_STATE、ACCESS_NETWORK_STATE、INTERNET、CHANGE_WIFI_MULTICAST_STATE 和定位权限。
++- getWifiApState()、isWifiApEnabled()、getWifiApConfiguration()、setWifiApEnabled() 在 API18 framework 中存在，但属于非公开 SDK 能力；当前状态/配置 getter 用反射访问。不能只因 framework 中方法是 public 就认定它在 Android SDK API surface 可直接编译调用。
++- 本 H52 固件 system_server 对只读 AP state/config 实际检查 ACCESS_WIFI_STATE；对写 AP state/config 检查 CHANGE_WIFI_STATE。H52 framework-res manifest 对应 protectionLevel 分别为 normal 与 dangerous。API18 上这两个 manifest 权限可在安装阶段授予；现代 Android 的 runtime permission 模型不应反推此设备。
++- 在 H52.10500 上从反射调用隐藏 setWifiApEnabled() 的静态权限路径看，不存在“必须 ADB 才能请求”的 service-side 条件。不过该 setter 会异步改变整车 Wi‑Fi radio mode；DiPlay 现有 MANUAL 流程不调用它，而是将用户带到原厂热点设置页。状态识别与网络可通信验证仍须分开。
++- 只读 AP 状态采用标准 WifiManager/API18 Hidden API 的反射方式即可；无需复刻 ECarX、打包厂商 jar、访问 ANW 蓝牙 service，也不应拿 station isWifiEnabled() 代替 AP 状态。
++
++## 对照 H52.12000
++
++以 10500 为主结论；12000 仅作方法级对照。两版反编译源码中以下文件 SHA-256 相同：
++
++| 文件 | SHA‑256 |
++|---|---|
++| framework WifiManager.smali | EF8B061CF9CFA08C455AD23E8187C07E95AEC695889713CB81968CB2EE29F193 |
++| IWifiManager$Stub.smali | 394021DC22CBA6C41A4FCFFE64A498D130A05DB9CF31C81DBFF3FFBC9FB5D931 |
++| system_server WifiService.smali | 64D94C5C9F6317090F0127EF3F1CFA49AD85E5C7602B09619937596433D50872 |
++| Settings WifiApEnabler.smali | 3590E55062314BF88053775C4503E3AED0AD0A2D6D4037EB7C2C980FE905532D |
++| KC2 WifiBean.smali | 340B9C0D7B12A67C426CC30FBCCD81866D1106AF146B6074D0DF167A1BD211FF |
++| ECarX WifiApBean.smali | 9128BCC0604DF20BC7F60CEDB9E506DDF0B34A31B9F69CB907E12BFDA79FBA21 |
++
++KC2 ConnectHomeFragment.smali 整文件 hash 不同；不过 12000 对应调用点仍分别以 getWifiState() 和 getWifiApState() 更新 station/AP UI（约 :484/:549、:840/:866），并监听标准 WIFI_STATE_CHANGED 与 WIFI_AP_STATE_CHANGED。故差异不能被简化成“所有 APK 完全相同”，但本报告的核心 Wi‑Fi 服务、权限、Settings 开热点流程及 ECarX/KC2控制路径有同内容源码支撑。两套原始固件与 APK/ODEX 的整体字节当然不是相同版本。
++
++## 可实施的只读诊断建议
++
++1. 在用户显式进入诊断时同时显示 station state（WifiManager.getWifiState()/isWifiEnabled）与 AP raw state（反射 getWifiApState，保留 10–14 原始值）；不可用单独显示 Unknown，不映射成 Off。
++2. 同次读取 AP SSID、安全类型及可用时的 preSharedKey；密码只填入遮罩输入框，默认不显示且绝不写入日志。将服务错误、AP 未启用、transition、配置不可读区分开。
++3. 枚举活动非 loopback NetworkInterface 的名称、IPv4/IPv6 地址和 interface index；不要在报告里预置 wlan0 或 192.168.43.1。已有 CarPlayController 连接诊断会记录所选 interface/host，可用于与车机侧状态对照。
++4. 先用只读 getter 和标准广播观察用户在原厂设置里分别切换 station 与热点时的变化；广播只作变化提示，状态以再次读取 Binder getter 为准。不要为诊断调用 setWifiEnabled()/setWifiApEnabled()。
++5. 在用户确认 AP enabled 后再验证 iPhone 加入、iAP2 0x5702/0x5703 配置交换、AP 接口上的 AirPlay listener/mDNS。AP 状态=13 不是无线连接成功证明。
++
++当前静态证据能回答的是“Wi‑Fi API/原厂设置路径是否显示为分离栈”：未发现分离，且有统一 WifiManager 的直接正证据。要判断用户车辆某一瞬间真实运行态，还需在 H52.10500 上采集上述只读 getter/接口信息；本轮没有操作车机，也没有据此推定热点当前状态。
+diff --git a/docs/geely-android43/H52-WiFiLog-manifest.json b/docs/geely-android43/H52-WiFiLog-manifest.json
+new file mode 100644
+index 0000000..b5a1a73
+--- /dev/null
++++ b/docs/geely-android43/H52-WiFiLog-manifest.json
+@@ -0,0 +1,52 @@
++{
++  "apk": "DiPlay-0.2.10-Geely-Android43-H52-WiFiLog-test.apk",
++  "sha256": "5073e0b906b8811b1ae5bf8f364fb5cea29148f726cce558a866abdaa1540c26",
++  "bytes": 18307246,
++  "unitTests": {
++    "tests": 605,
++    "failures": 0,
++    "errors": 0,
++    "skipped": 0
++  },
++  "hardwareWirelessVerified": false,
++  "fiveGhzApControlVerified": false,
++  "authenticationAssetsRetained": true,
++  "api18UiVerification": {
++    "connection-ui": {
++      "wideSplit": true,
++      "timestampedLog": true,
++      "stageAndGuidance": true,
++      "wirelessUi": true,
++      "narrowFallback": true,
++      "noFatalException": true
++    },
++    "missing-hotspot-ui": {
++      "emptySsidDoesNotCrash": true,
++      "specificFailureTitle": true,
++      "setupAdvice": true,
++      "fixturePreferencesRestored": true
++    },
++    "hotspot-ui": {
++      "readButton": true,
++      "readResult": "已读取车机热点：SSID“AndroidAP”；安全类型：WPA/WPA2；频段：无法获取；信道：无法获取。密码已保存到默认遮罩的输入框。",
++      "enableConfirmation": true,
++      "cancelWorks": true,
++      "enableResult": "车机报告热点开启失败。",
++      "fiveGhzNotClaimed": true,
++      "noFatalException": true,
++      "realH52HotspotVerified": false
++    },
++    "log-follow-ui": {
++      "autoFollow": true,
++      "scrollPausesFollow": true,
++      "newLogsDoNotForceScroll": true,
++      "latestResumes": true,
++      "failureAdvicePersistsDuringRetry": true,
++      "manualRetryWorks": true,
++      "chineseHotspotFailureTitle": true,
++      "noFatalException": true
++    }
++  },
++  "api18ReadOnlyHotspotProbe": "PASS (configuration readable; band/channel unavailable; no setter)",
++  "api18AnwMockProbe": "PASS (not real OEM/iPhone)"
++}
+diff --git a/mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt b/mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt
+index 0a9c66c..77248bb 100644
+--- a/mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt
++++ b/mobile/src/debug/java/com/shilapi/xcertplay/compat/Api18CompatProbeActivity.kt
+@@ -85,6 +85,24 @@ class Api18CompatProbeActivity : Activity(), SurfaceHolder.Callback {
+ 
+     private fun runProbes(surface: Surface) {
+         val mode = intent.getStringExtra("probe") ?: "full"
++        if (mode == "hotspot_read") {
++            checkCase("HOTSPOT_READ_ONLY_API18") {
++                val result = com.shilapi.xcertplay.network.CarHotspotTools.read(this)
++                when (result) {
++                    is com.shilapi.xcertplay.network.CarHotspotReadResult.Available -> {
++                        val config = result.configuration
++                        check(config.ssid.isNotBlank())
++                        line("HOTSPOT configReadable=true security=${config.security} bandKnown=${config.band != null} channelKnown=${config.channel != null} (credentials omitted)")
++                    }
++                    is com.shilapi.xcertplay.network.CarHotspotReadResult.Failure ->
++                        line("HOTSPOT configReadable=false reason=${result.reason} (supported failure path)")
++                }
++                val state = com.shilapi.xcertplay.network.CarHotspotTools.readState(this)
++                "AP state=${state ?: "UNKNOWN"}; no setter invoked; H52 hardware not tested"
++            }
++            line("COMPLETE failures=${failures.get()}")
++            return
++        }
+         if (mode == "geely_spp") {
+             checkCase("ANW_BACKEND_BINDER_MOCK_API18") {
+                 val address = "01:02:03:04:05:06"
+diff --git a/shared/src/main/java/com/shilapi/xcertplay/network/CarHotspotTools.kt b/shared/src/main/java/com/shilapi/xcertplay/network/CarHotspotTools.kt
+new file mode 100644
+index 0000000..7eb9f38
+--- /dev/null
++++ b/shared/src/main/java/com/shilapi/xcertplay/network/CarHotspotTools.kt
+@@ -0,0 +1,321 @@
++package com.shilapi.xcertplay.network
++
++import android.annotation.SuppressLint
++import android.content.Context
++import android.net.wifi.WifiConfiguration
++import android.net.wifi.WifiManager
++import android.os.SystemClock
++import com.shilapi.xcertplay.compat.systemService
++import com.shilapi.xcertplay.orchestration.ManualHotspotBand
++import com.shilapi.xcertplay.orchestration.ManualHotspotSecurity
++import java.lang.reflect.InvocationTargetException
++
++/** Read and user-requested start operations for the legacy device-owned Wi-Fi AP. */
++object CarHotspotTools {
++    const val STATE_DISABLING = 0
++    const val STATE_DISABLED = 1
++    const val STATE_ENABLING = 2
++    const val STATE_ENABLED = 3
++    const val STATE_FAILED = 4
++
++    const val AOSP_STATE_DISABLING = 10
++    const val AOSP_STATE_DISABLED = 11
++    const val AOSP_STATE_ENABLING = 12
++    const val AOSP_STATE_ENABLED = 13
++    const val AOSP_STATE_FAILED = 14
++
++    const val DEFAULT_POLL_INTERVAL_MILLIS = 500L
++    const val DEFAULT_START_TIMEOUT_MILLIS = 15_000L
++
++    fun read(context: Context): CarHotspotReadResult = try {
++        read(androidAccess(context))
++    } catch (error: Throwable) {
++        CarHotspotReadResult.Failure(error.toHotspotFailure())
++    }
++
++    fun readState(context: Context): CarHotspotState? = runCatching {
++        readState(androidAccess(context))?.let(::stateFromRaw)
++    }.getOrNull()
++
++    fun start(
++        context: Context,
++        timeoutMillis: Long = DEFAULT_START_TIMEOUT_MILLIS,
++        pollIntervalMillis: Long = DEFAULT_POLL_INTERVAL_MILLIS,
++        pause: (Long) -> Unit = { Thread.sleep(it) },
++        cancelled: () -> Boolean = { false },
++    ): CarHotspotStartResult = start(
++        androidAccess(context), timeoutMillis, pollIntervalMillis, pause, cancelled,
++    )
++
++    internal fun read(access: CarHotspotWifiAccess): CarHotspotReadResult {
++        return try {
++            val configuration = access.readConfiguration()
++                ?: return CarHotspotReadResult.Failure(CarHotspotFailure.CONFIGURATION_UNAVAILABLE)
++            CarHotspotReadResult.Available(configuration)
++        } catch (error: Throwable) {
++            CarHotspotReadResult.Failure(error.toHotspotFailure())
++        }
++    }
++
++    internal fun readState(access: CarHotspotWifiAccess): Int? = access.readState()
++
++    internal fun configurationFrom(
++        native: WifiConfiguration,
++        bandValue: Int? = readIntField(native, "apBand"),
++        channelValue: Int? = readIntField(native, "apChannel"),
++    ): CarHotspotConfiguration? {
++        // H52 stores and returns literal SSID/PSK values; quotes may be part of the value.
++        val ssid = native.SSID?.takeIf(String::isNotBlank) ?: return null
++        val keyManagement = native.allowedKeyManagement ?: return null
++        val hasWpaPsk = keyManagement.get(1)
++        val hasWpa2Psk = keyManagement.get(4)
++        var bit = keyManagement.nextSetBit(0)
++        var hasUnsupportedSecurity = false
++        while (bit >= 0) {
++            if (bit != 0 && bit != 1 && bit != 4) hasUnsupportedSecurity = true
++            bit = keyManagement.nextSetBit(bit + 1)
++        }
++        if (hasUnsupportedSecurity || (!keyManagement.get(0) && !hasWpaPsk && !hasWpa2Psk)) {
++            throw CarHotspotConfigurationException(CarHotspotFailure.UNSUPPORTED_CONFIGURATION)
++        }
++        val isOpen = keyManagement.get(0) && !hasWpaPsk && !hasWpa2Psk
++        val security = when {
++            isOpen -> ManualHotspotSecurity.OPEN
++            hasWpaPsk || hasWpa2Psk -> ManualHotspotSecurity.WPA2
++            else -> throw CarHotspotConfigurationException(CarHotspotFailure.UNSUPPORTED_CONFIGURATION)
++        }
++        if (native.wepKeys?.any { !it.isNullOrBlank() } == true) {
++            throw CarHotspotConfigurationException(CarHotspotFailure.UNSUPPORTED_CONFIGURATION)
++        }
++        val passphrase = if (isOpen) "" else native.preSharedKey.orEmpty()
++        if (!isOpen && (passphrase.isBlank() || passphrase.all { it == '*' })) {
++            throw CarHotspotConfigurationException(CarHotspotFailure.UNSUPPORTED_CONFIGURATION)
++        }
++        val band = when (bandValue) {
++            0 -> ManualHotspotBand.GHZ_2_4
++            1 -> ManualHotspotBand.GHZ_5
++            -1 -> ManualHotspotBand.AUTO
++            else -> null
++        }
++        val channel = channelValue?.takeIf { it > 0 }
++        return CarHotspotConfiguration(ssid, passphrase, security, band, channel, native)
++    }
++
++    private fun readIntField(configuration: WifiConfiguration, fieldName: String): Int? =
++        runCatching { WifiConfiguration::class.java.getField(fieldName).getInt(configuration) }.getOrNull()
++
++    /**
++     * Uses the exact configuration object returned by the firmware. In particular, do not build a
++     * replacement WifiConfiguration: OEM-only AP fields such as maxNumSta must survive the call.
++     */
++    internal fun start(
++        access: CarHotspotWifiAccess,
++        timeoutMillis: Long,
++        pollIntervalMillis: Long,
++        pause: (Long) -> Unit,
++        cancelled: () -> Boolean = { false },
++        nowMillis: () -> Long = SystemClock::elapsedRealtime,
++    ): CarHotspotStartResult {
++        require(timeoutMillis >= 0L)
++        require(pollIntervalMillis > 0L)
++
++        val configuration = try {
++            access.readConfiguration()
++        } catch (error: Throwable) {
++            return CarHotspotStartResult.Failure(error.toHotspotFailure())
++        } ?: return CarHotspotStartResult.Failure(CarHotspotFailure.CONFIGURATION_UNAVAILABLE)
++        if (cancelled()) return CarHotspotStartResult.Failure(CarHotspotFailure.OPERATION_CANCELLED)
++
++        val initialState = try {
++            access.readState()?.let(::stateFromRaw)
++        } catch (error: Throwable) {
++            return CarHotspotStartResult.Failure(error.toHotspotFailure())
++        } ?: return CarHotspotStartResult.Failure(CarHotspotFailure.STATE_UNAVAILABLE)
++
++        when (initialState) {
++            CarHotspotState.ENABLED -> return CarHotspotStartResult.AlreadyEnabled(configuration)
++            CarHotspotState.ENABLING -> return awaitEnabled(
++                access, configuration, timeoutMillis, pollIntervalMillis, pause, cancelled, nowMillis,
++            )
++            CarHotspotState.DISABLING ->
++                return CarHotspotStartResult.Failure(CarHotspotFailure.STATE_TRANSITION_IN_PROGRESS)
++            CarHotspotState.FAILED ->
++                return CarHotspotStartResult.Failure(CarHotspotFailure.FIRMWARE_REPORTED_FAILURE)
++            CarHotspotState.DISABLED -> Unit
++            CarHotspotState.UNKNOWN ->
++                return CarHotspotStartResult.Failure(CarHotspotFailure.STATE_UNAVAILABLE)
++        }
++
++        if (cancelled()) return CarHotspotStartResult.Failure(CarHotspotFailure.OPERATION_CANCELLED)
++        val accepted = try {
++            access.requestEnable(configuration)
++        } catch (error: Throwable) {
++            return CarHotspotStartResult.Failure(error.toHotspotFailure())
++        }
++        if (!accepted) {
++            return CarHotspotStartResult.Failure(CarHotspotFailure.REQUEST_REJECTED)
++        }
++        if (cancelled()) return CarHotspotStartResult.Failure(CarHotspotFailure.OPERATION_CANCELLED)
++
++        // setWifiApEnabled(true) only accepts an asynchronous request. It is not proof that the AP
++        // came up; wait for the service state and never send a second request on timeout.
++        return awaitEnabled(access, configuration, timeoutMillis, pollIntervalMillis, pause, cancelled, nowMillis)
++    }
++
++    internal fun stateFromRaw(rawState: Int): CarHotspotState = when (rawState) {
++        STATE_DISABLING, AOSP_STATE_DISABLING -> CarHotspotState.DISABLING
++        STATE_DISABLED, AOSP_STATE_DISABLED -> CarHotspotState.DISABLED
++        STATE_ENABLING, AOSP_STATE_ENABLING -> CarHotspotState.ENABLING
++        STATE_ENABLED, AOSP_STATE_ENABLED -> CarHotspotState.ENABLED
++        STATE_FAILED, AOSP_STATE_FAILED -> CarHotspotState.FAILED
++        else -> CarHotspotState.UNKNOWN
++    }
++
++    private fun awaitEnabled(
++        access: CarHotspotWifiAccess,
++        configuration: CarHotspotConfiguration,
++        timeoutMillis: Long,
++        pollIntervalMillis: Long,
++        pause: (Long) -> Unit,
++        cancelled: () -> Boolean,
++        nowMillis: () -> Long,
++    ): CarHotspotStartResult {
++        val startedAt = nowMillis()
++        val deadline = if (Long.MAX_VALUE - startedAt < timeoutMillis) Long.MAX_VALUE else startedAt + timeoutMillis
++        while (nowMillis() < deadline) {
++            if (cancelled()) return CarHotspotStartResult.Failure(CarHotspotFailure.OPERATION_CANCELLED)
++            val remaining = (deadline - nowMillis()).coerceAtLeast(1L)
++            try {
++                pause(minOf(pollIntervalMillis, remaining))
++            } catch (_: InterruptedException) {
++                Thread.currentThread().interrupt()
++                return CarHotspotStartResult.Failure(CarHotspotFailure.OPERATION_INTERRUPTED)
++            } catch (_: Throwable) {
++                return CarHotspotStartResult.Failure(CarHotspotFailure.OPERATION_FAILED)
++            }
++
++            val state = try {
++                access.readState()?.let(::stateFromRaw)
++            } catch (error: Throwable) {
++                return CarHotspotStartResult.Failure(error.toHotspotFailure())
++            } ?: return CarHotspotStartResult.Failure(CarHotspotFailure.STATE_UNAVAILABLE)
++
++            when (state) {
++                CarHotspotState.ENABLED -> return CarHotspotStartResult.Enabled(configuration)
++                CarHotspotState.FAILED ->
++                    return CarHotspotStartResult.Failure(CarHotspotFailure.FIRMWARE_REPORTED_FAILURE)
++                CarHotspotState.UNKNOWN ->
++                    return CarHotspotStartResult.Failure(CarHotspotFailure.STATE_UNAVAILABLE)
++                CarHotspotState.DISABLING ->
++                    return CarHotspotStartResult.Failure(CarHotspotFailure.STATE_TRANSITION_IN_PROGRESS)
++                CarHotspotState.DISABLED, CarHotspotState.ENABLING -> Unit
++            }
++        }
++        return CarHotspotStartResult.Failure(CarHotspotFailure.START_TIMED_OUT)
++    }
++
++    private fun androidAccess(context: Context): CarHotspotWifiAccess {
++        val appContext = context.applicationContext
++        val manager = appContext.systemService(WifiManager::class.java, "wifi")
++            ?: throw IllegalStateException("Wi-Fi service unavailable")
++        return AndroidCarHotspotWifiAccess(manager)
++    }
++
++    private fun Throwable.toHotspotFailure(): CarHotspotFailure {
++        var cause: Throwable = this
++        while (cause is InvocationTargetException && cause.targetException != null) {
++            cause = cause.targetException
++        }
++        return when (cause) {
++            is SecurityException -> CarHotspotFailure.PERMISSION_DENIED
++            is CarHotspotConfigurationException -> cause.failure
++            else -> CarHotspotFailure.OPERATION_FAILED
++        }
++    }
++}
++
++enum class CarHotspotState {
++    DISABLING,
++    DISABLED,
++    ENABLING,
++    ENABLED,
++    FAILED,
++    UNKNOWN,
++}
++
++enum class CarHotspotFailure {
++    CONFIGURATION_UNAVAILABLE,
++    UNSUPPORTED_CONFIGURATION,
++    OPERATION_CANCELLED,
++    PERMISSION_DENIED,
++    OPERATION_FAILED,
++    STATE_UNAVAILABLE,
++    STATE_TRANSITION_IN_PROGRESS,
++    FIRMWARE_REPORTED_FAILURE,
++    REQUEST_REJECTED,
++    START_TIMED_OUT,
++    OPERATION_INTERRUPTED,
++}
++
++sealed class CarHotspotReadResult {
++    class Available(val configuration: CarHotspotConfiguration) : CarHotspotReadResult()
++    class Failure(val reason: CarHotspotFailure) : CarHotspotReadResult()
++}
++
++sealed class CarHotspotStartResult {
++    class AlreadyEnabled(val configuration: CarHotspotConfiguration) : CarHotspotStartResult()
++    class Enabled(val configuration: CarHotspotConfiguration) : CarHotspotStartResult()
++    class Failure(val reason: CarHotspotFailure) : CarHotspotStartResult()
++}
++
++/** Does not print or expose the Wi-Fi password through toString(). */
++class CarHotspotConfiguration internal constructor(
++    val ssid: String,
++    val passphrase: String,
++    val security: ManualHotspotSecurity,
++    val band: ManualHotspotBand?,
++    val channel: Int?,
++    internal val nativeConfiguration: Any,
++) {
++    override fun toString(): String =
++        "CarHotspotConfiguration(ssid=$ssid, security=$security, band=$band, channel=$channel)"
++}
++
++internal class CarHotspotConfigurationException(val failure: CarHotspotFailure) : Exception()
++
++internal interface CarHotspotWifiAccess {
++    fun readConfiguration(): CarHotspotConfiguration?
++    fun readState(): Int?
++    fun requestEnable(configuration: CarHotspotConfiguration): Boolean
++}
++
++@SuppressLint("PrivateApi")
++private class AndroidCarHotspotWifiAccess(
++    private val wifiManager: WifiManager,
++) : CarHotspotWifiAccess {
++    override fun readConfiguration(): CarHotspotConfiguration? {
++        val native = WifiManager::class.java.getMethod("getWifiApConfiguration").invoke(wifiManager)
++            as? WifiConfiguration ?: return null
++        return CarHotspotTools.configurationFrom(native)
++    }
++
++    override fun readState(): Int? {
++        val state = runCatching {
++            WifiManager::class.java.getMethod("getWifiApState").invoke(wifiManager) as Int
++        }.getOrNull()
++        if (state != null) return state
++
++        val enabled = WifiManager::class.java.getMethod("isWifiApEnabled").invoke(wifiManager) as Boolean
++        return if (enabled) CarHotspotTools.AOSP_STATE_ENABLED else CarHotspotTools.AOSP_STATE_DISABLED
++    }
++
++    override fun requestEnable(configuration: CarHotspotConfiguration): Boolean {
++        val method = WifiManager::class.java.getMethod(
++            "setWifiApEnabled",
++            WifiConfiguration::class.java,
++            java.lang.Boolean.TYPE,
++        )
++        return method.invoke(wifiManager, configuration.nativeConfiguration, true) as? Boolean ?: false
++    }
++
++}
+diff --git a/shared/src/main/java/com/shilapi/xcertplay/orchestration/CarPlayController.kt b/shared/src/main/java/com/shilapi/xcertplay/orchestration/CarPlayController.kt
+index 7dfa6d1..e527d6e 100644
+--- a/shared/src/main/java/com/shilapi/xcertplay/orchestration/CarPlayController.kt
++++ b/shared/src/main/java/com/shilapi/xcertplay/orchestration/CarPlayController.kt
+@@ -107,6 +107,10 @@ sealed class CarPlayStatus {
+     ) : CarPlayStatus()
+     data object WaitingForPairedIphone : CarPlayStatus()
+     data object ConnectingBluetooth : CarPlayStatus()
++    data object BluetoothReady : CarPlayStatus()
++    data object WirelessIdentified : CarPlayStatus()
++    data object WirelessAuthenticated : CarPlayStatus()
++    data object WaitingForWifiJoin : CarPlayStatus()
+     data object RunningWireless : CarPlayStatus()
+     data object WirelessActive : CarPlayStatus()
+     data object DiscoveringIphone : CarPlayStatus()
+@@ -1065,6 +1069,7 @@ class CarPlayController(
+                 closeWirelessStack()
+                 return
+             }
++            onStatus(CarPlayStatus.BluetoothReady)
+             val channel = Iap2Session.openWireless(
+                 stream,
+                 traceContext = if (vendorBackend != null) "wireless-h52-anw" else "wireless-rfcomm",
+@@ -1108,6 +1113,20 @@ class CarPlayController(
+                 vehicleStatusProvider = vehicleStatusProvider,
+                 locationRequest = wirelessLocationRequest,
+                 onIncoming = ::onRouteFrame,
++                onStage = { stage ->
++                    if (!isStaleWirelessRun(generation) && !wirelessActiveReported.get()) {
++                        when (stage) {
++                            com.shilapi.xcertplay.transport.Iap2WirelessControlStage.IDENTIFIED ->
++                                onStatus(CarPlayStatus.WirelessIdentified)
++                            com.shilapi.xcertplay.transport.Iap2WirelessControlStage.AUTHENTICATED ->
++                                onStatus(CarPlayStatus.WirelessAuthenticated)
++                            com.shilapi.xcertplay.transport.Iap2WirelessControlStage.WIFI_CONFIG_SENT,
++                            com.shilapi.xcertplay.transport.Iap2WirelessControlStage.POST_TRANSPORT_WIFI_CONFIG_SENT ->
++                                onStatus(CarPlayStatus.WaitingForWifiJoin)
++                            else -> Unit
++                        }
++                    }
++                },
+                 onProgress = ::debugLog,
+             )
+             if (isStaleWirelessRun(generation)) {
+@@ -2243,6 +2262,10 @@ class CarPlayController(
+             "STEP bt/select: waiting for a paired or connected iPhone"
+         CarPlayStatus.ConnectingBluetooth ->
+             "STEP bt/rfcomm: connecting to the iPhone iAP2 RFCOMM service"
++        CarPlayStatus.BluetoothReady -> "STEP bt/ready: Bluetooth byte transport confirmed; opening iAP2 link"
++        CarPlayStatus.WirelessIdentified -> "STEP iap2/identified: identification accepted; waiting for authentication"
++        CarPlayStatus.WirelessAuthenticated -> "STEP iap2/authenticated: authentication accepted"
++        CarPlayStatus.WaitingForWifiJoin -> "STEP wifi/config-sent: configuration sent; Wi-Fi join and AirPlay session not yet confirmed"
+         CarPlayStatus.RunningWireless ->
+             "STEP iap2/wireless: Bluetooth control loop running"
+         CarPlayStatus.WirelessActive ->
+diff --git a/shared/src/main/java/com/shilapi/xcertplay/transport/Iap2WirelessControlClient.kt b/shared/src/main/java/com/shilapi/xcertplay/transport/Iap2WirelessControlClient.kt
+index 1e48a74..13aa596 100644
+--- a/shared/src/main/java/com/shilapi/xcertplay/transport/Iap2WirelessControlClient.kt
++++ b/shared/src/main/java/com/shilapi/xcertplay/transport/Iap2WirelessControlClient.kt
+@@ -30,6 +30,7 @@ class Iap2WirelessControlClient(
+         continueLocationRequest: Boolean = false,
+         onReady: () -> Unit = {},
+         onIncoming: (Iap2Frame) -> Unit = {},
++        onStage: (Iap2WirelessControlStage) -> Unit = {},
+         onProgress: (String) -> Unit = {},
+     ): Iap2WirelessControlResult {
+         require(identification.wireless != null) {
+@@ -51,15 +52,18 @@ class Iap2WirelessControlClient(
+         Iap2IdentificationClient(session).identify(identified, requireRemaining(deadlineNanos))
+         onProgress("iap2 identification accepted")
+         var stage = Iap2WirelessControlStage.IDENTIFIED
++        onStage(stage)
+ 
+         mfi.run(session, requireRemaining(deadlineNanos), onProgress)
+         stage = Iap2WirelessControlStage.AUTHENTICATED
++        onStage(stage)
+         onProgress("iap2 authentication accepted")
+ 
+         for (subscription in Iap2WiredControlClient.subscriptions()) {
+             send(subscription, deadlineNanos)
+         }
+         stage = Iap2WirelessControlStage.SUBSCRIBED
++        onStage(stage)
+         onProgress("iap2 subscriptions sent")
+         onReady()
+ 
+@@ -146,6 +150,7 @@ class Iap2WirelessControlClient(
+                                     Iap2WirelessControlStage.WIFI_CONFIG_SENT
+                                 },
+                             )
++                            onStage(stage)
+                             wifiConfigurationsSent++
+                             if (postTransport) {
+                                 postTransportWiFiConfigurationsSent++
+@@ -160,6 +165,7 @@ class Iap2WirelessControlClient(
+                         onProgress("iap2 rx=0x4300 carplay-availability")
+                         send(carPlayStartSession(endpoint), deadlineNanos)
+                         stage = later(stage, Iap2WirelessControlStage.CARPLAY_START_SENT)
++                        onStage(stage)
+                         carPlayStartSessionsSent++
+                         onProgress("iap2 tx=0x4301 carplay-start-session")
+                     }
+@@ -174,6 +180,7 @@ class Iap2WirelessControlClient(
+                         transportNotificationSeen = true
+                         val identifiers = Iap2WirelessMessages.deviceTransportIdentifier(incoming)
+                         stage = later(stage, Iap2WirelessControlStage.TRANSPORT_NOTIFIED)
++                        onStage(stage)
+                         onProgress(
+                             "iap2 rx=0x4e0e device-transport-identifier " +
+                                 "bluetooth=${identifiers.bluetoothMac ?: "none"} " +
+@@ -194,6 +201,7 @@ class Iap2WirelessControlClient(
+                                 stage,
+                                 Iap2WirelessControlStage.POST_TRANSPORT_WIFI_CONFIG_SENT,
+                             )
++                            onStage(stage)
+                             wifiConfigurationsSent++
+                             postTransportWiFiConfigurationsSent++
+                             onProgress(
+diff --git a/shared/src/test/java/com/shilapi/xcertplay/network/CarHotspotToolsTest.kt b/shared/src/test/java/com/shilapi/xcertplay/network/CarHotspotToolsTest.kt
+new file mode 100644
+index 0000000..eb75590
+--- /dev/null
++++ b/shared/src/test/java/com/shilapi/xcertplay/network/CarHotspotToolsTest.kt
+@@ -0,0 +1,245 @@
++package com.shilapi.xcertplay.network
++
++import android.net.wifi.WifiConfiguration
++import com.shilapi.xcertplay.orchestration.ManualHotspotBand
++import com.shilapi.xcertplay.orchestration.ManualHotspotSecurity
++import org.junit.Assert.assertEquals
++import org.junit.Assert.assertFalse
++import org.junit.Assert.assertNotNull
++import org.junit.Assert.assertNull
++import org.junit.Assert.assertSame
++import org.junit.Assert.assertTrue
++import org.junit.Test
++import org.junit.runner.RunWith
++import org.robolectric.RobolectricTestRunner
++import org.robolectric.annotation.Config
++
++@RunWith(RobolectricTestRunner::class)
++@Config(sdk = [28], manifest = Config.NONE)
++class CarHotspotToolsTest {
++    @Test
++    fun readsWpaAndOpenConfigurationWithoutNormalizingTheStoredStrings() {
++        val securedNative = WifiConfiguration().apply {
++            SSID = "\"quoted ssid\""
++            preSharedKey = "\"quoted secret\""
++            allowedKeyManagement.clear()
++            allowedKeyManagement.set(1) // WPA_PSK
++        }
++        val secured = CarHotspotTools.configurationFrom(securedNative, bandValue = null, channelValue = null)
++        assertNotNull(secured)
++        assertEquals("\"quoted ssid\"", secured!!.ssid)
++        assertEquals("\"quoted secret\"", secured.passphrase)
++        assertEquals(ManualHotspotSecurity.WPA2, secured.security)
++        assertNull(secured.band)
++        assertNull(secured.channel)
++        assertFalse(secured.toString().contains("quoted secret"))
++
++        val openNative = WifiConfiguration().apply {
++            SSID = "Guest"
++            allowedKeyManagement.clear()
++            allowedKeyManagement.set(0) // NONE
++        }
++        val open = CarHotspotTools.configurationFrom(openNative, bandValue = null, channelValue = null)
++        assertNotNull(open)
++        assertEquals("Guest", open!!.ssid)
++        assertEquals("", open.passphrase)
++        assertEquals(ManualHotspotSecurity.OPEN, open.security)
++    }
++
++    @Test
++    fun knownBandAndChannelAreMappedAndUnknownFieldsStayUnknown() {
++        val native = WifiConfiguration().apply {
++            SSID = "car"
++            preSharedKey = "12345678"
++            allowedKeyManagement.clear()
++            allowedKeyManagement.set(4) // WPA2_PSK
++        }
++        val known = CarHotspotTools.configurationFrom(native, bandValue = 1, channelValue = 44)
++        assertNotNull(known)
++        assertEquals(ManualHotspotBand.GHZ_5, known!!.band)
++        assertEquals(44, known.channel)
++        assertEquals(ManualHotspotSecurity.WPA2, known.security)
++        assertEquals(
++            ManualHotspotBand.AUTO,
++            CarHotspotTools.configurationFrom(native, bandValue = -1, channelValue = 0)?.band,
++        )
++
++        val unknown = CarHotspotTools.configurationFrom(native, bandValue = null, channelValue = null)
++        assertNotNull(unknown)
++        assertNull(unknown!!.band)
++        assertNull(unknown.channel)
++    }
++
++    @Test
++    fun alreadyEnabledAndAlreadyStartingNeverSubmitASecondEnableRequest() {
++        val alreadyEnabled = FakeWifiAccess(configuration(), states = listOf(13))
++        assertTrue(CarHotspotTools.start(alreadyEnabled, 1000, 100, {}).isAlreadyEnabled())
++        assertEquals(0, alreadyEnabled.enableRequests)
++
++        var now = 0L
++        val starting = FakeWifiAccess(configuration(), states = listOf(12, 12, 13))
++        val result = CarHotspotTools.start(
++            starting,
++            timeoutMillis = 1000,
++            pollIntervalMillis = 100,
++            pause = { now += it },
++            cancelled = { false },
++            nowMillis = { now },
++        )
++        assertTrue(result.isEnabled())
++        assertEquals(0, starting.enableRequests)
++    }
++
++    @Test
++    fun missingConfigurationNeverCallsSetter() {
++        val access = FakeWifiAccess(configurationValue = null, states = listOf(11))
++        val result = CarHotspotTools.start(access, 1000, 100, {})
++        assertFailure(CarHotspotFailure.CONFIGURATION_UNAVAILABLE, result)
++        assertEquals(0, access.stateReads)
++        assertEquals(0, access.enableRequests)
++    }
++
++    @Test
++    fun cancellationWhileStateReadIsBlockedPreventsTheLaterSetterCall() {
++        var cancelled = false
++        var requests = 0
++        val access = object : CarHotspotWifiAccess {
++            override fun readConfiguration(): CarHotspotConfiguration = configuration()
++            override fun readState(): Int {
++                cancelled = true
++                return 11
++            }
++            override fun requestEnable(configuration: CarHotspotConfiguration): Boolean {
++                requests++
++                return true
++            }
++        }
++        val result = CarHotspotTools.start(access, 1000, 100, {}, cancelled = { cancelled })
++        assertFailure(CarHotspotFailure.OPERATION_CANCELLED, result)
++        assertEquals(0, requests)
++    }
++
++    @Test
++    fun acceptedRequestIsNotReadyUntilStateReportsEnabled() {
++        var now = 0L
++        val access = FakeWifiAccess(configuration(), states = listOf(11, 12, 13))
++        val result = CarHotspotTools.start(
++            access,
++            timeoutMillis = 1000,
++            pollIntervalMillis = 100,
++            pause = { now += it },
++            cancelled = { false },
++            nowMillis = { now },
++        )
++        assertTrue(result.isEnabled())
++        assertEquals(1, access.enableRequests)
++        assertSame(access.expectedConfiguration.nativeConfiguration, access.configurationPassedToSetter)
++    }
++
++    @Test
++    fun timeoutDoesNotRetryAnAcceptedStartRequest() {
++        var now = 0L
++        val access = FakeWifiAccess(configuration(), states = listOf(11, 12, 11, 12, 11))
++        val result = CarHotspotTools.start(
++            access,
++            timeoutMillis = 250,
++            pollIntervalMillis = 100,
++            pause = { now += it },
++            cancelled = { false },
++            nowMillis = { now },
++        )
++        assertFailure(CarHotspotFailure.START_TIMED_OUT, result)
++        assertEquals(1, access.enableRequests)
++    }
++
++    @Test
++    fun rejectedAndPermissionDeniedRequestsAreReportedSeparately() {
++        val rejected = FakeWifiAccess(configuration(), states = listOf(11)).apply { acceptRequest = false }
++        assertFailure(CarHotspotFailure.REQUEST_REJECTED, CarHotspotTools.start(rejected, 1000, 100, {}))
++        assertEquals(1, rejected.enableRequests)
++
++        val denied = FakeWifiAccess(configuration(), states = listOf(11)).apply { throwOnEnable = SecurityException() }
++        assertFailure(CarHotspotFailure.PERMISSION_DENIED, CarHotspotTools.start(denied, 1000, 100, {}))
++        assertEquals(1, denied.enableRequests)
++    }
++
++    @Test
++    fun api18AndAospStateNumbersMapToTheSameStates() {
++        assertEquals(CarHotspotState.DISABLING, CarHotspotTools.stateFromRaw(0))
++        assertEquals(CarHotspotState.DISABLED, CarHotspotTools.stateFromRaw(1))
++        assertEquals(CarHotspotState.ENABLING, CarHotspotTools.stateFromRaw(2))
++        assertEquals(CarHotspotState.ENABLED, CarHotspotTools.stateFromRaw(3))
++        assertEquals(CarHotspotState.FAILED, CarHotspotTools.stateFromRaw(4))
++        assertEquals(CarHotspotState.DISABLED, CarHotspotTools.stateFromRaw(11))
++        assertEquals(CarHotspotState.ENABLED, CarHotspotTools.stateFromRaw(13))
++        assertEquals(CarHotspotState.FAILED, CarHotspotTools.stateFromRaw(14))
++        assertEquals(CarHotspotState.UNKNOWN, CarHotspotTools.stateFromRaw(99))
++    }
++
++    @Test
++    fun unknownSecurityDoesNotGetMisreportedAsWpa2() {
++        val native = WifiConfiguration().apply {
++            SSID = "head unit"
++            preSharedKey = "secret"
++            allowedKeyManagement.clear()
++            allowedKeyManagement.set(2) // EAP is not a supported AP security type here.
++        }
++        val access = object : CarHotspotWifiAccess {
++            override fun readConfiguration(): CarHotspotConfiguration? =
++                CarHotspotTools.configurationFrom(native, bandValue = null, channelValue = null)
++            override fun readState(): Int? = 11
++            override fun requestEnable(configuration: CarHotspotConfiguration): Boolean = error("must not start")
++        }
++        val result = CarHotspotTools.read(access)
++        assertTrue(result is CarHotspotReadResult.Failure)
++        assertEquals(
++            CarHotspotFailure.UNSUPPORTED_CONFIGURATION,
++            (result as CarHotspotReadResult.Failure).reason,
++        )
++    }
++
++    private fun configuration(): CarHotspotConfiguration = CarHotspotConfiguration(
++        ssid = "head unit",
++        passphrase = "secret-not-logged",
++        security = ManualHotspotSecurity.WPA2,
++        band = null,
++        channel = null,
++        nativeConfiguration = Any(),
++    )
++
++    private fun assertFailure(expected: CarHotspotFailure, result: CarHotspotStartResult) {
++        assertTrue("expected $expected, got $result", result is CarHotspotStartResult.Failure)
++        assertEquals(expected, (result as CarHotspotStartResult.Failure).reason)
++    }
++
++    private fun CarHotspotStartResult.isEnabled(): Boolean = this is CarHotspotStartResult.Enabled
++    private fun CarHotspotStartResult.isAlreadyEnabled(): Boolean = this is CarHotspotStartResult.AlreadyEnabled
++
++    private class FakeWifiAccess(
++        private val configurationValue: CarHotspotConfiguration?,
++        private val states: List<Int>,
++    ) : CarHotspotWifiAccess {
++        private var nextState = 0
++        var stateReads = 0
++        var enableRequests = 0
++        var acceptRequest = true
++        var throwOnEnable: SecurityException? = null
++        var configurationPassedToSetter: Any? = null
++        val expectedConfiguration: CarHotspotConfiguration
++            get() = requireNotNull(configurationValue)
++
++        override fun readConfiguration(): CarHotspotConfiguration? = configurationValue
++
++        override fun readState(): Int? {
++            stateReads++
++            return states.getOrNull(nextState++) ?: states.lastOrNull()
++        }
++
++        override fun requestEnable(configuration: CarHotspotConfiguration): Boolean {
++            enableRequests++
++            configurationPassedToSetter = configuration.nativeConfiguration
++            throwOnEnable?.let { throw it }
++            return acceptRequest
++        }
++    }
++}

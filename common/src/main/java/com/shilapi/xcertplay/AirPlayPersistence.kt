@@ -360,6 +360,23 @@ object AirPlayPersistence {
             .apply()
     }
 
+    fun saveManualHotspotProfile(
+        context: Context,
+        ssid: String,
+        passphrase: String,
+        security: ManualHotspotSecurity,
+        band: ManualHotspotBand,
+        channel: Int,
+    ) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .putString(KEY_MANUAL_HOTSPOT_SSID, ssid)
+            .putString(KEY_MANUAL_HOTSPOT_PASSPHRASE, passphrase)
+            .putString(KEY_MANUAL_HOTSPOT_SECURITY, security.name)
+            .putString(KEY_MANUAL_HOTSPOT_BAND, band.name)
+            .putInt(KEY_MANUAL_HOTSPOT_CHANNEL, channel.coerceIn(0, 196))
+            .apply()
+    }
+
     fun loadDebugLogsEnabled(context: Context): Boolean =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_DEBUG_LOGS_ENABLED, false)

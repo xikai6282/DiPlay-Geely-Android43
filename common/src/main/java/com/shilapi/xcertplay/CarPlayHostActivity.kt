@@ -109,6 +109,14 @@ class CarPlayHostActivity : ComponentActivity() {
     )
 
     private var connectionPanel: View? = null
+    private var wideConnectionPanel: View? = null
+    private var wideStageView: TextView? = null
+    private var wideGuidanceView: TextView? = null
+    private var wideElapsedView: TextView? = null
+    private var wideFailureView: TextView? = null
+    private var wideConfirmedStageView: TextView? = null
+    private var wideWifiRecoveryButton: View? = null
+    private var latestLogButton: Button? = null
     private var wifiRecoveryButton: View? = null
     private var reconnectAttempts = 0
     private lateinit var airPlayIdentity: AirPlayIdentity
@@ -257,6 +265,11 @@ class CarPlayHostActivity : ComponentActivity() {
     private var locationReportingSwitch: Switch? = null
     private var statusView: TextView? = null
     private var statusScrollView: ScrollView? = null
+    private var logScrollChangedListener: android.view.ViewTreeObserver.OnScrollChangedListener? = null
+    private var logFollowLatest = true
+    private var programmaticLogScroll = false
+    private var logRefreshScheduled = false
+    @Volatile private var hostUiDestroyed = false
     private var stageStatusView: TextView? = null
     private var resolutionValueView: TextView? = null
     private var resolutionPreviewView: TextView? = null
@@ -346,7 +359,11 @@ class CarPlayHostActivity : ComponentActivity() {
     private var vpnReady = false
     private var hotspotStatus = HotspotStatus(state = "off")
     private var menuOpen = false
-    private var latestStage = "Preparing CarPlay"
+    private var currentConnectionStatus: CarPlayStatus? = null
+    private var currentStageStartedAtMillis = 0L
+    private var lastFailureMessage: String? = null
+    private var lastFailureAdvice: String? = null
+    private var lastConfirmedStage: String? = null
     private var darkMode = false
     private var lastConfiguration: Configuration? = null
     private var activeAirPlaySession: AirPlaySession? = null
@@ -366,6 +383,21 @@ class CarPlayHostActivity : ComponentActivity() {
     private val airPlayCommandExecutor: ExecutorService = Executors.newSingleThreadExecutor()
     private val logLines = ArrayDeque<LogEntry>()
     private val expireOldLogLines = Runnable { refreshLogView(System.currentTimeMillis()) }
+    private val refreshPendingLogView = Runnable {
+        logRefreshScheduled = false
+        if (!hostUiDestroyed) refreshLogView(System.currentTimeMillis())
+    }
+    private val showStageElapsedNotice = Runnable {
+        if (hostUiDestroyed || currentConnectionStatus == null || currentStageStartedAtMillis == 0L) return@Runnable
+        val elapsed = System.currentTimeMillis() - currentStageStartedAtMillis
+        if (elapsed >= STAGE_STALL_NOTICE_MILLIS) {
+            wideElapsedView?.text = connectionUiText(
+                "此阶段已持续超过 ${elapsed / 1000} 秒；当前尚未确认原因。请查看右侧最新日志。",
+                "This stage has lasted ${elapsed / 1000}s; the cause is not confirmed. Check the latest log entries.",
+            )
+            wideElapsedView?.visibility = View.VISIBLE
+        }
+    }
     // Some head units (e.g. BYD DiLink) update resources.configuration for day/night
     // without delivering onConfigurationChanged, so poll while the activity is visible.
     private val pollConfiguration = object : Runnable {
@@ -960,6 +992,7 @@ class CarPlayHostActivity : ComponentActivity() {
         refreshConfiguration(newConfig)
         applyFullscreenMode()
         stageStatusView?.maxWidth = (resources.displayMetrics.widthPixels * 0.78f).toInt()
+        updateDebugOverlays()
         scrollLogsToBottom()
         videoView?.post {
             val view = videoView ?: return@post
@@ -981,6 +1014,15 @@ class CarPlayHostActivity : ComponentActivity() {
         dismissClusterPresentation()
         mainHandler.removeCallbacks(applyDisplaySize)
         mainHandler.removeCallbacks(expireOldLogLines)
+        mainHandler.removeCallbacks(refreshPendingLogView)
+        mainHandler.removeCallbacks(showStageElapsedNotice)
+        hostUiDestroyed = true
+        statusScrollView?.let { scroll ->
+            logScrollChangedListener?.let { listener ->
+                if (scroll.viewTreeObserver.isAlive) scroll.viewTreeObserver.removeOnScrollChangedListener(listener)
+            }
+        }
+        logScrollChangedListener = null
         mainHandler.removeCallbacks(pollConfiguration)
         currentSurface?.let { surface ->
             sink?.clearSurface(SCREEN_TYPE_MAIN, surface)
@@ -1050,12 +1092,203 @@ class CarPlayHostActivity : ComponentActivity() {
             textSize = 13f; gravity = Gravity.CENTER; setTextColor(Color.rgb(168, 182, 202)); setPadding(0, dp(20), 0, 0)
         })
         root.addView(panel, FrameLayout.LayoutParams(-1, -1))
+        root.addView(buildWideConnectionPanel(), FrameLayout.LayoutParams(-1, -1))
         videoView = video
         gestureOverlay = gestureLayer
         stageStatusView = stage
         connectionPanel = panel
         updateDebugOverlays()
         return root
+    }
+
+    /** Wide 16:9 and wider head units use a split connection surface until video is active. */
+    private fun buildWideConnectionPanel(): View {
+        val overlay = FrameLayout(this).apply {
+            setBackgroundColor(Color.argb(150, 0, 0, 0))
+            isClickable = true
+            contentDescription = "connection-panel"
+        }
+        val columns = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(dp(22), dp(22), dp(22), dp(22))
+        }
+        val leftContent = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(28), dp(24), dp(28), dp(24))
+            setBackgroundColor(Color.argb(238, 12, 17, 27))
+        }
+        val right = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(24), dp(20), dp(24), dp(20))
+            setBackgroundColor(Color.argb(232, 7, 11, 17))
+        }
+
+        leftContent.addView(TextView(this).apply {
+            text = getString(R.string.diplay)
+            textSize = 28f
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            setTextColor(Color.rgb(241, 245, 252))
+            contentDescription = "connection-title"
+        }, LinearLayout.LayoutParams(-1, -2))
+        leftContent.addView(TextView(this).apply {
+            text = connectionUiText("连接状态", "Connection status")
+            textSize = 15f
+            setTextColor(Color.rgb(150, 168, 190))
+            setPadding(0, dp(18), 0, dp(8))
+        }, LinearLayout.LayoutParams(-1, -2))
+        val stage = TextView(this).apply {
+            text = connectionUiText("正在准备 CarPlay", "Preparing CarPlay")
+            textSize = 25f
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            setTextColor(Color.rgb(241, 245, 252))
+            contentDescription = "connection-stage"
+            maxLines = 3
+        }
+        wideStageView = stage
+        leftContent.addView(stage, LinearLayout.LayoutParams(-1, -2))
+        val guidance = TextView(this).apply {
+            text = connectionUiText("等待连接阶段状态。", "Waiting for a connection stage.")
+            textSize = 18f
+            setTextColor(Color.rgb(190, 204, 222))
+            setPadding(0, dp(12), 0, dp(4))
+            contentDescription = "connection-guidance"
+            maxLines = 5
+        }
+        wideGuidanceView = guidance
+        leftContent.addView(guidance, LinearLayout.LayoutParams(-1, -2))
+        val elapsed = TextView(this).apply {
+            textSize = 14f
+            setTextColor(Color.rgb(242, 196, 96))
+            visibility = View.GONE
+            setPadding(0, dp(8), 0, dp(4))
+            contentDescription = "connection-stage-elapsed"
+            maxLines = 2
+        }
+        wideElapsedView = elapsed
+        leftContent.addView(elapsed, LinearLayout.LayoutParams(-1, -2))
+        val confirmed = TextView(this).apply {
+            textSize = 14f
+            setTextColor(Color.rgb(146, 190, 160))
+            setPadding(0, dp(6), 0, dp(4))
+            contentDescription = "connection-last-confirmed-stage"
+            visibility = View.GONE
+            maxLines = 2
+        }
+        wideConfirmedStageView = confirmed
+        leftContent.addView(confirmed, LinearLayout.LayoutParams(-1, -2))
+        val failure = TextView(this).apply {
+            textSize = 15f
+            setTextColor(Color.rgb(255, 184, 166))
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+            background = GradientDrawable().apply {
+                setColor(Color.argb(150, 107, 35, 30))
+                cornerRadius = dp(10).toFloat()
+            }
+            visibility = View.GONE
+            contentDescription = "connection-last-failure"
+            maxLines = 8
+        }
+        wideFailureView = failure
+        leftContent.addView(failure, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(14) })
+
+        val wifiRecovery = Button(this).apply {
+            text = getString(R.string.reset_carplay_wi_fi)
+            isAllCaps = false
+            textSize = 17f
+            visibility = View.GONE
+            setOnClickListener { showDiPlayHome("wireless-recovery") }
+            contentDescription = "connection-wifi-recovery"
+        }
+        wideWifiRecoveryButton = wifiRecovery
+        leftContent.addView(wifiRecovery, LinearLayout.LayoutParams(-1, dp(54)).apply { topMargin = dp(18) })
+        leftContent.addView(Button(this).apply {
+            text = connectionUiText("重试连接", "Retry connection")
+            isAllCaps = false
+            textSize = 18f
+            contentDescription = "connection-retry"
+            setOnClickListener {
+                if (controller == null) maybeStartCarPlay() else restartCarPlay("User requested connection retry")
+            }
+        }, LinearLayout.LayoutParams(-1, dp(58)).apply { topMargin = dp(18) })
+        leftContent.addView(Button(this).apply {
+            text = getString(R.string.carplay_settings)
+            isAllCaps = false
+            textSize = 18f
+            contentDescription = "connection-open-settings"
+            setOnClickListener { openSettingsMenu() }
+        }, LinearLayout.LayoutParams(-1, dp(58)).apply { topMargin = dp(18) })
+        leftContent.addView(Button(this).apply {
+            text = getString(R.string.back_to_diplay)
+            isAllCaps = false
+            textSize = 18f
+            contentDescription = "connection-return-home"
+            setOnClickListener { showDiPlayHome() }
+        }, LinearLayout.LayoutParams(-1, dp(58)).apply { topMargin = dp(10) })
+
+        val logHeader = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        logHeader.addView(TextView(this).apply {
+            text = connectionUiText("实时连接日志", "Live connection log")
+            textSize = 19f
+            typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+            setTextColor(Color.rgb(220, 231, 245))
+            contentDescription = "connection-log-title"
+        }, LinearLayout.LayoutParams(0, -2, 1f))
+        val latest = Button(this).apply {
+            text = connectionUiText("回到最新", "Latest")
+            isAllCaps = false
+            textSize = 15f
+            visibility = View.GONE
+            contentDescription = "connection-log-latest"
+            setOnClickListener {
+                logFollowLatest = true
+                updateLatestLogButton()
+                scrollLogsToBottom(force = true)
+            }
+        }
+        latestLogButton = latest
+        logHeader.addView(latest, LinearLayout.LayoutParams(-2, dp(44)))
+        right.addView(logHeader, LinearLayout.LayoutParams(-1, -2))
+
+        val logText = TextView(this).apply {
+            textSize = 14f
+            typeface = Typeface.MONOSPACE
+            setTextColor(Color.rgb(182, 207, 183))
+            setPadding(dp(12), dp(12), dp(12), dp(12))
+            contentDescription = "connection-log"
+            text = ""
+        }
+        val logs = ScrollView(this).apply {
+            isFillViewport = true
+            addView(logText, FrameLayout.LayoutParams(-1, -2))
+            setBackgroundColor(Color.argb(80, 0, 0, 0))
+        }
+        statusView = logText
+        statusScrollView = logs
+        val scrollListener = android.view.ViewTreeObserver.OnScrollChangedListener {
+            if (programmaticLogScroll || hostUiDestroyed) return@OnScrollChangedListener
+            val child = logs.getChildAt(0) ?: return@OnScrollChangedListener
+            val atBottom = logs.scrollY + logs.height >= child.height - dp(18)
+            logFollowLatest = atBottom
+            updateLatestLogButton()
+        }
+        logScrollChangedListener = scrollListener
+        logs.viewTreeObserver.addOnScrollChangedListener(scrollListener)
+        right.addView(logs, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(12) })
+
+        val leftScroll = ScrollView(this).apply {
+            isFillViewport = true
+            addView(leftContent, FrameLayout.LayoutParams(-1, -2))
+            contentDescription = "connection-actions-scroll"
+        }
+        columns.addView(leftScroll, LinearLayout.LayoutParams(0, -1, 0.40f).apply { rightMargin = dp(12) })
+        columns.addView(right, LinearLayout.LayoutParams(0, -1, 0.60f).apply { leftMargin = dp(12) })
+        overlay.addView(columns, FrameLayout.LayoutParams(-1, -1))
+        wideConnectionPanel = overlay
+        return overlay
     }
 
     private fun buildSettingsMenu(): View {
@@ -3217,8 +3450,32 @@ class CarPlayHostActivity : ComponentActivity() {
                     }
                     activeAirPlaySession = session
                     CarPlayBackgroundSession.active = true
+                    if (hostUiDestroyed) return@runOnUiThread
                     reconnectAttempts = 0
+                    lastFailureMessage = null
+                    lastFailureAdvice = null
+                    currentConnectionStatus = null
+                    currentStageStartedAtMillis = 0L
+                    mainHandler.removeCallbacks(showStageElapsedNotice)
+                    val activeTitle = connectionUiText(
+                        "CarPlay 会话已建立",
+                        "CarPlay session active",
+                    )
+                    stageStatusView?.text = activeTitle
+                    wideStageView?.text = activeTitle
+                    wideGuidanceView?.text = connectionUiText(
+                        "会话已建立；主视频流出现后将切换为全屏 CarPlay。",
+                        "The session is active; full-screen CarPlay appears when the main video stream starts.",
+                    )
+                    lastConfirmedStage = connectionUiText("CarPlay 会话已建立", "CarPlay session established")
+                    wideFailureView?.visibility = View.GONE
+                    wideConfirmedStageView?.text = connectionUiText(
+                        "最近确认节点：${lastConfirmedStage}",
+                        "Last confirmed milestone: ${lastConfirmedStage}",
+                    )
+                    wideConfirmedStageView?.visibility = View.VISIBLE
                     syncAirPlayDarkMode()
+                    updateDebugOverlays()
                     if (menuOpen) return@runOnUiThread
                     appendLog("AirPlay session active")
                 }
@@ -3228,7 +3485,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 runOnUiThread {
                     if (activeAirPlaySession === session) activeAirPlaySession = null
                     CarPlayBackgroundSession.active = false
-                    if (menuOpen || controllerGeneration != restartGeneration) {
+                    if (hostUiDestroyed || menuOpen || controllerGeneration != restartGeneration) {
                         return@runOnUiThread
                     }
                     activeScreenStreamTypes.clear()
@@ -3240,11 +3497,12 @@ class CarPlayHostActivity : ComponentActivity() {
 
             override fun onTransportError(message: String) {
                 runOnUiThread {
-                    if (menuOpen || controllerGeneration != restartGeneration) {
+                    if (hostUiDestroyed || menuOpen || controllerGeneration != restartGeneration) {
                         return@runOnUiThread
                     }
                     activeScreenStreamTypes.clear()
                     setConnectionStage(getString(R.string.transport_error_reconnecting))
+                    recordExplicitFailure(message)
                     appendLog("CarPlay transport error: $message; reconnecting from scratch")
                     reconnectAfterLoss("CarPlay transport error: $message")
                 }
@@ -3255,10 +3513,17 @@ class CarPlayHostActivity : ComponentActivity() {
                 if (message.startsWith(CarPlayController.CONNECTION_DIAGNOSTIC_PREFIX + " ")) {
                     // Retain old-controller teardown evidence without accepting its UI/session state.
                     AsyncDiagnosticLog.append(diagnosticLog, message)
+                    if (controllerGeneration == restartGeneration) {
+                        runOnUiThread {
+                            if (!hostUiDestroyed && !menuOpen && controllerGeneration == restartGeneration) {
+                                appendUiLogOnly(message)
+                            }
+                        }
+                    }
                     return
                 }
                 runOnUiThread {
-                    if (controllerGeneration != restartGeneration) {
+                    if (hostUiDestroyed || controllerGeneration != restartGeneration) {
                         return@runOnUiThread
                     }
                     DisplayDiagnosticSnapshot.record(this@CarPlayHostActivity, displayDiagnosticAttempt, message)
@@ -3275,20 +3540,28 @@ class CarPlayHostActivity : ComponentActivity() {
     private fun createStatusReporter(
         controllerGeneration: Int,
     ): (CarPlayStatus) -> Unit = { status ->
-        if (!menuOpen && controllerGeneration == restartGeneration) {
-            updateHotspotStatus(status)
-            val description = status.describe()
-            setConnectionStage(description)
-            when (status) {
-                is CarPlayStatus.Failed -> if (status.wifiResetRequired) {
-                    wifiRecoveryButton?.visibility = View.VISIBLE
-                } else {
-                    wifiRecoveryButton?.visibility = View.GONE
-                    reconnectAfterLoss(description)
+        val update = Runnable {
+            if (!hostUiDestroyed && !menuOpen && controllerGeneration == restartGeneration) {
+                updateHotspotStatus(status)
+                val description = statusTitle(status)
+                renderConnectionStatus(status, description)
+                when (status) {
+                    is CarPlayStatus.Failed -> if (status.wifiResetRequired) {
+                        wifiRecoveryButton?.visibility = View.VISIBLE
+                        wideWifiRecoveryButton?.visibility = View.VISIBLE
+                    } else {
+                        wifiRecoveryButton?.visibility = View.GONE
+                        wideWifiRecoveryButton?.visibility = View.GONE
+                        reconnectAfterLoss(description)
+                    }
+                    else -> {
+                        wifiRecoveryButton?.visibility = View.GONE
+                        wideWifiRecoveryButton?.visibility = View.GONE
+                    }
                 }
-                else -> Unit
             }
         }
+        if (Looper.myLooper() == Looper.getMainLooper()) update.run() else mainHandler.post(update)
     }
 
     private fun adoptBackgroundSession(): Boolean {
@@ -3345,8 +3618,16 @@ class CarPlayHostActivity : ComponentActivity() {
         if (CarPlayBackgroundSession.hasSession() && !CarPlayBackgroundSession.isOwner(this)) return
         if (shuttingDown.get() || menuOpen || handshakeResetInProgress || controller != null) return
         val controllerGeneration = restartGeneration
-        val config = createRuntimeConfig()
-        val airPlayConfig = createAirPlayConfig(size)
+        val prepared = try {
+            createRuntimeConfig() to createAirPlayConfig(size)
+        } catch (error: IllegalArgumentException) {
+            val failed = CarPlayStatus.Failed(error.message ?: "Invalid saved connection settings")
+            renderConnectionStatus(failed, statusTitle(failed))
+            appendLog("Connection settings validation failed: ${error.javaClass.simpleName}")
+            appendLog(statusTitle(failed))
+            return
+        }
+        val (config, airPlayConfig) = prepared
         val locationProvider: Iap2LocationProvider? =
             when {
                 !config.locationReportingEnabled -> null
@@ -3855,41 +4136,287 @@ class CarPlayHostActivity : ComponentActivity() {
         else "action=$action"
 
     private fun setConnectionStage(message: String) {
-        latestStage = message
-        stageStatusView?.text = friendlyStage(message)
+        currentConnectionStatus = null
+        currentStageStartedAtMillis = 0L
+        mainHandler.removeCallbacks(showStageElapsedNotice)
+        val safe = DiagnosticRedactor.redact(message)
+        val visibleMessage = safe ?: connectionUiText("连接状态暂不可显示", "Connection status unavailable")
+        stageStatusView?.text = visibleMessage
+        wideStageView?.text = visibleMessage
+        wideGuidanceView?.text = connectionUiText(
+            "当前没有新的结构化阶段信息。请查看右侧日志中的明确错误或进度。",
+            "No new structured stage is available. Check the explicit progress or errors in the log.",
+        )
+        wideElapsedView?.visibility = View.GONE
         updateDebugOverlays()
     }
 
-    private fun updateDebugOverlays() {
-        statusScrollView?.visibility = View.GONE
-        connectionPanel?.visibility = if (activeScreenStreamTypes.isEmpty()) View.VISIBLE else View.GONE
+    private fun renderConnectionStatus(status: CarPlayStatus, title: String) {
+        val changed = currentConnectionStatus != status
+        currentConnectionStatus = status
+        stageStatusView?.text = title
+        wideStageView?.text = title
+        wideGuidanceView?.text = guidanceFor(status)
+
+        if (changed) {
+            currentStageStartedAtMillis = System.currentTimeMillis()
+            mainHandler.removeCallbacks(showStageElapsedNotice)
+            wideElapsedView?.visibility = View.GONE
+            mainHandler.postDelayed(showStageElapsedNotice, STAGE_STALL_NOTICE_MILLIS)
+            when (status) {
+                is CarPlayStatus.Failed -> {
+                    recordExplicitFailure(status.message)
+                    appendLog("Connection failed: ${status.message}")
+                }
+                else -> {
+                    if (isConfirmedConnectionMilestone(status)) {
+                        lastConfirmedStage = title
+                        wideConfirmedStageView?.text = connectionUiText(
+                            "最近确认节点：$title",
+                            "Last confirmed milestone: $title",
+                        )
+                        wideConfirmedStageView?.visibility = View.VISIBLE
+                    }
+                    appendLog(connectionUiText("阶段：$title", "Stage: $title"))
+                }
+            }
+        }
+        if (lastFailureMessage != null && status !is CarPlayStatus.Failed) {
+            wideFailureView?.text = failureCardText(lastFailureMessage!!, lastFailureAdvice.orEmpty())
+            wideFailureView?.visibility = View.VISIBLE
+        }
+        updateDebugOverlays()
     }
 
-    private fun friendlyStage(message: String): String = when {
-        message.contains("Turn on Wi-Fi", true) -> getString(R.string.turn_on_wi_fi_in_the_head_unit_s_settings_to_connect)
-        message.contains("Allow precise Location", true) -> getString(R.string.allow_precise_location_for_diplay_in_the_head_unit_s_app_p)
-        message.contains("Allow Nearby devices", true) -> getString(R.string.allow_nearby_devices_for_diplay_in_the_head_unit_s_app_per)
-        message.contains("createGroup failed", true) -> getString(R.string.the_head_unit_couldn_t_start_carplay_wi_fi_check_wi_fi_and)
-        message.contains("needs a reset", true) -> getString(R.string.a_previous_wi_fi_direct_connection_is_still_running_reset)
-        message.contains("socket", true) || message.contains("RFCOMM", true) -> getString(R.string.your_iphone_isn_t_available_unlock_it_and_check_bluetooth)
-        message.contains("unsupported", true) || message.contains("not supported", true) -> getString(R.string.this_head_unit_may_not_support_wireless_carplay_try_a_usb)
-        message.contains("denied", true) || message.contains("permission", true) -> getString(R.string.allow_the_connection_permission_to_continue)
-        message.contains("Failed", true) || message.contains("error", true) -> getString(R.string.connection_interrupted_retrying)
-        message.contains("Waiting for iPhone", true) || message.contains("Discovering iPhone", true) -> getString(R.string.connect_your_iphone_with_a_usb_cable)
-        message.contains("paired", true) -> getString(R.string.looking_for_your_paired_iphone)
-        message.contains("Bluetooth", true) -> getString(R.string.connecting_to_your_iphone)
-        message.contains("reconnect", true) || message.contains("ended", true) -> getString(R.string.reconnecting_to_your_iphone)
-        message.contains("active", true) || message.contains("running", true) -> getString(R.string.opening_carplay)
-        else -> getString(R.string.getting_carplay_ready)
+    private fun statusTitle(status: CarPlayStatus): String = when (status) {
+        is CarPlayStatus.HotspotReady -> connectionUiText("无线热点已就绪", "Wireless hotspot is ready")
+        is CarPlayStatus.Failed -> getString(
+            R.string.status_failed,
+            failureText(status),
+        )
+        else -> status.describe()
+    }
+
+    private fun failureText(status: CarPlayStatus.Failed): String {
+        val message = status.message.lowercase(Locale.US)
+        val knownReason = when {
+            message.contains("the car hotspot is off") ->
+                connectionUiText("车机热点未开启", "Car hotspot is off")
+            message.contains("h52 anw previous initialization") || message.contains("h52 anw spp initialization failed") ->
+                connectionUiText("原厂蓝牙 SPP 初始化失败或尚未确认", "Factory SPP initialization failed or is unconfirmed")
+            message.contains("h52 anw service") || message.contains("h52 anw binder unavailable") ->
+                connectionUiText("无法访问原厂蓝牙服务", "Factory Bluetooth service is unavailable")
+            message.contains("h52 factory bluetooth is not on") ->
+                connectionUiText("原厂蓝牙未开启", "Factory Bluetooth is off")
+            message.contains("h52 anw connect request rejected") || message.contains("h52 anw connection not confirmed") ->
+                connectionUiText("原厂蓝牙数据通路未建立", "Factory Bluetooth data connection was not confirmed")
+            message.contains("h52 anw spp link disconnected") ->
+                connectionUiText("原厂蓝牙数据通路已断开", "Factory Bluetooth data connection was disconnected")
+            message.contains("waiting for the manual hotspot") ->
+                connectionUiText("未找到可用的热点网络接口", "No usable hotspot network interface was found")
+            else -> null
+        }
+        if (knownReason != null) return knownReason
+        if (status.message.startsWith("manualHotspotSsid is required")) {
+            return connectionUiText("尚未配置车机热点名称", "Car hotspot name is not configured")
+        }
+        if (status.message.startsWith("Manual hotspot SSID does not match")) {
+            return connectionUiText("保存的热点名称与车机配置不一致", "Saved hotspot name differs from the car configuration")
+        }
+        val mapped = AndroidBluetoothFailureCopy.forControllerMessage(this, status.message) ?: status.message
+        return DiagnosticRedactor.redact(mapped)
+            ?: connectionUiText("错误详情已隐藏", "Error details were hidden")
+    }
+
+    private fun recordExplicitFailure(message: String) {
+        val safe = DiagnosticRedactor.redact(message)
+            ?: connectionUiText("错误详情已隐藏", "Error details were hidden")
+        lastFailureMessage = safe
+        val advice = ConnectionRecoveryAdvice.forFailure(message, geelyBluetoothEnabled)
+        lastFailureAdvice = connectionUiText(advice.chinese, advice.english)
+        wideFailureView?.text = failureCardText(safe, lastFailureAdvice.orEmpty())
+        wideFailureView?.visibility = View.VISIBLE
+    }
+
+    private fun isConfirmedConnectionMilestone(status: CarPlayStatus): Boolean = when (status) {
+        CarPlayStatus.MfiReady,
+        is CarPlayStatus.HotspotReady,
+        CarPlayStatus.BluetoothReady,
+        CarPlayStatus.WirelessIdentified,
+        CarPlayStatus.WirelessAuthenticated,
+        CarPlayStatus.RunningWireless,
+        CarPlayStatus.WirelessActive,
+        CarPlayStatus.RunningControl -> true
+        else -> false
+    }
+
+    private fun failureCardText(message: String, advice: String): String = connectionUiText(
+        "最近一次失败：$message\n建议：$advice",
+        "Most recent failure: $message\nNext step: $advice",
+    )
+
+    private fun guidanceFor(status: CarPlayStatus): String = when (status) {
+        CarPlayStatus.DiscoveringMfi -> connectionUiText(
+            "正在查找 MFi 认证设备。保持当前连接方式并查看右侧日志。",
+            "Looking for the MFi authentication device. Keep the current connection in place and check the log.",
+        )
+        CarPlayStatus.WaitingForMfi -> connectionUiText(
+            "仍在等待 MFi 协处理器。检查其连接与供电，再查看最新日志。",
+            "Still waiting for the MFi coprocessor. Check its connection and power, then review the latest log.",
+        )
+        CarPlayStatus.RequestingMfiPermission -> connectionUiText(
+            "请在系统弹窗中允许访问 USB 设备。",
+            "Allow access to the USB device in the system prompt.",
+        )
+        CarPlayStatus.MfiReady -> connectionUiText(
+            "MFi 认证设备已就绪，正在继续连接流程。",
+            "The MFi authentication device is ready. Connection setup is continuing.",
+        )
+        CarPlayStatus.StartingHotspot -> connectionUiText(
+            "正在启动无线热点。请查看右侧日志确认后续阶段。",
+            "Starting the wireless hotspot. Check the log for the next confirmed stage.",
+        )
+        is CarPlayStatus.HotspotReady -> connectionUiText(
+            "热点已就绪，正在等待 iPhone 建立无线连接。",
+            "The hotspot is ready; waiting for the iPhone to establish a wireless connection.",
+        )
+        CarPlayStatus.WaitingForPairedIphone -> connectionUiText(
+            "请确认 iPhone 已与车机配对并处于附近。",
+            "Confirm the iPhone is paired with the head unit and nearby.",
+        )
+        CarPlayStatus.ConnectingBluetooth -> connectionUiText(
+            "正在建立蓝牙数据连接。若仍等待，请确认 iPhone 已开机且已配对。",
+            "Establishing the Bluetooth data connection. If it keeps waiting, confirm the iPhone is on and paired.",
+        )
+        CarPlayStatus.BluetoothReady -> connectionUiText(
+            "蓝牙数据通道已确认，正在打开 iAP2 连接。",
+            "The Bluetooth byte transport is confirmed; opening the iAP2 connection.",
+        )
+        CarPlayStatus.WirelessIdentified -> connectionUiText(
+            "iAP2 设备识别已通过，正在等待认证。",
+            "iAP2 identification succeeded; waiting for authentication.",
+        )
+        CarPlayStatus.WirelessAuthenticated -> connectionUiText(
+            "iAP2 认证已通过，正在继续无线配置。",
+            "iAP2 authentication succeeded; continuing wireless setup.",
+        )
+        CarPlayStatus.WaitingForWifiJoin -> connectionUiText(
+            "Wi-Fi 配置已发送；这不表示 iPhone 已加入热点。请查看后续日志。",
+            "The Wi-Fi configuration was sent; this does not confirm the iPhone joined the hotspot. Check the next log entries.",
+        )
+        CarPlayStatus.RunningWireless -> connectionUiText(
+            "无线控制链路已运行，正在等待媒体会话。",
+            "The wireless control link is running; waiting for the media session.",
+        )
+        CarPlayStatus.WirelessActive -> connectionUiText(
+            "无线 CarPlay 已确认活动，等待视频画面显示。",
+            "Wireless CarPlay is confirmed active; waiting for video.",
+        )
+        CarPlayStatus.DiscoveringIphone -> connectionUiText(
+            "正在查找通过 USB 连接的 iPhone。",
+            "Looking for an iPhone connected over USB.",
+        )
+        CarPlayStatus.WaitingForIphone -> connectionUiText(
+            "请用 USB 数据线连接并解锁 iPhone。",
+            "Connect the iPhone with a USB data cable and unlock it.",
+        )
+        CarPlayStatus.RequestingIphonePermission -> connectionUiText(
+            "请在系统弹窗中允许访问 iPhone USB 设备。",
+            "Allow access to the iPhone USB device in the system prompt.",
+        )
+        CarPlayStatus.WaitingForReenumeration -> connectionUiText(
+            "USB 设备正在重新枚举。保持数据线连接并等待下一阶段。",
+            "The USB device is re-enumerating. Keep the cable connected and wait for the next stage.",
+        )
+        CarPlayStatus.SelectingConfiguration -> connectionUiText(
+            "正在选择 iPhone USB 配置。请保持连接。",
+            "Selecting the iPhone USB configuration. Keep it connected.",
+        )
+        CarPlayStatus.OpeningDataPaths -> connectionUiText(
+            "正在打开 USB 数据通道。请保持连接并查看日志。",
+            "Opening USB data paths. Keep the connection in place and check the log.",
+        )
+        CarPlayStatus.Pairing -> connectionUiText(
+            "正在与 iPhone 配对。按 iPhone 上显示的信任提示操作。",
+            "Pairing with the iPhone. Respond to any trust prompt shown on the phone.",
+        )
+        CarPlayStatus.ConnectingControl -> connectionUiText(
+            "正在建立 iAP2 控制连接。请保持 iPhone 解锁并查看后续日志。",
+            "Establishing the iAP2 control connection. Keep the iPhone unlocked and check the next log entries.",
+        )
+        CarPlayStatus.AttachingNetwork -> connectionUiText(
+            "控制连接已建立，正在准备网络通道。",
+            "The control connection is ready; preparing the network path.",
+        )
+        CarPlayStatus.RunningControl -> connectionUiText(
+            "CarPlay 控制通道已运行，正在等待媒体会话。",
+            "The CarPlay control channel is running; waiting for the media session.",
+        )
+        CarPlayStatus.ControlEnded -> connectionUiText(
+            "控制连接已结束。请查看右侧日志中的后续状态。",
+            "The control connection ended. Check the subsequent state in the log.",
+        )
+        is CarPlayStatus.Failed -> {
+            val advice = ConnectionRecoveryAdvice.forFailure(status.message, geelyBluetoothEnabled)
+            connectionUiText(advice.chinese, advice.english)
+        }
+    }
+
+    private fun connectionUiText(chinese: String, english: String): String =
+        if (resources.configuration.locale?.language == "zh") chinese else english
+
+    private fun updateDebugOverlays() {
+        val wide = isWideConnectionSurface()
+        val mainVideoActive = SCREEN_TYPE_MAIN in activeScreenStreamTypes
+        connectionPanel?.visibility =
+            if (!wide && activeScreenStreamTypes.isEmpty()) View.VISIBLE else View.GONE
+        wideConnectionPanel?.visibility = if (wide && !mainVideoActive) View.VISIBLE else View.GONE
+        statusScrollView?.visibility = if (wide && !mainVideoActive) View.VISIBLE else View.GONE
+        updateLatestLogButton()
+    }
+
+    private fun isWideConnectionSurface(): Boolean {
+        val config = resources.configuration
+        val widthDp = config.screenWidthDp
+        val heightDp = config.screenHeightDp
+        return widthDp >= WIDE_CONNECTION_MIN_WIDTH_DP && heightDp > 0 &&
+            widthDp.toFloat() / heightDp.toFloat() >= WIDE_CONNECTION_MIN_ASPECT
     }
 
     private fun appendLog(message: String) {
-        val safe = DiagnosticRedactor.redact(message) ?: return
-        sessionLog?.append(formattedLogLine(safe, System.currentTimeMillis()))
+        val safe = redactSingleLogLine(message) ?: return
+        val now = System.currentTimeMillis()
+        sessionLog?.append(formattedLogLine(safe, now))
+        enqueueUiLogLine(safe, now)
     }
 
     private fun appendFileLog(message: String) {
-        sessionLog?.append(formattedLogLine(message, System.currentTimeMillis()))
+        val safe = redactSingleLogLine(message) ?: return
+        sessionLog?.append(formattedLogLine(safe, System.currentTimeMillis()))
+    }
+
+    /** Adds a current-generation connection diagnostic already written to its async file log. */
+    private fun appendUiLogOnly(message: String) {
+        val safe = redactSingleLogLine(message) ?: return
+        enqueueUiLogLine(safe, System.currentTimeMillis())
+    }
+
+    private fun redactSingleLogLine(message: String): String? = DiagnosticRedactor.redact(message)
+        ?.replace('\r', ' ')
+        ?.replace('\n', ' ')
+
+    private fun enqueueUiLogLine(message: String, timestampMillis: Long) {
+        if (hostUiDestroyed) return
+        val update = Runnable {
+            if (hostUiDestroyed) return@Runnable
+            while (logLines.size >= MAX_VISIBLE_LOG_LINES) logLines.removeFirst()
+            logLines.addLast(LogEntry(timestampMillis, formattedLogLine(message, timestampMillis)))
+            if (!logRefreshScheduled) {
+                logRefreshScheduled = true
+                mainHandler.postDelayed(refreshPendingLogView, LOG_UI_REFRESH_INTERVAL_MILLIS)
+            }
+        }
+        if (Looper.myLooper() == Looper.getMainLooper()) update.run() else mainHandler.post(update)
     }
 
     private fun formattedLogLine(message: String, nowMillis: Long): String =
@@ -3914,7 +4441,8 @@ class CarPlayHostActivity : ComponentActivity() {
             logLines.removeFirst()
         }
         statusView?.text = logLines.joinToString("\n") { it.text }
-        scrollLogsToBottom()
+        if (logFollowLatest) scrollLogsToBottom(force = true)
+        updateLatestLogButton()
 
         mainHandler.removeCallbacks(expireOldLogLines)
         logLines.firstOrNull()?.let { oldest ->
@@ -3924,9 +4452,27 @@ class CarPlayHostActivity : ComponentActivity() {
         }
     }
 
-    private fun scrollLogsToBottom() {
+    private fun scrollLogsToBottom(force: Boolean = false) {
+        if (!force && !logFollowLatest) return
         statusScrollView?.post {
+            if (hostUiDestroyed) return@post
+            programmaticLogScroll = true
             statusScrollView?.fullScroll(View.FOCUS_DOWN)
+            statusScrollView?.post {
+                programmaticLogScroll = false
+                updateLatestLogButton()
+            }
+        }
+    }
+
+    private fun updateLatestLogButton() {
+        val button = latestLogButton ?: return
+        val wideVisible = statusScrollView?.visibility == View.VISIBLE
+        button.visibility = if (wideVisible) View.VISIBLE else View.GONE
+        button.text = if (logFollowLatest) {
+            connectionUiText("自动跟随中", "Following latest")
+        } else {
+            connectionUiText("回到最新", "Back to latest")
         }
     }
 
@@ -3995,10 +4541,13 @@ class CarPlayHostActivity : ComponentActivity() {
         CarPlayStatus.RequestingMfiPermission -> getString(R.string.requesting_mfi_usb_permission)
         CarPlayStatus.MfiReady -> getString(R.string.mfi_authentication_ready)
         CarPlayStatus.StartingHotspot -> getString(R.string.starting_wireless_hotspot)
-        is CarPlayStatus.HotspotReady ->
-            getString(R.string.status_hotspot_ready, hotspotBackendLabel(backend), ssid, hotspotBandLabel(band), if (channel == 0) getString(R.string.auto_value) else channel.toString())
+        is CarPlayStatus.HotspotReady -> connectionUiText("无线热点已就绪", "Wireless hotspot is ready")
         CarPlayStatus.WaitingForPairedIphone -> getString(R.string.waiting_for_paired_iphone)
         CarPlayStatus.ConnectingBluetooth -> getString(R.string.connecting_bluetooth)
+        CarPlayStatus.BluetoothReady -> connectionUiText("蓝牙数据通道已就绪", "Bluetooth data transport is ready")
+        CarPlayStatus.WirelessIdentified -> connectionUiText("iAP2 设备识别已通过", "iAP2 identification succeeded")
+        CarPlayStatus.WirelessAuthenticated -> connectionUiText("iAP2 认证已通过", "iAP2 authentication succeeded")
+        CarPlayStatus.WaitingForWifiJoin -> connectionUiText("已发送 Wi-Fi 配置，等待后续确认", "Wi-Fi configuration sent; awaiting confirmation")
         CarPlayStatus.RunningWireless -> getString(R.string.wireless_carplay_control_running)
         CarPlayStatus.WirelessActive -> getString(R.string.wireless_carplay_active)
         CarPlayStatus.DiscoveringIphone -> getString(R.string.discovering_iphone)
@@ -4013,10 +4562,7 @@ class CarPlayHostActivity : ComponentActivity() {
             if (wirelessEnabled) getString(R.string.starting_airplay_service) else getString(R.string.status_attaching_ncm)
         CarPlayStatus.RunningControl -> getString(R.string.carplay_control_running)
         CarPlayStatus.ControlEnded -> getString(R.string.carplay_control_window_ended)
-        is CarPlayStatus.Failed -> getString(
-            R.string.status_failed,
-            AndroidBluetoothFailureCopy.forControllerMessage(this@CarPlayHostActivity, message) ?: message,
-        )
+        is CarPlayStatus.Failed -> getString(R.string.status_failed, failureText(this))
     }
 
     private companion object {
@@ -4025,6 +4571,11 @@ class CarPlayHostActivity : ComponentActivity() {
         const val SCREEN_TYPE_ALT = 111
         private const val CENTER_MAP_IDLE_MILLIS = 3_000L // a reconnect is quicker; a session end is not
         const val LOG_RETENTION_MILLIS = 5 * 60_000L
+        const val MAX_VISIBLE_LOG_LINES = 400
+        const val LOG_UI_REFRESH_INTERVAL_MILLIS = 250L
+        const val STAGE_STALL_NOTICE_MILLIS = 30_000L
+        const val WIDE_CONNECTION_MIN_WIDTH_DP = 900
+        const val WIDE_CONNECTION_MIN_ASPECT = 1.6f
         const val DISPLAY_CHANGE_DEBOUNCE_MILLIS = 500L
         const val CONFIGURATION_POLL_INTERVAL_MILLIS = 2_000L
         const val RECONNECT_DELAY_MILLIS = 2_000L

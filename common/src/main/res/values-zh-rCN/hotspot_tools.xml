@@ -1,0 +1,33 @@
+<resources>
+    <string name="hotspot_tools_read_button">读取车机热点信息</string>
+    <string name="hotspot_tools_enable_button">开启车机热点</string>
+    <string name="hotspot_tools_enable_title">开启车机热点？</string>
+    <string name="hotspot_tools_enable_warning">如果热点当前关闭，开启它可能会关闭车机正在使用的 Wi‑Fi 客户端连接，并中断依赖该连接的服务。DiPlay 会保留现有热点配置，不会自行关闭 Wi‑Fi。是否继续？</string>
+    <string name="hotspot_tools_enable_confirm">开启热点</string>
+    <string name="hotspot_tools_5ghz_unavailable">此固件没有经过验证的 5 GHz 热点频段设置接口。DiPlay 不会更改频段。</string>
+    <string name="hotspot_tools_p2p_unavailable">此 Android 版本不支持 DiPlay 的 Wi‑Fi Direct 模式，请使用车机自带热点。</string>
+    <string name="hotspot_tools_idle">可读取当前车机热点设置；开启前请先阅读 Wi‑Fi 提示。</string>
+    <string name="hotspot_tools_status_content_description">车机热点状态：%1$s</string>
+    <string name="hotspot_tools_busy">热点操作仍在等待中，请等它结束后再试。</string>
+    <string name="hotspot_tools_pending_timeout">操作仍未返回，当前结果未知。请先检查车机热点状态，再决定是否重试。</string>
+    <string name="hotspot_tools_read_result">已读取车机热点：SSID“%1$s”；安全类型：%2$s；频段：%3$s；信道：%4$s。密码已保存到默认遮罩的输入框。</string>
+    <string name="hotspot_tools_security_open">开放</string>
+    <string name="hotspot_tools_security_wpa">WPA/WPA2</string>
+    <string name="hotspot_tools_band_24">2.4 GHz</string>
+    <string name="hotspot_tools_band_5">5 GHz</string>
+    <string name="hotspot_tools_band_auto">自动</string>
+    <string name="hotspot_tools_channel_value">信道 %1$d</string>
+    <string name="hotspot_tools_unavailable">无法获取</string>
+    <string name="hotspot_tools_already_enabled">车机热点已经开启。DiPlay 保留其运行状态，没有重启热点。</string>
+    <string name="hotspot_tools_enabled">车机已报告热点开启。</string>
+    <string name="hotspot_tools_configuration_unavailable">无法读取当前热点配置，没有进行更改。</string>
+    <string name="hotspot_tools_configuration_unsupported">无法以支持的格式读取热点安全类型或密码，没有进行更改。</string>
+    <string name="hotspot_tools_permission_denied">Android 拒绝访问热点服务，没有进行更改。</string>
+    <string name="hotspot_tools_state_unavailable">无法读取热点状态，没有进行更改。</string>
+    <string name="hotspot_tools_transition_in_progress">车机正在更改热点状态，请等待完成后再试。</string>
+    <string name="hotspot_tools_firmware_failed">车机报告热点开启失败。</string>
+    <string name="hotspot_tools_request_rejected">车机拒绝了热点开启请求。</string>
+    <string name="hotspot_tools_start_timeout">超时前车机没有报告热点已开启。请先检查热点状态，再决定是否重试。</string>
+    <string name="hotspot_tools_operation_cancelled">在确认开启请求前，操作已取消。</string>
+    <string name="hotspot_tools_operation_failed">热点操作失败。如果车机已接受开启请求，热点状态仍可能变化；请先检查状态再重试。</string>
+</resources>

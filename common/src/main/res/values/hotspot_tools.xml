@@ -1,0 +1,33 @@
+<resources>
+    <string name="hotspot_tools_read_button">Read car hotspot info</string>
+    <string name="hotspot_tools_enable_button">Enable car hotspot</string>
+    <string name="hotspot_tools_enable_title">Enable the car hotspot?</string>
+    <string name="hotspot_tools_enable_warning">If the hotspot is off, enabling it may turn off the car’s current Wi-Fi client connection and disconnect services using that connection. DiPlay will keep the existing hotspot configuration and will not turn Wi-Fi off itself. Continue?</string>
+    <string name="hotspot_tools_enable_confirm">Enable hotspot</string>
+    <string name="hotspot_tools_5ghz_unavailable">This firmware has no verified setting for choosing a 5 GHz hotspot band. DiPlay will not change the band.</string>
+    <string name="hotspot_tools_p2p_unavailable">Wi-Fi Direct mode is unavailable on this Android version. Use the car’s built-in hotspot mode.</string>
+    <string name="hotspot_tools_idle">Read the current car hotspot settings, or enable it after reviewing the Wi-Fi warning.</string>
+    <string name="hotspot_tools_status_content_description">Car hotspot status: %1$s</string>
+    <string name="hotspot_tools_busy">A hotspot operation is still pending. Wait for it to finish before trying again.</string>
+    <string name="hotspot_tools_pending_timeout">The operation is still pending. Its result is unknown; check the car hotspot status before trying again.</string>
+    <string name="hotspot_tools_read_result">Read car hotspot: SSID “%1$s”; security %2$s; band %3$s; channel %4$s. Password is saved in the masked field.</string>
+    <string name="hotspot_tools_security_open">open</string>
+    <string name="hotspot_tools_security_wpa">WPA/WPA2</string>
+    <string name="hotspot_tools_band_24">2.4 GHz</string>
+    <string name="hotspot_tools_band_5">5 GHz</string>
+    <string name="hotspot_tools_band_auto">automatic</string>
+    <string name="hotspot_tools_channel_value">channel %1$d</string>
+    <string name="hotspot_tools_unavailable">unavailable</string>
+    <string name="hotspot_tools_already_enabled">The car hotspot is already enabled. DiPlay left it running without restarting it.</string>
+    <string name="hotspot_tools_enabled">The car reported that its hotspot is enabled.</string>
+    <string name="hotspot_tools_configuration_unavailable">Could not read the current hotspot configuration. Nothing was changed.</string>
+    <string name="hotspot_tools_configuration_unsupported">The hotspot security or password could not be read in a supported form. Nothing was changed.</string>
+    <string name="hotspot_tools_permission_denied">Android denied access to the hotspot service. Nothing was changed.</string>
+    <string name="hotspot_tools_state_unavailable">Could not read the hotspot state. Nothing was changed.</string>
+    <string name="hotspot_tools_transition_in_progress">The hotspot is already changing state. Wait for the car to finish before trying again.</string>
+    <string name="hotspot_tools_firmware_failed">The car reported a hotspot start failure.</string>
+    <string name="hotspot_tools_request_rejected">The car rejected the hotspot start request.</string>
+    <string name="hotspot_tools_start_timeout">The car did not report an enabled hotspot before the timeout. Check its state before trying again.</string>
+    <string name="hotspot_tools_operation_cancelled">The operation was canceled before a start request could be confirmed.</string>
+    <string name="hotspot_tools_operation_failed">The hotspot operation failed. Nothing was changed unless the car accepted a start request; check its state before retrying.</string>
+</resources>

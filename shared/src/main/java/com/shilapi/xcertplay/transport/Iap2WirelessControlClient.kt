@@ -30,6 +30,7 @@ class Iap2WirelessControlClient(
         continueLocationRequest: Boolean = false,
         onReady: () -> Unit = {},
         onIncoming: (Iap2Frame) -> Unit = {},
+        onStage: (Iap2WirelessControlStage) -> Unit = {},
         onProgress: (String) -> Unit = {},
     ): Iap2WirelessControlResult {
         require(identification.wireless != null) {
@@ -51,15 +52,18 @@ class Iap2WirelessControlClient(
         Iap2IdentificationClient(session).identify(identified, requireRemaining(deadlineNanos))
         onProgress("iap2 identification accepted")
         var stage = Iap2WirelessControlStage.IDENTIFIED
+        onStage(stage)
 
         mfi.run(session, requireRemaining(deadlineNanos), onProgress)
         stage = Iap2WirelessControlStage.AUTHENTICATED
+        onStage(stage)
         onProgress("iap2 authentication accepted")
 
         for (subscription in Iap2WiredControlClient.subscriptions()) {
             send(subscription, deadlineNanos)
         }
         stage = Iap2WirelessControlStage.SUBSCRIBED
+        onStage(stage)
         onProgress("iap2 subscriptions sent")
         onReady()
 
@@ -146,6 +150,7 @@ class Iap2WirelessControlClient(
                                     Iap2WirelessControlStage.WIFI_CONFIG_SENT
                                 },
                             )
+                            onStage(stage)
                             wifiConfigurationsSent++
                             if (postTransport) {
                                 postTransportWiFiConfigurationsSent++
@@ -160,6 +165,7 @@ class Iap2WirelessControlClient(
                         onProgress("iap2 rx=0x4300 carplay-availability")
                         send(carPlayStartSession(endpoint), deadlineNanos)
                         stage = later(stage, Iap2WirelessControlStage.CARPLAY_START_SENT)
+                        onStage(stage)
                         carPlayStartSessionsSent++
                         onProgress("iap2 tx=0x4301 carplay-start-session")
                     }
@@ -174,6 +180,7 @@ class Iap2WirelessControlClient(
                         transportNotificationSeen = true
                         val identifiers = Iap2WirelessMessages.deviceTransportIdentifier(incoming)
                         stage = later(stage, Iap2WirelessControlStage.TRANSPORT_NOTIFIED)
+                        onStage(stage)
                         onProgress(
                             "iap2 rx=0x4e0e device-transport-identifier " +
                                 "bluetooth=${identifiers.bluetoothMac ?: "none"} " +
@@ -194,6 +201,7 @@ class Iap2WirelessControlClient(
                                 stage,
                                 Iap2WirelessControlStage.POST_TRANSPORT_WIFI_CONFIG_SENT,
                             )
+                            onStage(stage)
                             wifiConfigurationsSent++
                             postTransportWiFiConfigurationsSent++
                             onProgress(

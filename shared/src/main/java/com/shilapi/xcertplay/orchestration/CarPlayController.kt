@@ -107,6 +107,10 @@ sealed class CarPlayStatus {
     ) : CarPlayStatus()
     data object WaitingForPairedIphone : CarPlayStatus()
     data object ConnectingBluetooth : CarPlayStatus()
+    data object BluetoothReady : CarPlayStatus()
+    data object WirelessIdentified : CarPlayStatus()
+    data object WirelessAuthenticated : CarPlayStatus()
+    data object WaitingForWifiJoin : CarPlayStatus()
     data object RunningWireless : CarPlayStatus()
     data object WirelessActive : CarPlayStatus()
     data object DiscoveringIphone : CarPlayStatus()
@@ -1065,6 +1069,7 @@ class CarPlayController(
                 closeWirelessStack()
                 return
             }
+            onStatus(CarPlayStatus.BluetoothReady)
             val channel = Iap2Session.openWireless(
                 stream,
                 traceContext = if (vendorBackend != null) "wireless-h52-anw" else "wireless-rfcomm",
@@ -1108,6 +1113,20 @@ class CarPlayController(
                 vehicleStatusProvider = vehicleStatusProvider,
                 locationRequest = wirelessLocationRequest,
                 onIncoming = ::onRouteFrame,
+                onStage = { stage ->
+                    if (!isStaleWirelessRun(generation) && !wirelessActiveReported.get()) {
+                        when (stage) {
+                            com.shilapi.xcertplay.transport.Iap2WirelessControlStage.IDENTIFIED ->
+                                onStatus(CarPlayStatus.WirelessIdentified)
+                            com.shilapi.xcertplay.transport.Iap2WirelessControlStage.AUTHENTICATED ->
+                                onStatus(CarPlayStatus.WirelessAuthenticated)
+                            com.shilapi.xcertplay.transport.Iap2WirelessControlStage.WIFI_CONFIG_SENT,
+                            com.shilapi.xcertplay.transport.Iap2WirelessControlStage.POST_TRANSPORT_WIFI_CONFIG_SENT ->
+                                onStatus(CarPlayStatus.WaitingForWifiJoin)
+                            else -> Unit
+                        }
+                    }
+                },
                 onProgress = ::debugLog,
             )
             if (isStaleWirelessRun(generation)) {
@@ -2243,6 +2262,10 @@ class CarPlayController(
             "STEP bt/select: waiting for a paired or connected iPhone"
         CarPlayStatus.ConnectingBluetooth ->
             "STEP bt/rfcomm: connecting to the iPhone iAP2 RFCOMM service"
+        CarPlayStatus.BluetoothReady -> "STEP bt/ready: Bluetooth byte transport confirmed; opening iAP2 link"
+        CarPlayStatus.WirelessIdentified -> "STEP iap2/identified: identification accepted; waiting for authentication"
+        CarPlayStatus.WirelessAuthenticated -> "STEP iap2/authenticated: authentication accepted"
+        CarPlayStatus.WaitingForWifiJoin -> "STEP wifi/config-sent: configuration sent; Wi-Fi join and AirPlay session not yet confirmed"
         CarPlayStatus.RunningWireless ->
             "STEP iap2/wireless: Bluetooth control loop running"
         CarPlayStatus.WirelessActive ->
