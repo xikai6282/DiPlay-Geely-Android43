@@ -498,7 +498,7 @@
     <string name="bt_stack_status_title">蓝牙通路状态</string>
     <string name="bt_stack_standard_unavailable_message">Android 蓝牙适配器：%1$s。DiPlay 无线连接使用标准 Android 蓝牙／RFCOMM 通路。此状态不能说明独立厂商蓝牙栈的情况。</string>
     <string name="bt_stack_summary">Android 蓝牙适配器：%1$s\nANW 服务：%2$s\nANW 报告的蓝牙电源状态：%3$s\nECarX 服务：%4$s\n\nDiPlay 无线连接需要 Android 蓝牙／RFCOMM 通路。厂商蓝牙状态和配对记录不能代替该通路。</string>
-    <string name="bt_stack_vendor_on_next_step">厂商服务报告蓝牙已开启，但 DiPlay 所需的 Android 蓝牙／RFCOMM 通路不可用。请保存诊断报告，以便进一步核对厂商连接通路；这不代表无线 CarPlay 已连通。</string>
+    <string name="bt_stack_vendor_on_next_step">厂商服务报告蓝牙已开启，但 DiPlay 所需的 Android 蓝牙／RFCOMM 通路不可用。请复制蓝牙诊断摘要，以便进一步核对厂商连接通路；这不代表无线 CarPlay 已连通。</string>
     <string name="bt_stack_unknown_next_step">当前无法确认蓝牙各层的状态。可以打开 Android 蓝牙设置检查标准适配器，但这不保证厂商通路或无线连接可用。</string>
     <string name="bt_stack_save_report">保存诊断报告</string>
     <string name="bt_stack_open_android_settings">打开 Android 蓝牙设置</string>
@@ -527,4 +527,7 @@
     <string name="bt_stack_ecarx_enabled">服务报告已开启</string>
     <string name="bt_stack_ecarx_not_ready">服务报告未开启或尚未就绪</string>
     <string name="bt_stack_open_settings_hint">打开 Android 蓝牙设置；适配器可用后再试。</string>
+    <string name="legacy_report_destination">报告默认保存在用户存储根目录（/sdcard），保存后显示实际文件路径。</string>
+    <string name="legacy_report_failed">用户存储根目录不可用或不可写，请检查存储后重试。</string>
+    <string name="legacy_report_retry">重试</string>
 </resources>

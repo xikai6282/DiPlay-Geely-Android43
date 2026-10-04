@@ -1,0 +1,12 @@
+# Android4.3 诊断报告直接保存
+
+用户指定默认保存到用户存储根目录。API18不调用ACTION_CREATE_DOCUMENT，也不显示选择保存位置按钮。
+DiPlayActivity.chooseReportDestination在API<19直接进入exportDiagnostics，报告内容保持完整并经过原有DiagnosticRedactor处理。
+DiagnosticExportStore.saveLegacy检查MEDIA_MOUNTED后调用Environment.getExternalStorageDirectory，使用UTF-8写入DiPlay-诊断报告-时间.txt；失败清理本次未完成文件并显示存储失败/重试，不静默改为别处。
+WRITE_EXTERNAL_STORAGE仅声明到maxSdkVersion18，老系统安装时授予；不会扩展现代Android存储权限。
+保存成功显示实际绝对路径，API18仍可通过系统分享应用分享文件，缺少分享应用时保留文件并提示。
+蓝牙弹窗正文改为复制诊断摘要，车上截图已证实ANW服务可访问，ANW与ECarX报告开启，Android适配器关闭；这证明状态分离和只读访问可用，尚不证明厂商SPP无线CarPlay通路。
+
+## 实际API18验收
+
+未挂载存储：实际点击保存，显示根目录不可用和重试。挂载vfat测试存储后：实际点击保存，生成根目录文件；通过ADB读取确认UTF-8完整报告包含Android4.3信息及蓝牙诊断段，无FATAL EXCEPTION。最终APK SHA256：b8d20eb4f0d450a397c271fce642dd2047a65c0d5cf5b8338db6cb2e98a69362。common现有142项单测通过；本次不将此前固定APK的全部回归归于新hash。

@@ -31,3 +31,7 @@ The reviewed H52-10500 and H52-12000 firmware images are Android 4.3/API 18. Ins
 Device names and MAC addresses are not stored or included in the report. When diagnostics are disabled, a prior snapshot is marked historical. On Android 4.3 the H52 flow offers copying a sanitized Bluetooth summary to the clipboard. This is **not** full diagnostic file export; generic full-file export remains unavailable on API 18.
 
 The API 18 debug probe's `geely_bluetooth` mode checks both protocol parsers using Android Binder/Parcel mocks and verifies that absent OEM services remain unknown. Mock success verifies the request/reply contract only; it does not establish vehicle Binder access, SPP connectivity or wireless CarPlay support. No firmware source, decompiled code, OEM binary, vehicle identity, private key, device name or MAC address is included in this document or implementation.
+
+## Subsequent API18 export fix
+
+The subsequent root-report build implements full diagnostic file export directly to the user-storage root without a file picker; see API18-REPORT-EXPORT.md. The earlier build limitation above remains historical.

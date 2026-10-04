@@ -1,5 +1,7 @@
 package com.shilapi.xcertplay
 
+import android.content.Context
+import java.io.File
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.net.Uri
@@ -11,6 +13,23 @@ import java.io.IOException
 
 /** Saves an app-owned report without depending on an OEM's document-picker activity. */
 internal object DiagnosticExportStore {
+    /** API18: save directly to the shared user-storage root without DocumentsUI. */
+    fun saveLegacy(context: Context, fileName: String, report: String): Uri {
+        require(File(fileName).name == fileName)
+        if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED) {
+            throw IOException("User storage is not mounted or writable")
+        }
+        return Uri.fromFile(writeLegacyFile(Environment.getExternalStorageDirectory(), fileName, report))
+    }
+
+    private fun writeLegacyFile(directory: File, fileName: String, report: String): File {
+        if (!directory.isDirectory && !directory.mkdirs()) throw IOException("Report directory unavailable")
+        val file = File(directory, fileName)
+        try { file.outputStream().bufferedWriter(Charsets.UTF_8).use { it.write(report) } }
+        catch (error: Exception) { file.delete(); throw error }
+        return file
+    }
+
     @RequiresApi(Build.VERSION_CODES.Q)
     fun saveToDownloads(resolver: ContentResolver, fileName: String, report: String): Uri {
         val values = ContentValues().apply {

@@ -1,0 +1,148 @@
+diff --git a/common/src/main/AndroidManifest.xml b/common/src/main/AndroidManifest.xml
+index e6cff82..05c78a2 100644
+--- a/common/src/main/AndroidManifest.xml
++++ b/common/src/main/AndroidManifest.xml
+@@ -20,6 +20,7 @@
+             <category android:name="android.intent.category.HOME" />
+         </intent>
+     </queries>
++    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="18" />
+     <application>
+         <activity android:name="com.shilapi.xcertplay.DiPlayActivity"
+             android:exported="true" android:launchMode="singleTop"
+diff --git a/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt b/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt
+index 9688f6d..50dd7d0 100644
+--- a/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt
++++ b/common/src/main/java/com/shilapi/xcertplay/DiPlayActivity.kt
+@@ -303,8 +303,8 @@ class DiPlayActivity : ComponentActivity() {
+                 else chooseReportDestination()
+             }.apply { isEnabled = !exportInProgress }
+             card.addView(exportButton, matchButton(10, 60))
+-            card.addView(button(getString(R.string.choose_save_location), false) { chooseReportDestination() }, matchButton(10, 60))
+-            val destination = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) getString(R.string.reports_save_to_downloads_diplay) else getString(R.string.choose_where_to_save_your_report)
++            if (Build.VERSION.SDK_INT >= 19) card.addView(button(getString(R.string.choose_save_location), false) { chooseReportDestination() }, matchButton(10, 60))
++            val destination = if (Build.VERSION.SDK_INT < 19) getString(R.string.legacy_report_destination) else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) getString(R.string.reports_save_to_downloads_diplay) else getString(R.string.choose_where_to_save_your_report)
+             card.addView(label(destination + getString(R.string.nothing_is_sent_automatically_protocol_payloads_and_creden), 14, MUTED).apply { setPadding(0, dp(12), 0, 0) })
+         }
+         section(content, getString(R.string.automatic_connection), R.drawable.ic_dp_automation) { card ->
+@@ -1256,11 +1256,11 @@ class DiPlayActivity : ComponentActivity() {
+         }
+         connectButton?.isEnabled = setupError == null
+     }
+-    private fun reportFileName() = "DiPlay-${SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date())}.txt"
++    private fun reportFileName() = "DiPlay-诊断报告-${SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date())}.txt"
+ 
+     private fun chooseReportDestination() {
+         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+-            toast(getString(R.string.this_head_unit_has_no_available_file_picker_to_save_the_re))
++            exportDiagnostics()
+             return
+         }
+         // Some head units omit or disable DocumentsUI. Launch itself can throw, before
+@@ -1323,6 +1323,8 @@ class DiPlayActivity : ComponentActivity() {
+                 if (uri != null) { DiagnosticExportStore.write(appContext.contentResolver, uri, report); uri }
+                 else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                     DiagnosticExportStore.saveToDownloads(appContext.contentResolver, fileName, report)
++                } else if (Build.VERSION.SDK_INT < 19) {
++                    DiagnosticExportStore.saveLegacy(appContext, fileName, report)
+                 } else error("A save location is required")
+             }
+             runOnUiThread {
+@@ -1332,7 +1334,7 @@ class DiPlayActivity : ComponentActivity() {
+                 if (result.isSuccess) {
+                     val savedUri = result.getOrThrow()
+                     AlertDialog.Builder(this).setTitle(getString(R.string.diagnostic_report_saved))
+-                        .setMessage(if (uri == null) "Downloads/DiPlay/$fileName" else getString(R.string.your_report_was_saved_to_the_selected_location))
++                        .setMessage(if (Build.VERSION.SDK_INT < 19) savedUri.path else if (uri == null) "Downloads/DiPlay/$fileName" else getString(R.string.your_report_was_saved_to_the_selected_location))
+                         .setPositiveButton(getString(R.string.done), null)
+                         .setNeutralButton(getString(R.string.share)) { _, _ ->
+                             runCatching {
+@@ -1345,8 +1347,8 @@ class DiPlayActivity : ComponentActivity() {
+                         }.show()
+                 } else {
+                     AlertDialog.Builder(this).setTitle(getString(R.string.could_not_save_the_report))
+-                        .setMessage(getString(R.string.check_that_storage_is_available_or_choose_another_save_loc))
+-                        .setPositiveButton(getString(R.string.choose_location)) { _, _ -> chooseReportDestination() }
++                        .setMessage(getString(if (Build.VERSION.SDK_INT < 19) R.string.legacy_report_failed else R.string.check_that_storage_is_available_or_choose_another_save_loc))
++                        .setPositiveButton(getString(if (Build.VERSION.SDK_INT < 19) R.string.legacy_report_retry else R.string.choose_location)) { _, _ -> chooseReportDestination() }
+                         .setNegativeButton(getString(R.string.close), null).show()
+                 }
+             }
+diff --git a/common/src/main/java/com/shilapi/xcertplay/DiagnosticExportStore.kt b/common/src/main/java/com/shilapi/xcertplay/DiagnosticExportStore.kt
+index 6939b0a..23e18ab 100644
+--- a/common/src/main/java/com/shilapi/xcertplay/DiagnosticExportStore.kt
++++ b/common/src/main/java/com/shilapi/xcertplay/DiagnosticExportStore.kt
+@@ -1,5 +1,7 @@
+ package com.shilapi.xcertplay
+ 
++import android.content.Context
++import java.io.File
+ import android.content.ContentResolver
+ import android.content.ContentValues
+ import android.net.Uri
+@@ -11,6 +13,23 @@ import java.io.IOException
+ 
+ /** Saves an app-owned report without depending on an OEM's document-picker activity. */
+ internal object DiagnosticExportStore {
++    /** API18: save directly to the shared user-storage root without DocumentsUI. */
++    fun saveLegacy(context: Context, fileName: String, report: String): Uri {
++        require(File(fileName).name == fileName)
++        if (Environment.getExternalStorageState() != Environment.MEDIA_MOUNTED) {
++            throw IOException("User storage is not mounted or writable")
++        }
++        return Uri.fromFile(writeLegacyFile(Environment.getExternalStorageDirectory(), fileName, report))
++    }
++
++    private fun writeLegacyFile(directory: File, fileName: String, report: String): File {
++        if (!directory.isDirectory && !directory.mkdirs()) throw IOException("Report directory unavailable")
++        val file = File(directory, fileName)
++        try { file.outputStream().bufferedWriter(Charsets.UTF_8).use { it.write(report) } }
++        catch (error: Exception) { file.delete(); throw error }
++        return file
++    }
++
+     @RequiresApi(Build.VERSION_CODES.Q)
+     fun saveToDownloads(resolver: ContentResolver, fileName: String, report: String): Uri {
+         val values = ContentValues().apply {
+diff --git a/common/src/main/res/values-zh-rCN/strings.xml b/common/src/main/res/values-zh-rCN/strings.xml
+index 6324cc2..0d481e2 100644
+--- a/common/src/main/res/values-zh-rCN/strings.xml
++++ b/common/src/main/res/values-zh-rCN/strings.xml
+@@ -498,7 +498,7 @@
+     <string name="bt_stack_status_title">蓝牙通路状态</string>
+     <string name="bt_stack_standard_unavailable_message">Android 蓝牙适配器：%1$s。DiPlay 无线连接使用标准 Android 蓝牙／RFCOMM 通路。此状态不能说明独立厂商蓝牙栈的情况。</string>
+     <string name="bt_stack_summary">Android 蓝牙适配器：%1$s\nANW 服务：%2$s\nANW 报告的蓝牙电源状态：%3$s\nECarX 服务：%4$s\n\nDiPlay 无线连接需要 Android 蓝牙／RFCOMM 通路。厂商蓝牙状态和配对记录不能代替该通路。</string>
+-    <string name="bt_stack_vendor_on_next_step">厂商服务报告蓝牙已开启，但 DiPlay 所需的 Android 蓝牙／RFCOMM 通路不可用。请保存诊断报告，以便进一步核对厂商连接通路；这不代表无线 CarPlay 已连通。</string>
++    <string name="bt_stack_vendor_on_next_step">厂商服务报告蓝牙已开启，但 DiPlay 所需的 Android 蓝牙／RFCOMM 通路不可用。请复制蓝牙诊断摘要，以便进一步核对厂商连接通路；这不代表无线 CarPlay 已连通。</string>
+     <string name="bt_stack_unknown_next_step">当前无法确认蓝牙各层的状态。可以打开 Android 蓝牙设置检查标准适配器，但这不保证厂商通路或无线连接可用。</string>
+     <string name="bt_stack_save_report">保存诊断报告</string>
+     <string name="bt_stack_open_android_settings">打开 Android 蓝牙设置</string>
+@@ -527,4 +527,7 @@
+     <string name="bt_stack_ecarx_enabled">服务报告已开启</string>
+     <string name="bt_stack_ecarx_not_ready">服务报告未开启或尚未就绪</string>
+     <string name="bt_stack_open_settings_hint">打开 Android 蓝牙设置；适配器可用后再试。</string>
++    <string name="legacy_report_destination">报告默认保存在用户存储根目录（/sdcard），保存后显示实际文件路径。</string>
++    <string name="legacy_report_failed">用户存储根目录不可用或不可写，请检查存储后重试。</string>
++    <string name="legacy_report_retry">重试</string>
+ </resources>
+diff --git a/common/src/main/res/values/strings.xml b/common/src/main/res/values/strings.xml
+index c75a876..6654c2a 100644
+--- a/common/src/main/res/values/strings.xml
++++ b/common/src/main/res/values/strings.xml
+@@ -498,7 +498,7 @@
+     <string name="bt_stack_status_title">Bluetooth stack status</string>
+     <string name="bt_stack_standard_unavailable_message">Android Bluetooth adapter: %1$s. DiPlay wireless connection uses the standard Android Bluetooth/RFCOMM path. This does not establish the state of any separate vendor Bluetooth stack.</string>
+     <string name="bt_stack_summary">Android Bluetooth adapter: %1$s\nANW service: %2$s\nANW-reported Bluetooth power: %3$s\nECarX service: %4$s\n\nDiPlay wireless connection requires the Android Bluetooth/RFCOMM path. Vendor status and paired records do not enable that path.</string>
+-    <string name="bt_stack_vendor_on_next_step">A vendor stack reports Bluetooth on, but DiPlay’s Android Bluetooth/RFCOMM path is unavailable. Save a diagnostic report so the vendor connection path can be reviewed; this does not confirm wireless CarPlay connectivity.</string>
++    <string name="bt_stack_vendor_on_next_step">A vendor stack reports Bluetooth on, but DiPlay’s Android Bluetooth/RFCOMM path is unavailable. Copy the Bluetooth diagnostic summary so the vendor connection path can be reviewed; this does not confirm wireless CarPlay connectivity.</string>
+     <string name="bt_stack_unknown_next_step">Bluetooth stack state is unknown. Android Bluetooth settings are available for checking the standard adapter; opening them does not guarantee that the vendor stack or wireless connection will work.</string>
+     <string name="bt_stack_save_report">Save diagnostic report</string>
+     <string name="bt_stack_open_android_settings">Open Android Bluetooth settings</string>
+@@ -527,4 +527,7 @@
+     <string name="bt_stack_ecarx_enabled">enabled</string>
+     <string name="bt_stack_ecarx_not_ready">not enabled or not ready</string>
+     <string name="bt_stack_open_settings_hint">Open Android Bluetooth settings and retry after the adapter is available.</string>
++    <string name="legacy_report_destination">Reports are saved directly to the user-storage root (/sdcard). The saved path is shown after completion.</string>
++    <string name="legacy_report_failed">The user-storage root is unavailable or not writable. Check storage and retry.</string>
++    <string name="legacy_report_retry">Retry</string>
+ </resources>

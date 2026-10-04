@@ -498,7 +498,7 @@
     <string name="bt_stack_status_title">Bluetooth stack status</string>
     <string name="bt_stack_standard_unavailable_message">Android Bluetooth adapter: %1$s. DiPlay wireless connection uses the standard Android Bluetooth/RFCOMM path. This does not establish the state of any separate vendor Bluetooth stack.</string>
     <string name="bt_stack_summary">Android Bluetooth adapter: %1$s\nANW service: %2$s\nANW-reported Bluetooth power: %3$s\nECarX service: %4$s\n\nDiPlay wireless connection requires the Android Bluetooth/RFCOMM path. Vendor status and paired records do not enable that path.</string>
-    <string name="bt_stack_vendor_on_next_step">A vendor stack reports Bluetooth on, but DiPlay’s Android Bluetooth/RFCOMM path is unavailable. Save a diagnostic report so the vendor connection path can be reviewed; this does not confirm wireless CarPlay connectivity.</string>
+    <string name="bt_stack_vendor_on_next_step">A vendor stack reports Bluetooth on, but DiPlay’s Android Bluetooth/RFCOMM path is unavailable. Copy the Bluetooth diagnostic summary so the vendor connection path can be reviewed; this does not confirm wireless CarPlay connectivity.</string>
     <string name="bt_stack_unknown_next_step">Bluetooth stack state is unknown. Android Bluetooth settings are available for checking the standard adapter; opening them does not guarantee that the vendor stack or wireless connection will work.</string>
     <string name="bt_stack_save_report">Save diagnostic report</string>
     <string name="bt_stack_open_android_settings">Open Android Bluetooth settings</string>
@@ -527,4 +527,7 @@
     <string name="bt_stack_ecarx_enabled">enabled</string>
     <string name="bt_stack_ecarx_not_ready">not enabled or not ready</string>
     <string name="bt_stack_open_settings_hint">Open Android Bluetooth settings and retry after the adapter is available.</string>
+    <string name="legacy_report_destination">Reports are saved directly to the user-storage root (/sdcard). The saved path is shown after completion.</string>
+    <string name="legacy_report_failed">The user-storage root is unavailable or not writable. Check storage and retry.</string>
+    <string name="legacy_report_retry">Retry</string>
 </resources>
