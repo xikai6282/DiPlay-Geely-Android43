@@ -1,0 +1,43 @@
+{
+  "apk": "DiPlay-0.2.10-Geely-Android43-H52-WiFiDirect-test.apk",
+  "sha256": "d24f1e483a7ec813c94c5751be02bbf62f6160727b1d083a97c28f76b0f37713",
+  "bytes": 18309574,
+  "upstream": "shihabal3amri/DiPlay v0.2.10",
+  "minSdk": 18,
+  "authAssetsPreserved": true,
+  "unitTests": {
+    "shared": {
+      "tests": 453,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "common": {
+      "tests": 158,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "api18UiAndProbe": {
+    "twoModesVisible": true,
+    "legacyLimitationsVisible": true,
+    "modeSelectionPersistsAfterRestart": true,
+    "api18ProbeNoFailures": true,
+    "noFatalException": true,
+    "realH52OrIPhoneTested": false
+  },
+  "h52FirmwareStaticAnalysis": true,
+  "realH52GroupCreationTested": false,
+  "realIPhoneConnectionTested": false,
+  "forced5GHzImplemented": false,
+  "legacyChannelUnknownValue": 0,
+  "api18ConnectionUi": {
+    "wideSplit": true,
+    "timestampedLog": true,
+    "stageAndGuidance": true,
+    "wirelessUi": true,
+    "narrowFallback": true,
+    "noFatalException": true
+  }
+}

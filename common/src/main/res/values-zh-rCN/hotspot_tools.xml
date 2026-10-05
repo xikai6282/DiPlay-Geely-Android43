@@ -30,4 +30,6 @@
     <string name="hotspot_tools_start_timeout">超时前车机没有报告热点已开启。请先检查热点状态，再决定是否重试。</string>
     <string name="hotspot_tools_operation_cancelled">在确认开启请求前，操作已取消。</string>
     <string name="hotspot_tools_operation_failed">热点操作失败。如果车机已接受开启请求，热点状态仍可能变化；请先检查状态再重试。</string>
+    <string name="hotspot_tools_p2p_legacy">Android 4.3 Wi-Fi 直连：由系统生成网络名称和密码、自动选择频段。需要固件支持，不能强制 5 GHz；建组失败时请切回车机热点。</string>
+    <string name="hotspot_tools_p2p_legacy_help">请在车机设置开启 Wi-Fi 客户端开关。车机热点可能与直连争用无线模块；若提示忙，可在原厂设置关闭热点后重试。也可随时切回车机热点模式。</string>
 </resources>

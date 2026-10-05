@@ -837,7 +837,7 @@ class DiPlayActivity : ComponentActivity() {
 
     private fun wirelessLinkControls(parent: LinearLayout) {
         val mode = if (pendingCarHotspotSetup) WirelessHotspotMode.MANUAL else AirPlayPersistence.loadWirelessHotspotMode(this)
-        val p2pSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+        val p2pSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2
         val modes = if (p2pSupported) {
             listOf(WirelessHotspotMode.MANUAL, WirelessHotspotMode.WIFI_P2P)
         } else {
@@ -867,6 +867,11 @@ class DiPlayActivity : ComponentActivity() {
                 }
             }, matchButton(12, 60))
             option.addView(label(descriptions[index], 15, MUTED).apply { setPadding(0, dp(6), 0, dp(12)) })
+        }
+        if (p2pSupported && Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            parent.addView(label(getString(R.string.hotspot_tools_p2p_legacy), 14, MUTED).apply {
+                setPadding(0, dp(4), 0, dp(8))
+            })
         }
         if (!p2pSupported) {
             parent.addView(label(getString(R.string.hotspot_tools_p2p_unavailable), 14, MUTED).apply {
@@ -909,7 +914,7 @@ class DiPlayActivity : ComponentActivity() {
             }, matchButton(12, 60))
             parent.addView(label(if (pendingCarHotspotSetup) getString(R.string.finish_setup_save_your_hotspot_details_to_use_this_mode) else if (carHotspotOff()) getString(R.string.hotspot_details_off) else getString(R.string.hotspot_details_saved), 15, if (carHotspotOff()) WARNING else MUTED).apply { setPadding(0, dp(12), 0, 0) })
         } else {
-            parent.addView(label(getString(R.string.turn_the_car_s_wi_fi_switch_on_allow_location_nearby_devic), 16, MUTED))
+            parent.addView(label(getString(if (Build.VERSION.SDK_INT < 23) R.string.hotspot_tools_p2p_legacy_help else R.string.turn_the_car_s_wi_fi_switch_on_allow_location_nearby_devic), 16, MUTED))
             parent.addView(button(getString(R.string.open_car_wi_fi_settings), false) { openCarClientWifiSettings() }, matchButton(12, 60))
         }
     }

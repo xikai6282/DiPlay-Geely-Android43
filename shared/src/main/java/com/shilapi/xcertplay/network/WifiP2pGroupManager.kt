@@ -34,9 +34,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Creates a temporary Wi-Fi Direct group owner, preferring 5 GHz, that can also be joined as a legacy AP.
- *
- * The group is deliberately not persistent. [close] removes it and releases the callback thread.
+ * Creates a Wi-Fi Direct group owner that legacy Wi-Fi clients can join.
+ * API 29+ can request frequencies; API 18-28 uses system-generated credentials and band.
+ * [close] removes only this session's active group and releases the callback thread.
+ * Old firmware may retain its persistent profile; no hidden profile-deletion API is invoked.
  */
 class WifiP2pGroupManager(
     context: Context,
@@ -44,8 +45,7 @@ class WifiP2pGroupManager(
 ) : WirelessHotspotManager {
     private val appContext = context.applicationContext
     private val p2pManager = appContext.systemService(WifiP2pManager::class.java, "wifip2p")
-        ?: error("Wi-Fi P2P service unavailable")
-        ?: throw IllegalStateException("WifiP2pManager is unavailable")
+        ?: throw IOException("Wi-Fi P2P service unavailable")
     private val stateLock = Object()
     private val random = SecureRandom()
     private val configurationMemory = P2pConfigurationMemory(appContext)
@@ -73,9 +73,6 @@ class WifiP2pGroupManager(
     @Volatile private var requestedName: String? = null
 
     override fun start(timeoutMillis: Long): WirelessHotspotInfo {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            throw IOException("Wi-Fi P2P credentials require Android 10 (API 29) or newer")
-        }
         check(Looper.myLooper() != Looper.getMainLooper()) {
             "WifiP2pGroupManager.start must not run on the main thread"
         }
@@ -118,7 +115,8 @@ class WifiP2pGroupManager(
                 callbackThread = thread
             }
 
-            logP2pState(attempt, p2pChannel)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) logP2pState(attempt, p2pChannel)
+            else diagnostic("Wi-Fi P2P legacy API: system-generated credentials; band selected by firmware")
             // Preferences disappear on reinstall, but the scoped namespace survives.
             val existing = requestGroupInfo(attempt, p2pChannel, REQUEST_POLL_NANOS, requireResponse = true)
             diagnostic("Wi-Fi P2P existingGroup=${existing != null}")
@@ -136,7 +134,21 @@ class WifiP2pGroupManager(
                 }
             }
 
-            val creation = P2pStartupRecovery.create(
+            val legacy = Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+            val creation = if (legacy) {
+                ensureStartActive(attempt)
+                val request = CreateRequest()
+                synchronized(stateLock) {
+                    ensureStartActiveLocked(attempt)
+                    attempt.request = request
+                }
+                // API 14+ overload; never constructs API 29 WifiP2pConfig.Builder.
+                // Old firmware may retain a persistent profile; remove only our active group.
+                diagnostic("Wi-Fi P2P create mode=LEGACY_SYSTEM_DEFAULT band=unknown")
+                p2pManager.createGroup(p2pChannel, createActionListener(attempt, request))
+                awaitGroupCreated(attempt, request, deadlineNanos, timeoutMillis)
+                P2pCreationRequest(P2pCreationMode.SYSTEM_DEFAULT)
+            } else P2pStartupRecovery.create(
                 stationFrequency = stationFrequency,
                 preferred = preferred?.request,
                 beforeRetry = {
@@ -205,9 +217,9 @@ class WifiP2pGroupManager(
                 ensureStartActiveLocked(attempt)
                 created = true
                 startAttempt = null
-                pendingSuccess = {
-                    configurationMemory.remember(creation, requireNotNull(group.frequencyMHz), stationFrequency)
-                }
+                pendingSuccess = if (group.frequencyMHz != null) {
+                    { configurationMemory.remember(creation, group.frequencyMHz, stationFrequency) }
+                } else null
             }
             return group
         } catch (failure: Exception) {
@@ -331,7 +343,6 @@ class WifiP2pGroupManager(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
     private fun awaitUsableGroup(
         attempt: StartAttempt,
         channel: WifiP2pManager.Channel,
@@ -367,18 +378,22 @@ class WifiP2pGroupManager(
             val passphrase = group.passphrase?.takeIf { it.isNotBlank() }
                 ?: credentials?.passphrase
             val interfaceName = group.getInterface()?.takeIf { it.isNotBlank() }
-            val frequencyMHz = group.frequency
-            val channelNumber = wifiFrequencyMhzToChannel(frequencyMHz)
+            // WifiP2pGroup.getFrequency is API 29. API 18 exposes no reliable group channel.
+            val frequencyMHz = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                group.frequency.takeIf { it > 0 }
+            } else null
+            val channelNumber = frequencyMHz?.let(::wifiFrequencyMhzToChannel) ?: 0
             if (
                 networkName == null || passphrase == null ||
                 interfaceName == null ||
-                frequencyMHz <= 0 ||
-                channelNumber == null
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q &&
+                    (frequencyMHz == null || channelNumber == 0))
             ) {
                 lastReason = "incomplete group details frequencyMHz=$frequencyMHz"
                 continue
             }
             val band = when {
+                frequencyMHz == null -> "Auto (firmware selected)"
                 is5Ghz(frequencyMHz) -> "5 GHz"
                 frequencyMHz in 2412..2484 -> "2.4 GHz"
                 else -> throw IOException("Wi-Fi P2P returned an unsupported band at ${frequencyMHz}MHz")
@@ -531,8 +546,11 @@ class WifiP2pGroupManager(
                     location.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
             }
         }.getOrNull()
-        val required = if (Build.VERSION.SDK_INT >= 33) Manifest.permission.NEARBY_WIFI_DEVICES
-            else Manifest.permission.ACCESS_FINE_LOCATION
+        val required = when {
+            Build.VERSION.SDK_INT >= 33 -> Manifest.permission.NEARBY_WIFI_DEVICES
+            Build.VERSION.SDK_INT >= 23 -> Manifest.permission.ACCESS_FINE_LOCATION
+            else -> Manifest.permission.CHANGE_WIFI_STATE
+        }
         val granted = com.shilapi.xcertplay.compat.ContextCompat.checkSelfPermission(appContext, required) == PackageManager.PERMISSION_GRANTED
         val locationAccessMode = if (Build.VERSION.SDK_INT in 29..32) runCatching {
             appContext.systemService(AppOpsManager::class.java, "appops")?.unsafeCheckOpNoThrow(

@@ -284,7 +284,7 @@ object AirPlayPersistence {
         val mode = WirelessHotspotMode.entries.firstOrNull { it.name == stored }
             ?: WirelessHotspotMode.MANUAL
         val supported = if (mode == WirelessHotspotMode.LOCAL_ONLY_HOTSPOT ||
-            (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && mode == WirelessHotspotMode.WIFI_P2P)
+            (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2 && mode == WirelessHotspotMode.WIFI_P2P)
         ) WirelessHotspotMode.MANUAL else mode
         if (stored != supported.name) saveWirelessHotspotMode(context, supported)
         return supported

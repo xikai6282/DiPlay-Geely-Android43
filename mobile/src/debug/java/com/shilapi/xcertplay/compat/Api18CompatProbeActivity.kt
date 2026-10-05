@@ -85,6 +85,31 @@ class Api18CompatProbeActivity : Activity(), SurfaceHolder.Callback {
 
     private fun runProbes(surface: Surface) {
         val mode = intent.getStringExtra("probe") ?: "full"
+        if (mode == "wifi_p2p") {
+            checkCase("WIFI_P2P_LEGACY_API18") {
+                android.net.wifi.p2p.WifiP2pManager::class.java.getMethod("createGroup",
+                    android.net.wifi.p2p.WifiP2pManager.Channel::class.java,
+                    android.net.wifi.p2p.WifiP2pManager.ActionListener::class.java)
+                for (name in listOf("getPassphrase", "getInterface", "getNetworkName")) {
+                    android.net.wifi.p2p.WifiP2pGroup::class.java.getMethod(name)
+                }
+                line("P2P legacyMethodsPresent=true (API linkage check, not radio success)")
+                val manager = com.shilapi.xcertplay.network.WifiP2pGroupManager(this) { line(it) }
+                try {
+                    val group = manager.start(12_000)
+                    check(group.ssid.isNotBlank() && group.passphrase.isNotBlank())
+                    check(group.backend == com.shilapi.xcertplay.network.WirelessHotspotBackend.WIFI_P2P)
+                    line("P2P created=true channelKnown=${group.channel > 0} credentials omitted; real iPhone not tested")
+                } catch (failure: java.io.IOException) {
+                    // Emulator may have no Wi-Fi radio. A supported preflight failure is not creation success.
+                    check(!failure.message.orEmpty().contains("require Android 10"))
+                    line("P2P created=false supportedFailure=${failure.message}")
+                } finally { manager.close() }
+                "manager loaded and outcome surfaced; no modern API linkage failure; real H52/iPhone not tested"
+            }
+            complete()
+            return
+        }
         if (mode == "hotspot_read") {
             checkCase("HOTSPOT_READ_ONLY_API18") {
                 val result = com.shilapi.xcertplay.network.CarHotspotTools.read(this)

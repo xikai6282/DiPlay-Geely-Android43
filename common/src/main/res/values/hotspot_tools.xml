@@ -30,4 +30,6 @@
     <string name="hotspot_tools_start_timeout">The car did not report an enabled hotspot before the timeout. Check its state before trying again.</string>
     <string name="hotspot_tools_operation_cancelled">The operation was canceled before a start request could be confirmed.</string>
     <string name="hotspot_tools_operation_failed">The hotspot operation failed. Nothing was changed unless the car accepted a start request; check its state before retrying.</string>
+    <string name="hotspot_tools_p2p_legacy">Android 4.3 Wi-Fi Direct: the system generates the network name and password and selects the band. Requires firmware support; 5 GHz cannot be forced. If creation fails, use the built-in car hotspot.</string>
+    <string name="hotspot_tools_p2p_legacy_help">Enable client Wi-Fi in the car settings. The built-in hotspot may share the radio with Wi-Fi Direct; if the system reports BUSY, turn off that hotspot and retry. You can switch back to built-in hotspot mode at any time.</string>
 </resources>

@@ -44,3 +44,7 @@ Release 提供**内置实验性认证材料的完整车测 APK**，无需用户�
 新增默认关闭的 H52 ANW 原厂蓝牙连接开关、读取热点配置和用户确认开启车机热点按钮，以及宽屏左侧连接状态/解决建议、右侧实时滚动日志。Android4.3 的完整诊断报告直接保存到用户内存根目录。605项单元测试通过；最终APK通过安卓4.3模拟器宽屏/窄屏、热点按钮、缺配置防崩溃和日志跟随/重试验收，验证范围见技术文档。H52实车 iPhone 握手和热点硬件操作仍待验证，尚无经过验证的5 GHz AP频段控制接口。
 
 代码与使用说明：[ANW接入](docs/geely-android43/H52-ANW-CONNECTION.md)、[热点与连接界面](docs/geely-android43/CONNECTION-UI-IMPLEMENTATION.md)、[WiFi固件证据](docs/geely-android43/H52-WIFI-REVIEW.md)、[原厂音频](docs/geely-android43/H52-AUDIO.md)、[API18报告导出](docs/geely-android43/API18-REPORT-EXPORT.md)。测试APK保留本地认证私钥与证书；源码不包含原始认证凭据。
+
+### Android 4.3 Wi-Fi Direct 更新（2026-10-05）
+
+连接设置恢复“Wi-Fi 直连”选项，API18–28 使用旧版两参数 createGroup，读取系统提供的网络名和密码。H52.10500 固件已核实这些接口、访问权限和 persistent group 语义；未知频段/频道不伪造为 5 GHz。保留车机热点模式、原厂蓝牙开关和运行日志。当前模拟器无有效 Wi-Fi radio，真实 H52 建组与 iPhone 完整连接仍需实车验证。详见 [代码与测试说明](docs/geely-android43/WIFI-DIRECT-API18.md)。

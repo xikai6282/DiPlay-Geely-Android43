@@ -327,6 +327,53 @@ class WifiP2pGroupManagerTest {
         assertEquals(0, radio.removals)
     }
 
+    @Test @Config(sdk = [28]) fun legacyGroupReadsGeneratedCredentialsWithoutModernApisOrInventingChannel() {
+        shadowOf(context).grantPermissions(Manifest.permission.ACCESS_FINE_LOCATION)
+        val logs = mutableListOf<String>()
+        val manager = WifiP2pGroupManager(context, logs::add)
+        try {
+            val info = background { manager.start(5000) }
+            assertEquals("DIRECT-system-test", info.ssid)
+            assertEquals("test-generated-key", info.passphrase)
+            assertEquals(0, info.channel)
+            assertNull(info.frequencyMHz)
+            assertEquals("Auto (firmware selected)", info.bandLabel)
+            assertEquals(1, radio.legacyRequests)
+            assertEquals(listOf(null), radio.requests)
+            manager.onCarPlayConfirmed()
+            assertNull(memory.getString("confirmed", null))
+            assertFalse(logs.any { it.contains(info.passphrase) || it.contains(info.ssid) })
+        } finally { manager.close() }
+        assertEquals(1, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun legacyDoesNotTakeOverAnotherApplicationsGroup() {
+        radio.group = radio.makeGroup(null)
+        WifiP2pGroupManager(context).use { manager ->
+            assertTrue(failure { manager.start(5000) } is P2pResetRequiredException)
+        }
+        assertEquals(0, radio.legacyRequests)
+        assertEquals(0, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun legacyMissingCredentialsTimesOutAndRemovesOnlyItsOwnGroup() {
+        radio.missingCredentials = true
+        WifiP2pGroupManager(context).use { manager ->
+            assertTrue(failure { manager.start(700) }.message!!.contains("usable Wi-Fi P2P group"))
+        }
+        assertEquals(1, radio.legacyRequests)
+        assertEquals(1, radio.removals)
+    }
+
+    @Test @Config(sdk = [28]) fun legacyCreateTimeoutDoesNotIssueAnotherCreate() {
+        radio.noCreateReply = true
+        WifiP2pGroupManager(context).use { manager ->
+            assertTrue(failure { manager.start(300) }.message!!.contains("group creation"))
+        }
+        assertEquals(1, radio.legacyRequests)
+        assertEquals(0, radio.removals)
+    }
+
     private fun failure(block: () -> Any): Throwable {
         try { background(block); fail("Expected failure") }
         catch (failure: ExecutionException) { return failure.cause!! }
@@ -357,6 +404,7 @@ class WifiP2pGroupManagerTest {
         var fixed24Only = false
         var allowed24 = setOf(2412, 2437, 2462)
         var reportedFrequency: Int? = null
+        var legacyRequests = 0
 
         @Implementation protected fun requestP2pState(channel: WifiP2pManager.Channel, listener: WifiP2pManager.P2pStateListener) {
             listener.onP2pStateAvailable(WifiP2pManager.WIFI_P2P_STATE_ENABLED)
@@ -372,6 +420,11 @@ class WifiP2pGroupManagerTest {
                 isGroupOwner = true
                 groupOwnerAddress = InetAddress.getByName("192.168.49.1")
             })
+        }
+
+        @Implementation override fun createGroup(channel: WifiP2pManager.Channel, listener: WifiP2pManager.ActionListener) {
+            legacyRequests++
+            createGroup(channel, null, listener)
         }
 
         @Implementation override fun createGroup(channel: WifiP2pManager.Channel, config: WifiP2pConfig?, listener: WifiP2pManager.ActionListener) {
@@ -397,7 +450,7 @@ class WifiP2pGroupManagerTest {
             shadowOf(this).setNetworkName(config?.networkName ?: "DIRECT-system-test")
             shadowOf(this).setPassphrase(if (missingCredentials) null else config?.passphrase ?: "test-generated-key")
             shadowOf(this).setInterface("p2p-test-missing")
-            ReflectionHelpers.setField(this, "mFrequency", reportedFrequency ?: config?.groupOwnerBand ?: 2437)
+            if (android.os.Build.VERSION.SDK_INT >= 29) ReflectionHelpers.setField(this, "mFrequency", reportedFrequency ?: config?.groupOwnerBand ?: 2437)
         }
     }
 }

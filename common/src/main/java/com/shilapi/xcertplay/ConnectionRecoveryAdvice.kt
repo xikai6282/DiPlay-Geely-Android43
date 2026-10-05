@@ -23,6 +23,18 @@ internal object ConnectionRecoveryAdvice {
             error.contains("h52 anw connect request rejected") || error.contains("h52 anw connection not confirmed") || error.contains("h52 anw spp link disconnected") -> Advice(
                 "请确认 iPhone 在附近、蓝牙已开启且原厂配对有效，然后重试。原厂配对成功不代表 SPP 已建立；若仍失败，保存报告，暂不能确认是手机还是厂商通路问题。",
                 "Check that the iPhone is nearby, Bluetooth is on and factory pairing is valid, then retry. Pairing does not prove SPP is ready; save a report if it still fails. The cause is not yet confirmed.")
+            error.contains("wi-fi p2p is unsupported") || error.contains("wi-fi p2p service unavailable") -> Advice(
+                "当前固件未提供可用的 Wi-Fi 直连服务。请切回“车机热点”模式，读取原厂热点信息后连接。",
+                "The firmware does not provide usable Wi-Fi Direct. Switch to the built-in car hotspot and read its configuration.")
+            error.contains("wi-fi p2p is busy") -> Advice(
+                "Wi-Fi 直连正在忙。请结束系统或其他应用的直连会话；车机热点与直连可能争用无线模块，可在原厂设置关闭热点、开启 Wi-Fi 后重试，或使用车机热点模式。",
+                "Wi-Fi Direct is busy. End other direct sessions. The car hotspot may share the radio; disable it and enable client Wi-Fi in factory settings, or use car-hotspot mode.")
+            error.contains("existing wi-fi direct connection needs a reset") -> Advice(
+                "检测到已有 Wi-Fi 直连会话，为避免断开其他应用，本次未接管。请在原厂设置结束该会话，或切回车机热点模式。",
+                "An existing Wi-Fi Direct session was not taken over. End it in system settings, or use car-hotspot mode.")
+            error.contains("wi-fi p2p creategroup failed") || error.contains("waiting for a usable wi-fi p2p group") || error.contains("wi-fi direct did not respond") -> Advice(
+                "系统未确认可用的 Wi-Fi 直连网络。请检查车机 Wi-Fi 已开启；仍失败时切回车机热点并保存日志。建组失败不能认定为 iPhone 密码错误。",
+                "The system did not confirm a usable Wi-Fi Direct group. Enable Wi-Fi; if it still fails, use the built-in hotspot and save logs. This does not prove an iPhone password error.")
             error.contains("the car hotspot is off") -> Advice(
                 "请在 DiPlay 热点设置或车机原厂界面开启车机热点，再点击“读取车机热点信息”并重试。WiFi 客户端开启不等于热点开启。",
                 "Enable the car hotspot in DiPlay or the factory settings, read its configuration, and retry. Client Wi-Fi being on does not mean the hotspot is on.")

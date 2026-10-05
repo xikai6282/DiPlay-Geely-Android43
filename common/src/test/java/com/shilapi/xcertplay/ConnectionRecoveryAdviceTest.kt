@@ -37,4 +37,13 @@ class ConnectionRecoveryAdviceTest {
     @Test fun explicitPermissionDenialHasConcreteAdvice() {
         assertTrue(ConnectionRecoveryAdvice.forFailure("java.lang.SecurityException: Permission denial").chinese.contains("应用权限"))
     }
+    @Test fun unsupportedP2pOffersBuiltInHotspotInsteadOfClaimingPhoneFailure() {
+        val text = ConnectionRecoveryAdvice.forFailure("Wi-Fi P2P createGroup failed: Wi-Fi P2P is unsupported (code=1)")
+        assertTrue(text.chinese.contains("切回"))
+        assertTrue(text.chinese.contains("车机热点"))
+        assertFalse(text.chinese.contains("密码"))
+    }
+    @Test fun busyP2pExplainsRadioContention() {
+        assertTrue(ConnectionRecoveryAdvice.forFailure("Wi-Fi P2P createGroup failed: Wi-Fi P2P is busy (code=2)").chinese.contains("争用无线模块"))
+    }
 }
