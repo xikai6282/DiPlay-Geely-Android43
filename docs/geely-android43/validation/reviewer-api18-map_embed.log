@@ -1,0 +1,162 @@
+--------- beginning of /dev/log/main
+
+
+10-04 03:48:01.271  4038  4038 D AndroidRuntime: 
+
+
+10-04 03:48:01.271  4038  4038 D AndroidRuntime: >>>>>> AndroidRuntime START com.android.internal.os.RuntimeInit <<<<<<
+
+
+10-04 03:48:01.271  4038  4038 D AndroidRuntime: CheckJNI is ON
+
+
+10-04 03:48:01.281  4038  4038 D dalvikvm: Trying to load lib libjavacore.so 0x0
+
+
+10-04 03:48:01.281  4038  4038 D dalvikvm: Added shared lib libjavacore.so 0x0
+
+
+10-04 03:48:01.281  4038  4038 D dalvikvm: Trying to load lib libnativehelper.so 0x0
+
+
+10-04 03:48:01.281  4038  4038 D dalvikvm: Added shared lib libnativehelper.so 0x0
+
+
+10-04 03:48:01.311  4038  4038 D AndroidRuntime: Calling main entry com.android.commands.am.Am
+
+
+10-04 03:48:01.311  4038  4038 D dalvikvm: Note: class Landroid/app/ActivityManagerNative; has 163 unimplemented (abstract) methods
+
+
+10-04 03:48:01.311  1480  1491 D dalvikvm: GC_FOR_ALLOC freed 556K, 24% free 6680K/8764K, paused 3ms, total 3ms
+
+
+--------- beginning of /dev/log/system
+
+
+10-04 03:48:01.311  1480  1491 I ActivityManager: START u0 {flg=0x10000000 cmp=com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity (has extras)} from pid 4038
+
+
+10-04 03:48:01.321  4038  4038 D AndroidRuntime: Shutting down VM
+
+
+10-04 03:48:01.321  4049  4049 D dalvikvm: Not late-enabling CheckJNI (already on)
+
+
+10-04 03:48:01.321  4038  4043 D dalvikvm: GC_CONCURRENT freed 90K, 16% free 502K/596K, paused 0ms+0ms, total 0ms
+
+
+10-04 03:48:01.331  1163  1291 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 1536000
+
+
+10-04 03:48:01.331  1620  1620 D EGL_emulation: eglMakeCurrent: 0xb8c0fe90: ver 2 0
+
+
+10-04 03:48:01.331  1480  1646 I ActivityManager: Start proc com.shihab.diplay.hudtest for activity com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity: pid=4049 uid=10046 gids={50046, 3003, 3002, 3001, 1028}
+
+
+10-04 03:48:01.341  4049  4049 I MultiDex: VM with version 1.6.0 does not have multidex support
+
+
+10-04 03:48:01.341  4049  4049 I MultiDex: Installing application
+
+
+10-04 03:48:01.341  4049  4049 I MultiDex: MultiDexExtractor(/data/app/com.shihab.diplay.hudtest-1.apk, /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes)
+
+
+10-04 03:48:01.341  4049  4049 I MultiDex: Blocking on lock /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/MultiDex.lock
+
+
+10-04 03:48:01.341  4049  4049 I MultiDex: /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/MultiDex.lock locked
+
+
+10-04 03:48:01.341  4049  4049 I MultiDex: MultiDexExtractor.load(/data/app/com.shihab.diplay.hudtest-1.apk, false, )
+
+
+10-04 03:48:01.341  4049  4049 I MultiDex: loading existing secondary dex files
+
+
+10-04 03:48:01.341  4049  4049 I MultiDex: load found 2 secondary dex files
+
+
+10-04 03:48:01.341  4049  4049 I MultiDex: install done
+
+
+10-04 03:48:01.341  4049  4049 I dalvikvm: Could not find method android.os.Trace.isEnabled, referenced from method androidx.tracing.Trace.isEnabled
+
+
+10-04 03:48:01.341  4049  4049 W dalvikvm: VFY: unable to resolve static method 2217: Landroid/os/Trace;.isEnabled ()Z
+
+
+10-04 03:48:01.341  4049  4049 D dalvikvm: VFY: replacing opcode 0x71 at 0x0004
+
+
+10-04 03:48:01.351  1620  1620 D EGL_emulation: eglMakeCurrent: 0xb8c0fe90: ver 2 0
+
+
+10-04 03:48:01.351  4049  4049 I dalvikvm: Could not find method com.shilapi.xcertplay.compat.Api18CompatProbeActivity.registerReceiver, referenced from method com.shilapi.xcertplay.compat.Api18CompatProbeActivity.onCreate
+
+
+10-04 03:48:01.351  4049  4049 W dalvikvm: VFY: unable to resolve virtual method 44906: Lcom/shilapi/xcertplay/compat/Api18CompatProbeActivity;.registerReceiver (Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;I)Landroid/content/Intent;
+
+
+10-04 03:48:01.351  4049  4049 D dalvikvm: VFY: replacing opcode 0x6e at 0x008c
+
+
+10-04 03:48:01.351  4049  4049 D dalvikvm: GC_FOR_ALLOC freed 240K, 13% free 2637K/3024K, paused 2ms, total 2ms
+
+
+10-04 03:48:01.351  4049  4049 I dalvikvm-heap: Grow heap (frag case) to 3.321MB for 635808-byte allocation
+
+
+10-04 03:48:01.361  4049  4051 D dalvikvm: GC_CONCURRENT freed <1K, 11% free 3257K/3648K, paused 3ms+0ms, total 4ms
+
+
+10-04 03:48:01.361  4049  4058 D dalvikvm: WAIT_FOR_CONCURRENT_GC blocked 1ms
+
+
+10-04 03:48:01.361  4049  4049 I CodexApi18Probe: START sdk=18 probe=map_embed
+
+
+10-04 03:48:01.381  4049  4049 D libEGL  : loaded /system/lib/egl/libEGL_emulation.so
+
+
+10-04 03:48:01.381  4049  4049 D libEGL  : loaded /system/lib/egl/libGLESv1_CM_emulation.so
+
+
+10-04 03:48:01.381  4049  4049 D libEGL  : loaded /system/lib/egl/libGLESv2_emulation.so
+
+
+10-04 03:48:01.381  4049  4049 D         : HostConnection::get() New Host Connection established 0xb8a6c850, tid 4049
+
+
+10-04 03:48:01.381  4049  4049 D EGL_emulation: eglCreateContext: 0xb8a6e5d0: maj 2 min 0 rcv 2
+
+
+10-04 03:48:01.391  4049  4049 D EGL_emulation: eglMakeCurrent: 0xb8a6e5d0: ver 2 0
+
+
+10-04 03:48:01.391  4049  4049 D OpenGLRenderer: Enabling debug mode 0
+
+
+10-04 03:48:01.601  1480  1496 I ActivityManager: Displayed com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity: +282ms
+
+
+10-04 03:48:01.601  4049  4049 D dalvikvm: DexOpt: couldn't find field Landroid/os/Message;.sendingUid
+
+
+10-04 03:48:01.601  4049  4049 W dalvikvm: VFY: unable to resolve instance field 222
+
+
+10-04 03:48:01.601  4049  4049 D dalvikvm: VFY: replacing opcode 0x52 at 0x0033
+
+
+10-04 03:48:01.611  4049  4049 W DiPlay-MapEmbed: uid unknown asked for the map: unsupported
+
+
+10-04 03:48:01.611  4049  4049 I CodexApi18Probe: PASS MAP_EMBED_UNSUPPORTED_REPLY actualServiceBound=true actualBinderReply=unsupported
+
+
+10-04 03:48:01.611  4049  4049 I CodexApi18Probe: COMPLETE failures=0
+
+

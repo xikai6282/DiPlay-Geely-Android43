@@ -1,42 +1,42 @@
-# H52 DiPlay repair status — 2026-10-06
+# H52 DiPlay 修复状态报告 — 2026-10-06
 
-This adapted DiPlay 0.2.10 tree studies GKUI compatibility for 2018–2020 Geely Borui, Binyue, Binrui, Jiaji and Xingyue models. This is the target adaptation scope, not a claim that every listed model is compatible. Vehicle verification currently covers one Geely Borui H52 running Android 4.3/API 18 only; other models and other hardware or firmware versions remain untested.
+本次是在 DiPlay 0.2.10 基础上的 GKUI 兼容适配研究，目标范围为 2018–2020 款吉利博瑞、缤越、缤瑞、嘉际、星越车机。此范围表示目标适配研究车型，不表示这些车型均已兼容。当前实车验证仅覆盖一台吉利博瑞 H52、Android 4.3/API 18；其他车型及同车型其他硬件或固件版本均未验证。
 
-## Confirmed behavior
+## 已确认的行为
 
-- **USB video:** On the connected iPhone only, the app uses root to read the active USB configuration and, when it identifies that iPhone, changes configuration 2 to configuration 6 through sysfs. This does not change the head unit's USB-host/ADB operating mode. The repair includes API 18 Lockdown TLS compatibility, asynchronous USB reads with disconnect detection, fullscreen presentation, UUID field byte-order handling, and H.264 hardware decoding. USB CarPlay video and reconnect were seen on the vehicle.
-- **Wireless video:** The working route uses the built-in car hotspot. The app reads the actual `hostapd` channel through a bounded, read-only root query and includes the six-byte BSSID in the Wi-Fi configuration message. The user confirmed a successful session: phone TCP connected at 22:09:43 and the first frame arrived at 22:09:47. Earlier attempts with BSSID also waited without connecting, so this does not establish BSSID as the sole cause. The vehicle's 5 GHz hotspot was tested; other head units and 2.4 GHz were not.
-- **Audio:** The user confirmed audible CarPlay music on stream 23. A navigation preview on stream 11 was audible, but wireless navigation's Opus stream could not create an Android decoder; its navigation statistics showed zero written frames. P13 stops advertising Opus on SDKs below 21 and retains PCM/AAC. P13 has not been installed or tested in a vehicle.
-- **Picture configuration and decoder:** The saved display configuration was restored to 1920×720, 100% scale and 60 FPS; the vehicle configured H.264 at 1920×720 using `OMX.Freescale.std.video_decoder.avc.v3.hw-based`. The user still reports severe lag and poor touch response. Selecting a hardware decoder confirms the decoder path, not low-latency presentation or a smooth user experience.
+- **USB 视频：**仅针对已连接的 iPhone，应用通过 root 读取 USB 当前配置，并在识别到该 iPhone 时经 sysfs 将配置 2 切换到配置 6。这不会切换或更改车机的 USB host/ADB 工作模式。修复还包括 Android 4.3 上的 Lockdown 旧 TLS 兼容、USB 异步读取与断线识别、全屏显示、UUID 字段字节序处理及 H.264 硬件解码。实车已观察到 USB CarPlay 视频与重连。
+- **无线视频：**成功路线使用原车热点。应用通过有时限、只读的 root 查询读取实际 `hostapd` 信道，并在 Wi-Fi 配置消息中包含 6 字节 BSSID。用户确认一次成功会话：手机 TCP 于 22:09:43 接入，首帧于 22:09:47 到达。此前有几次补入 BSSID 后仍停留等待，因此这些证据不能证明 BSSID 是唯一根因。已验证用户车机的 5 GHz 热点；其他车机和 2.4 GHz 均未验证。
+- **音频：**用户确认 CarPlay 音乐流 23 实车有声。导航流 11 的试听有声，但无线导航的 Opus 流无法创建 Android 解码器；导航统计中写入帧数为 0。P13 在 SDK 低于 21 时不再声明 Opus，保留 PCM/AAC。P13 尚未安装或实车验证。
+- **画质配置和解码器：**已将显示配置恢复为 1920×720、100% 缩放和 60 FPS；实车为 H.264 1920×720 配置了解码器 `OMX.Freescale.std.video_decoder.avc.v3.hw-based`。用户仍反馈严重卡顿和触控不跟手。选中硬件解码器只能确认解码路径，不能证明低延迟显示或流畅体验。
 
-## Candidate artifacts and boundaries
+## 候选版本与验证边界
 
-| Candidate | Change | SHA-256 | Vehicle status |
+| 候选版本 | 改动 | SHA-256 | 实车状态 |
 | --- | --- | --- | --- |
-| P12-WifiBssid | Last deployed version; manual hotspot, actual-channel read and BSSID support | `27f1d4e907b5e0acff74653d830049bf21f956a8c4ae9986293a48ff1dbe4f81` | Wireless video confirmed by user; severe lag remains |
-| P13-LegacyAudio | P12 plus SDK-gated Opus advertisement for legacy audio | `b5e61566b7dd7cedf6ea81bec808085c55227e448c70ca354a70daef555f6020` | Built and locally checked; not installed, no vehicle verification |
-| P14-TouchNoDelay | P13 plus the event-socket TCP_NODELAY change from upstream PR 311 | `be63c739524e5006f8872271f7394cf14008dca7ff1e53c996bc4f0da15b7361` | Built and locally checked; not installed, no vehicle verification |
+| P12-WifiBssid | 最后部署版本；原车热点、实际信道读取和 BSSID 支持 | `27f1d4e907b5e0acff74653d830049bf21f956a8c4ae9986293a48ff1dbe4f81` | 用户确认无线视频成功；严重卡顿仍在 |
+| P13-LegacyAudio | P12 加入旧系统 Opus 能力声明门控 | `b5e61566b7dd7cedf6ea81bec808085c55227e448c70ca354a70daef555f6020` | 本地构建与检查完成；未安装、未实车验证 |
+| P14-TouchNoDelay | P13 加入上游 PR 311 的 event-socket TCP_NODELAY 改动 | `be63c739524e5006f8872271f7394cf14008dca7ff1e53c996bc4f0da15b7361` | 本地构建与检查完成；未安装、未实车验证 |
 
-P13 and P14 source candidates correspond to locally repackaged test APKs. The public source tree does not include those APKs or the locally retained authentication payloads, so a build from this tree is not byte-for-byte the tested APK. The authentication payload retained in local test APKs is not published here.
+P13/P14 源码候选对应本地重打包测试 APK。公开源码树不包含这些 APK，也不包含本地保留的认证载荷，因此从公开树构建的包与测试 APK 并非逐字节相同。本地测试 APK 所带的认证载荷没有随本次发布。
 
-P14 ports one specific compatible change from [upstream PR 311](https://github.com/shihabal3amri/DiPlay/pull/311); it is not the complete upstream 0.2.13 release. The upstream release targets API 28 and cannot be installed as-is on this API 18 unit.
+P14 只移植了[上游 PR 311](https://github.com/shihabal3amri/DiPlay/pull/311) 中一项兼容改动；它不是完整上游 0.2.13。上游发行版目标为 API 28，不能直接安装在这台 API 18 车机上。
 
-## Open issues
+## 尚未解决的问题
 
-- **Severe lag and touch response:** Still unresolved. The 44–48 counts in earlier logs are calls that submitted decoded output with `render=true`, not measured display FPS. `touch2frame` measures time until the next frame arrives; it does not measure physical touch-to-display latency. P14's TCP_NODELAY change is a hypothesis to test, not a demonstrated fix.
-- **Surface lifecycle:** Surface release/recreation errors have occurred when leaving the projection, backgrounding the app or changing settings. Their relationship to lag during active foreground playback has not been established, and no lifecycle repair is confirmed.
-- **Wireless navigation audio:** Opus decoder creation fails on the head unit and P13 has not had an on-vehicle test. Audible navigation from a preview does not verify the wireless Opus path.
-- **OEM audio ownership:** `com.ecarx.multimedia` remains stopped following an earlier audio experiment. Persistent Bluetooth/CarPlay focus arbitration and restoration of the OEM app have not been completed. Stopping the OEM app is not a supported final fix.
-- **Build and device validation:** The complete Gradle build was not run because the required toolchain was unavailable. P13/P14 validation consisted of local Java/D8 work, DEX assembly and readback, API 18 v1 signature checks, and ZIP alignment checks. Neither candidate received a vehicle or emulator test. An emulator does not establish behavior on this API 18 vehicle.
+- **严重卡顿与触控响应：**仍未解决。早前日志中的 44–48 计数是调用 `releaseOutputBuffer(render=true)` 提交解码输出的次数，不是实际屏幕 FPS。`touch2frame` 测量的是等待下一帧到达的时间，并不测量实体触控到画面显示的延迟。P14 的 TCP_NODELAY 改动仍是待验证假设，不能称为已证实修复。
+- **Surface 生命周期：**离开投影、应用进入后台或切换设置时出现过 Surface 释放/重建错误。它与前台持续播放卡顿之间的关系尚未确定，也未确认生命周期修复。
+- **无线导航音频：**车机无法创建 Opus 解码器，P13 尚未实车测试。试听导航有声不能验证无线 Opus 导航链路。
+- **OEM 音频所有权：**此前音频实验后，`com.ecarx.multimedia` 仍处于停止状态。Bluetooth/CarPlay 焦点的长期互斥协调及 OEM 应用恢复尚未完成。停止 OEM 应用不属于可交付的解决方案。
+- **构建和设备验证：**由于工具链不齐，未运行完整 Gradle 构建。P13/P14 做过局部 Java/D8、DEX 组装及回读、API 18 v1 签名检查和 ZIP 对齐检查；两个候选都没有实车或模拟器测试。模拟器结果不能证明这台 API 18 实车上的行为。
 
-## Failed or abandoned route
+## 失败或放弃的路线
 
-The P11 framework Wi-Fi Direct route failed to start/attach on the head unit. A separate native command experiment did create a group owner and configure its interface/DHCP, but the integrated P11 candidate did not complete a CarPlay connection test; its integration also encountered command-completion problems. The user abandoned this route. It is not a confirmed working connection mode.
+P11 的 framework Wi-Fi Direct 路线在车机上启动/attach 失败。另一次原生命令实验成功建立过 group owner，并配置接口与 DHCP；但集成后的 P11 候选没有完成 CarPlay 连接验证，集成过程中还遇到命令完成处理问题。用户已放弃这条路线。它不能作为已验证可用的连接方式。
 
-## Local authentication setup
+## 本地认证输入
 
-The repository's standalone build expects locally supplied MFi identity inputs under `offline-mfi/identity.pk8` and `offline-mfi/certificate.p7b`; see `BUILD.md` and `mobile/build.gradle.kts` for the current build configuration. These files are not included. Provide only authorized local inputs outside version control. The standalone test APKs used locally may contain these authentication resources, which is why those APKs and raw pairing/evidence data are not part of this publication.
+仓库的 standalone 构建需要本地提供 MFi 身份文件 `offline-mfi/identity.pk8` 和 `offline-mfi/certificate.p7b`，具体构建配置见 `BUILD.md` 与 `mobile/build.gradle.kts`。这些文件不包含在仓库内；只有经授权的本地输入才应放在版本控制目录之外。本地 standalone 测试 APK 可能含有这些认证资源，因此 APK 与原始配对/证据资料没有纳入本次公开发布。
 
-## Provenance and validation
+## 来源与验证说明
 
-This is an adapted source tree based on DiPlay 0.2.10 with H52/API 18 changes. Upstream licensing and notices are retained in `LICENSE`, `docs/licenses/`, `docs/THIRD_PARTY_NOTICES.md`, and the vendored component notices. P13/P14 APK hashes identify local candidates only; publishing this report does not publish or certify those binaries.
+本适配源码基于 DiPlay 0.2.10，并加入 H52/API 18 相关改动。上游许可与声明保留于 `LICENSE`、`docs/licenses/`、`docs/THIRD_PARTY_NOTICES.md` 及 vendored 组件声明中。P13/P14 APK 哈希仅用于识别本地候选；本报告不发布或认证这些二进制文件。

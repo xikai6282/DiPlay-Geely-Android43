@@ -1,0 +1,252 @@
+--------- beginning of /dev/log/main
+
+
+10-04 03:48:02.461  4085  4085 D AndroidRuntime: 
+
+
+10-04 03:48:02.461  4085  4085 D AndroidRuntime: >>>>>> AndroidRuntime START com.android.internal.os.RuntimeInit <<<<<<
+
+
+10-04 03:48:02.461  4085  4085 D AndroidRuntime: CheckJNI is ON
+
+
+10-04 03:48:02.461  4085  4085 D dalvikvm: Trying to load lib libjavacore.so 0x0
+
+
+10-04 03:48:02.461  4085  4085 D dalvikvm: Added shared lib libjavacore.so 0x0
+
+
+10-04 03:48:02.461  4085  4085 D dalvikvm: Trying to load lib libnativehelper.so 0x0
+
+
+10-04 03:48:02.461  4085  4085 D dalvikvm: Added shared lib libnativehelper.so 0x0
+
+
+10-04 03:48:02.501  4085  4085 D AndroidRuntime: Calling main entry com.android.commands.am.Am
+
+
+10-04 03:48:02.501  4085  4085 D dalvikvm: Note: class Landroid/app/ActivityManagerNative; has 163 unimplemented (abstract) methods
+
+
+10-04 03:48:02.501  4085  4085 D AndroidRuntime: Shutting down VM
+
+
+10-04 03:48:02.501  4085  4090 D dalvikvm: GC_CONCURRENT freed 90K, 16% free 502K/596K, paused 0ms+0ms, total 0ms
+
+
+10-04 03:48:02.501  4096  4096 D dalvikvm: Not late-enabling CheckJNI (already on)
+
+
+--------- beginning of /dev/log/system
+
+
+10-04 03:48:02.501  1480  1619 I ActivityManager: START u0 {flg=0x10000000 cmp=com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity (has extras)} from pid 4085
+
+
+10-04 03:48:02.501  1480  1600 I ActivityManager: Start proc com.shihab.diplay.hudtest for activity com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity: pid=4096 uid=10046 gids={50046, 3003, 3002, 3001, 1028}
+
+
+10-04 03:48:02.511  1163  1667 D gralloc_ranchu: gralloc_alloc: Creating ashmem region of size 1536000
+
+
+10-04 03:48:02.521  1620  1620 D EGL_emulation: eglMakeCurrent: 0xb8c0fe90: ver 2 0
+
+
+10-04 03:48:02.521  4096  4096 I MultiDex: VM with version 1.6.0 does not have multidex support
+
+
+10-04 03:48:02.521  4096  4096 I MultiDex: Installing application
+
+
+10-04 03:48:02.521  4096  4096 I MultiDex: MultiDexExtractor(/data/app/com.shihab.diplay.hudtest-1.apk, /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes)
+
+
+10-04 03:48:02.521  4096  4096 I MultiDex: Blocking on lock /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/MultiDex.lock
+
+
+10-04 03:48:02.521  4096  4096 I MultiDex: /data/data/com.shihab.diplay.hudtest/code_cache/secondary-dexes/MultiDex.lock locked
+
+
+10-04 03:48:02.521  4096  4096 I MultiDex: MultiDexExtractor.load(/data/app/com.shihab.diplay.hudtest-1.apk, false, )
+
+
+10-04 03:48:02.521  4096  4096 I MultiDex: loading existing secondary dex files
+
+
+10-04 03:48:02.521  4096  4096 I MultiDex: load found 2 secondary dex files
+
+
+10-04 03:48:02.521  4096  4096 I MultiDex: install done
+
+
+10-04 03:48:02.521  4096  4096 I dalvikvm: Could not find method android.os.Trace.isEnabled, referenced from method androidx.tracing.Trace.isEnabled
+
+
+10-04 03:48:02.521  4096  4096 W dalvikvm: VFY: unable to resolve static method 2217: Landroid/os/Trace;.isEnabled ()Z
+
+
+10-04 03:48:02.521  4096  4096 D dalvikvm: VFY: replacing opcode 0x71 at 0x0004
+
+
+10-04 03:48:02.531  1620  1620 D EGL_emulation: eglMakeCurrent: 0xb8c0fe90: ver 2 0
+
+
+10-04 03:48:02.531  4096  4096 I dalvikvm: Could not find method com.shilapi.xcertplay.compat.Api18CompatProbeActivity.registerReceiver, referenced from method com.shilapi.xcertplay.compat.Api18CompatProbeActivity.onCreate
+
+
+10-04 03:48:02.531  4096  4096 W dalvikvm: VFY: unable to resolve virtual method 44906: Lcom/shilapi/xcertplay/compat/Api18CompatProbeActivity;.registerReceiver (Landroid/content/BroadcastReceiver;Landroid/content/IntentFilter;I)Landroid/content/Intent;
+
+
+10-04 03:48:02.531  4096  4096 D dalvikvm: VFY: replacing opcode 0x6e at 0x008c
+
+
+10-04 03:48:02.531  4096  4096 D dalvikvm: GC_FOR_ALLOC freed 244K, 13% free 2637K/3028K, paused 1ms, total 1ms
+
+
+10-04 03:48:02.531  4096  4096 I dalvikvm-heap: Grow heap (frag case) to 3.321MB for 635808-byte allocation
+
+
+10-04 03:48:02.541  4096  4098 D dalvikvm: GC_CONCURRENT freed <1K, 11% free 3257K/3652K, paused 2ms+0ms, total 3ms
+
+
+10-04 03:48:02.541  4096  4096 D dalvikvm: WAIT_FOR_CONCURRENT_GC blocked 1ms
+
+
+10-04 03:48:02.541  4096  4105 D dalvikvm: WAIT_FOR_CONCURRENT_GC blocked 1ms
+
+
+10-04 03:48:02.541  4096  4096 I CodexApi18Probe: START sdk=18 probe=overlay
+
+
+10-04 03:48:02.571  4096  4096 D libEGL  : loaded /system/lib/egl/libEGL_emulation.so
+
+
+10-04 03:48:02.571  4096  4096 D libEGL  : loaded /system/lib/egl/libGLESv1_CM_emulation.so
+
+
+10-04 03:48:02.571  4096  4096 D libEGL  : loaded /system/lib/egl/libGLESv2_emulation.so
+
+
+10-04 03:48:02.571  4096  4096 D         : HostConnection::get() New Host Connection established 0xb8a6c800, tid 4096
+
+
+10-04 03:48:02.571  4096  4096 D EGL_emulation: eglCreateContext: 0xb8a6e650: maj 2 min 0 rcv 2
+
+
+10-04 03:48:02.571  4096  4096 D EGL_emulation: eglMakeCurrent: 0xb8a6e650: ver 2 0
+
+
+10-04 03:48:02.571  4096  4096 D OpenGLRenderer: Enabling debug mode 0
+
+
+10-04 03:48:02.761  4096  4096 I dalvikvm: Could not find method android.provider.Settings.canDrawOverlays, referenced from method com.shilapi.xcertplay.CenterMapOverlay.permitted
+
+
+10-04 03:48:02.761  4096  4096 W dalvikvm: VFY: unable to resolve static method 2238: Landroid/provider/Settings;.canDrawOverlays (Landroid/content/Context;)Z
+
+
+10-04 03:48:02.761  4096  4096 D dalvikvm: VFY: replacing opcode 0x71 at 0x000b
+
+
+10-04 03:48:02.761  4096  4096 I dalvikvm: Could not find method android.content.Context.checkSelfPermission, referenced from method com.shilapi.xcertplay.compat.ContextCompat.checkSelfPermission
+
+
+10-04 03:48:02.761  4096  4096 W dalvikvm: VFY: unable to resolve virtual method 504: Landroid/content/Context;.checkSelfPermission (Ljava/lang/String;)I
+
+
+10-04 03:48:02.761  4096  4096 D dalvikvm: VFY: replacing opcode 0x6e at 0x0011
+
+
+10-04 03:48:02.761  4096  4096 D dalvikvm: DexOpt: couldn't find field Landroid/content/pm/PackageInfo;.signingInfo
+
+
+10-04 03:48:02.761  4096  4096 W dalvikvm: VFY: unable to resolve instance field 51
+
+
+10-04 03:48:02.761  4096  4096 D dalvikvm: VFY: replacing opcode 0x54 at 0x000b
+
+
+10-04 03:48:02.761  4096  4096 D dalvikvm: DexOpt: couldn't find field Landroid/content/pm/PackageInfo;.signingInfo
+
+
+10-04 03:48:02.761  4096  4096 W dalvikvm: VFY: unable to resolve instance field 51
+
+
+10-04 03:48:02.761  4096  4096 D dalvikvm: VFY: replacing opcode 0x54 at 0x0030
+
+
+10-04 03:48:02.761  4096  4096 I dalvikvm: Could not find method android.content.Context.getNoBackupFilesDir, referenced from method com.shilapi.xcertplay.compat.SystemServicesKt.appPrivateDir
+
+
+10-04 03:48:02.761  4096  4096 W dalvikvm: VFY: unable to resolve virtual method 527: Landroid/content/Context;.getNoBackupFilesDir ()Ljava/io/File;
+
+
+10-04 03:48:02.761  4096  4096 D dalvikvm: VFY: replacing opcode 0x6e at 0x000b
+
+
+10-04 03:48:02.761  4096  4096 I dalvikvm: Could not find method android.content.Context.getSystemService, referenced from method com.shilapi.xcertplay.compat.SystemServicesKt.systemService
+
+
+10-04 03:48:02.761  4096  4096 W dalvikvm: VFY: unable to resolve virtual method 537: Landroid/content/Context;.getSystemService (Ljava/lang/Class;)Ljava/lang/Object;
+
+
+10-04 03:48:02.761  4096  4096 D dalvikvm: VFY: replacing opcode 0x6e at 0x0017
+
+
+10-04 03:48:02.771  1480  1496 I ActivityManager: Displayed com.shihab.diplay.hudtest/com.shilapi.xcertplay.compat.Api18CompatProbeActivity: +276ms
+
+
+10-04 03:48:02.771  4096  4096 W dalvikvm: Unable to resolve superclass of Lcom/shilapi/xcertplay/RoundedClipCompat$apply$1; (637)
+
+
+10-04 03:48:02.771  4096  4096 W dalvikvm: Link of class 'Lcom/shilapi/xcertplay/RoundedClipCompat$apply$1;' failed
+
+
+10-04 03:48:02.771  4096  4096 E dalvikvm: Could not find class 'com.shilapi.xcertplay.RoundedClipCompat$apply$1', referenced from method com.shilapi.xcertplay.RoundedClipCompat.apply
+
+
+10-04 03:48:02.771  4096  4096 W dalvikvm: VFY: unable to resolve new-instance 7299 (Lcom/shilapi/xcertplay/RoundedClipCompat$apply$1;) in Lcom/shilapi/xcertplay/RoundedClipCompat;
+
+
+10-04 03:48:02.771  4096  4096 D dalvikvm: VFY: replacing opcode 0x22 at 0x0006
+
+
+10-04 03:48:02.771  4096  4096 W dalvikvm: Unable to resolve superclass of Lcom/shilapi/xcertplay/RoundedClipCompat$apply$1; (637)
+
+
+10-04 03:48:02.771  4096  4096 W dalvikvm: Link of class 'Lcom/shilapi/xcertplay/RoundedClipCompat$apply$1;' failed
+
+
+10-04 03:48:02.771  4096  4096 D dalvikvm: DexOpt: unable to opt direct call 0xa9e0 at 0x08 in Lcom/shilapi/xcertplay/RoundedClipCompat;.apply
+
+
+10-04 03:48:02.771  4096  4096 I DiPlay-CenterMap: card shown 172x96 at 260,144
+
+
+10-04 03:48:02.771  4096  4096 I CodexApi18Probe: PASS CENTER_OVERLAY_OPEN permissionGranted=true opened=true
+
+
+10-04 03:48:02.801  4096  4096 D EGL_emulation: eglMakeCurrent: 0xb8a6e650: ver 2 0
+
+
+10-04 03:48:02.821  4096  4096 I DiPlay-CenterMap: card surface 172x96
+
+
+10-04 03:48:03.771  4096  4096 D EGL_emulation: eglMakeCurrent: 0xb8a6e650: ver 2 0
+
+
+10-04 03:48:03.991  4096  4096 D EGL_emulation: eglMakeCurrent: 0xb8a6e650: ver 2 0
+
+
+10-04 03:48:03.991  4096  4096 I DiPlay-CenterMap: card hidden
+
+
+10-04 03:48:03.991  4096  4096 I CodexApi18Probe: PASS CENTER_OVERLAY_SURFACE_AND_CLOSE surfaceValid=true unavailable=false
+
+
+10-04 03:48:03.991  4096  4096 I CodexApi18Probe: COMPLETE failures=0
+
+
+10-04 03:48:04.001  4096  4096 D EGL_emulation: eglMakeCurrent: 0xb8a6e650: ver 2 0
+
+
