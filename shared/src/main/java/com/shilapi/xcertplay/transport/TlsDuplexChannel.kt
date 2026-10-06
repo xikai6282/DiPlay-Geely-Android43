@@ -389,7 +389,9 @@ class TlsDuplexChannel private constructor(
     }
 
     companion object {
-        private val ALLOWED_PROTOCOLS = arrayOf("TLSv1.3", "TLSv1.2")
+        private val ALLOWED_PROTOCOLS = if (android.os.Build.VERSION.SDK_INT <= 19)
+            arrayOf("TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1")
+        else arrayOf("TLSv1.3", "TLSv1.2")
         private const val RECEIVE_CHUNK_BYTES = 16 * 1024
         private const val MAXIMUM_TLS_BUFFER_BYTES = 1024 * 1024
         private const val MAXIMUM_CONTROL_STEPS = 32

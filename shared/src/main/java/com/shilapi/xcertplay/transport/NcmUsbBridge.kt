@@ -329,7 +329,7 @@ class NcmUsbBridge internal constructor(
         private const val NANOS_PER_MILLISECOND = 1_000_000L
 
         /** Claims and activates the NCM control/data interfaces; owns the connection on success. */
-        fun open(connection: UsbDeviceConnection, function: NcmFunctionDiscovery.NcmFunction): NcmUsbBridge {
+        fun open(connection: UsbDeviceConnection, function: NcmFunctionDiscovery.NcmFunction, diagnostic: (String) -> Unit = {}): NcmUsbBridge {
             val claimed = ArrayList<UsbInterface>(2)
             try {
                 val descriptorHostMac = readNcmHostMac(connection, function.control.id)
@@ -341,7 +341,7 @@ class NcmUsbBridge internal constructor(
                 // same interface id, so it must be claimed once and switched with setInterface.
                 val sameInterface = function.control.id == function.data.id
                 val first = if (sameInterface) function.data else function.control
-                val firstClaimed = connection.claimInterface(first, true)
+                val firstClaimed = UsbCompat.claimInterface(connection, first, diagnostic)
                 Log.i(
                     IphoneCarPlayConfiguration.TAG,
                     "claim iface=${first.id}/${UsbCompat.alternateSetting(first)} class=${first.interfaceClass}" +
@@ -354,7 +354,7 @@ class NcmUsbBridge internal constructor(
                 }
                 claimed.add(first)
                 if (!sameInterface) {
-                    val dataClaimed = connection.claimInterface(function.data, true)
+                    val dataClaimed = UsbCompat.claimInterface(connection, function.data, diagnostic)
                     Log.i(
                         IphoneCarPlayConfiguration.TAG,
                         "claim iface=${function.data.id}/${function.dataAlternate}" +

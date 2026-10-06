@@ -1,3 +1,7 @@
+> Historical validation note: this report covers an earlier candidate, not P12, P13, or P14. The APK and local authentication resources referenced below are not included in this publication.
+
+> 历史验证记录：此报告涉及其他旧候选，不代表 P12、P13 或 P14 的状态。下列本地 APK 与认证资源未包含在本次公开提交中。
+
 # H52 音频和蓝牙诊断候选独立验收（2026-10-04）
 
 APK：DiPlay-0.2.10-Geely-Android43-H52-test.apk

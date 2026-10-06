@@ -94,12 +94,13 @@ class ManualHotspotManager(
             if (localInterface != null) {
                 val connectionFrequency = frequencyFromConnectionInfo()
                 val scanFrequency = frequencyFromScanResult(localInterface)
-                val channel = observedManualHotspotChannel(
+                val observedChannel = observedManualHotspotChannel(
                     apChannel = apConfiguration?.channel ?: 0,
                     connectionFrequencyMHz = connectionFrequency,
                     scanFrequencyMHz = scanFrequency,
                     apFrequencyMHz = apConfiguration?.frequencyMHz,
                 )
+                val channel = com.shilapi.xcertplay.compat.H52WirelessDiagnostics.channel(observedChannel, expectedChannel)
                 val frequencyMHz = when {
                     apConfiguration?.frequencyMHz != null -> apConfiguration.frequencyMHz
                     connectionFrequency != null -> connectionFrequency

@@ -279,7 +279,7 @@ class IphoneUsbHost(
             val selected = if (platformConfiguration != null) {
                 UsbCompat.setConfiguration(connection, platformConfiguration)
             } else {
-                UsbCompat.setConfigurationById(connection, configurationId)
+                H52UsbConfigurationFix.select(device, connection, configurationId)
             }
             if (!selected) {
                 Log.w(
@@ -301,7 +301,7 @@ class IphoneUsbHost(
                     "out=${describeUsbEndpoint(endpoints.first)} " +
                     "in=${describeUsbEndpoint(endpoints.second)}",
             )
-            if (!connection.claimInterface(usbMux, true)) {
+            if (!UsbCompat.claimInterface(connection, usbMux)) {
                 throw IphoneUsbException.DeviceUnavailable("Android could not claim USBMUX interface 1")
             }
             claimedInterface = usbMux

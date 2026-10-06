@@ -1,13 +1,13 @@
 # H52.10500 Android 4.3 Wi‑Fi Direct 固件核查
 
-核查对象：`E:\BaiduNetdiskDownload\kc_update_01.03.10500.H52.00030\system\framework`。`system/build.prop` 标识为 `01.03.10500.H52.00030`、Android 4.3、SDK 18、incremental `2018-07-03`。本报告只根据该固件的 framework/services ODEX 反汇编，不根据新版本 Android API 推断。
+核查对象：`<local-H52.10500-firmware>\system\framework`。`system/build.prop` 标识为 `01.03.10500.H52.00030`、Android 4.3、SDK 18、incremental `2018-07-03`。本报告只根据该固件的 framework/services ODEX 反汇编，不根据新版本 Android API 推断。
 
 输入 ODEX：
 
 - `framework.odex` SHA-256：`A2FB4B0B3B123F1CF50BB3D3496913CB83E93A8D8202FFAE9C1D90270A323560`
 - `services.odex` SHA-256：`C02E7D697C4DE42DA3B18B4A390BAC6276BDC1288EA60C5DE6A45CCCADB0298C`
 
-使用本机 `F:\CarPlay\tools\baksmali-2.5.2.jar` 及 `smali-lib` 依赖，以 API 18 模式从 H52.10500 的 `framework.odex` 选择性 deodex。类保存在本报告旁边的 `p2p-api18-full-extract-classes\framework\android\net\wifi\p2p` 和 `p2p-group-list-inner-extract\framework\android\net\wifi\p2p`。未修改项目源码或固件输入。
+使用本机 `<local-tools>/baksmali-2.5.2.jar` 及 `smali-lib` 依赖，以 API 18 模式从 H52.10500 的 `framework.odex` 选择性 deodex。类保存在本报告旁边的 `<local-api18-extract>\framework\android\net\wifi\p2p` 和 `<local-group-list-extract>\framework\android\net\wifi\p2p`。未修改项目源码或固件输入。
 
 ## 旧 createGroup 的持久化行为
 

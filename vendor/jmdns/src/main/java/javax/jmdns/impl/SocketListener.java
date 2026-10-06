@@ -58,6 +58,7 @@ class SocketListener extends Thread {
                 sleepThread();
                 packet.setLength(buf.length);
                 this._jmDNSImpl.getSocket().receive(packet);
+                H52MdnsDiagnostics.packet(packet, true);
                 if (this._jmDNSImpl.isCanceling() || this._jmDNSImpl.isCanceled() || this._jmDNSImpl.isClosing() || this._jmDNSImpl.isClosed()) {
                     break;
                 }

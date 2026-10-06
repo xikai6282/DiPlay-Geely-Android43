@@ -110,6 +110,9 @@ class CarPlayHostActivity : ComponentActivity() {
 
     private var connectionPanel: View? = null
     private var wideConnectionPanel: View? = null
+    private val keyDiagnostics = ConnectionKeyDiagnostics()
+    private var keyDiagnosticsView: TextView? = null
+    private var connectionReportSaving = false
     private var wideStageView: TextView? = null
     private var wideGuidanceView: TextView? = null
     private var wideElapsedView: TextView? = null
@@ -1047,6 +1050,7 @@ class CarPlayHostActivity : ComponentActivity() {
             isClickable = true
             setOnTouchListener { view, event -> onHostTouch(view, event) }
         }
+        com.shilapi.xcertplay.media.H52LegacySurface.install(this, root, video)
         root.addView(video, FrameLayout.LayoutParams(-1, -1))
         root.addView(gestureLayer, FrameLayout.LayoutParams(-1, -1))
         val panel = LinearLayout(this).apply {
@@ -1091,6 +1095,12 @@ class CarPlayHostActivity : ComponentActivity() {
             text = getString(R.string.in_carplay_swipe_down_with_three_fingers_to_open_diplay_se)
             textSize = 13f; gravity = Gravity.CENTER; setTextColor(Color.rgb(168, 182, 202)); setPadding(0, dp(20), 0, 0)
         })
+        panel.addView(Button(this).apply {
+            text = connectionUiText("保存诊断报告", "Save report")
+            isAllCaps = false
+            contentDescription = "connection-save-report-narrow"
+            setOnClickListener { saveConnectionReport() }
+        }, LinearLayout.LayoutParams(dp(300), dp(56)))
         root.addView(panel, FrameLayout.LayoutParams(-1, -1))
         root.addView(buildWideConnectionPanel(), FrameLayout.LayoutParams(-1, -1))
         videoView = video
@@ -1157,6 +1167,16 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         wideGuidanceView = guidance
         leftContent.addView(guidance, LinearLayout.LayoutParams(-1, -2))
+        val keyDetails = TextView(this).apply {
+            textSize = 16f
+            setTextColor(Color.rgb(242, 196, 96))
+            setPadding(0, dp(8), 0, dp(4))
+            contentDescription = "connection-key-diagnostics"
+            text = keyDiagnostics.summary()
+            visibility = if (text.isEmpty()) View.GONE else View.VISIBLE
+        }
+        keyDiagnosticsView = keyDetails
+        leftContent.addView(keyDetails, LinearLayout.LayoutParams(-1, -2))
         val elapsed = TextView(this).apply {
             textSize = 14f
             setTextColor(Color.rgb(242, 196, 96))
@@ -1249,6 +1269,13 @@ class CarPlayHostActivity : ComponentActivity() {
                 scrollLogsToBottom(force = true)
             }
         }
+        logHeader.addView(Button(this).apply {
+            text = connectionUiText("保存诊断报告", "Save report")
+            isAllCaps = false
+            textSize = 16f
+            contentDescription = "connection-save-report"
+            setOnClickListener { saveConnectionReport() }
+        }, LinearLayout.LayoutParams(-2, dp(48)))
         latestLogButton = latest
         logHeader.addView(latest, LinearLayout.LayoutParams(-2, dp(44)))
         right.addView(logHeader, LinearLayout.LayoutParams(-1, -2))
@@ -1681,6 +1708,7 @@ class CarPlayHostActivity : ComponentActivity() {
             LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f),
         )
         val hevcSwitch = Switch(this).apply {
+            isEnabled = com.shilapi.xcertplay.media.H52VideoCapabilities.supportsHevc()
             isChecked = hevcEnabled
             contentDescription = getString(R.string.hevc_h_265_video_transport)
             applyMenuSwitchTints()
@@ -3177,6 +3205,7 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun createAirPlayConfig(size: DisplaySize): AirPlayConfig {
+        if (!com.shilapi.xcertplay.media.H52VideoCapabilities.supportsHevc()) hevcEnabled = false
         val physical = resolvePhysicalSize(size)
         val baseDisplay = AirPlayDisplayConfig(
             widthPixels = size.width,
@@ -4152,6 +4181,10 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun renderConnectionStatus(status: CarPlayStatus, title: String) {
+        if (status is CarPlayStatus.ConnectingControl) com.shilapi.xcertplay.media.H52WiredAudioGuard.start(this)
+        if (status is CarPlayStatus.Failed || status is CarPlayStatus.ControlEnded || status is CarPlayStatus.WaitingForIphone || status is CarPlayStatus.DiscoveringIphone) {
+            activeScreenStreamTypes.clear()
+        }
         val changed = currentConnectionStatus != status
         currentConnectionStatus = status
         stageStatusView?.text = title
@@ -4200,6 +4233,8 @@ class CarPlayHostActivity : ComponentActivity() {
     private fun failureText(status: CarPlayStatus.Failed): String {
         val message = status.message.lowercase(Locale.US)
         val knownReason = when {
+            message.contains("could not claim the ncm") ->
+                connectionUiText("无法占用 iPhone USB 网络接口", "Cannot claim the iPhone USB network interface")
             message.contains("the car hotspot is off") ->
                 connectionUiText("车机热点未开启", "Car hotspot is off")
             message.contains("h52 anw previous initialization") || message.contains("h52 anw spp initialization failed") ->
@@ -4383,6 +4418,48 @@ class CarPlayHostActivity : ComponentActivity() {
             widthDp.toFloat() / heightDp.toFloat() >= WIDE_CONNECTION_MIN_ASPECT
     }
 
+    private fun saveConnectionReport() {
+        if (connectionReportSaving) return
+        connectionReportSaving = true
+        val app = applicationContext
+        val weak = java.lang.ref.WeakReference(this)
+        val visible = logLines.joinToString("\n") { it.text }
+        val summary = keyDiagnostics.summary()
+        val fileName = "DiPlay-诊断报告-" + SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US).format(Date()) + ".txt"
+        Thread({
+            val result = runCatching {
+                val report = buildString {
+                    appendLine("DiPlay connection diagnostic report")
+                    appendLine("Android ${Build.VERSION.RELEASE} / API ${Build.VERSION.SDK_INT}; build=${Build.DISPLAY}")
+                    appendLine(summary)
+                    appendLine("--- Current visible log snapshot ---")
+                    appendLine(visible)
+                    for (name in SessionLogFile.REPORT_NAMES) {
+                        val file = File(app.filesDir, "logs/$name")
+                        if (file.isFile) {
+                            appendLine("--- $name ---")
+                            file.useLines { lines -> lines.forEach { line -> DiagnosticRedactor.redact(line)?.let { appendLine(it) } } }
+                        }
+                    }
+                }
+                if (Build.VERSION.SDK_INT >= 29) DiagnosticExportStore.saveToDownloads(app.contentResolver, fileName, report)
+                else DiagnosticExportStore.saveLegacy(app, fileName, report)
+            }
+            val activity = weak.get() ?: return@Thread
+            activity.runOnUiThread {
+                if (activity.hostUiDestroyed) return@runOnUiThread
+                activity.connectionReportSaving = false
+                val text = result.fold(
+                    { connectionUiText("报告已保存：", "Report saved: ") + it.toString() },
+                    { connectionUiText("保存失败：", "Save failed: ") + it.javaClass.simpleName })
+                android.app.AlertDialog.Builder(activity)
+                    .setMessage(text)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show()
+            }
+        }, "diplay-connection-report").apply { isDaemon = true; start() }
+    }
+
     private fun appendLog(message: String) {
         val safe = redactSingleLogLine(message) ?: return
         val now = System.currentTimeMillis()
@@ -4409,6 +4486,11 @@ class CarPlayHostActivity : ComponentActivity() {
         if (hostUiDestroyed) return
         val update = Runnable {
             if (hostUiDestroyed) return@Runnable
+            keyDiagnostics.update(message)
+            keyDiagnosticsView?.apply {
+                text = keyDiagnostics.summary()
+                visibility = if (text.isEmpty()) View.GONE else View.VISIBLE
+            }
             while (logLines.size >= MAX_VISIBLE_LOG_LINES) logLines.removeFirst()
             logLines.addLast(LogEntry(timestampMillis, formattedLogLine(message, timestampMillis)))
             if (!logRefreshScheduled) {
@@ -4477,6 +4559,11 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     private fun applyFullscreenMode() {
+        if (Build.VERSION.SDK_INT < 20) {
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            return
+        }
         val hideTop = hideTopBar
         val hideBottom = hideBottomBar
         WindowCompat.setDecorFitsSystemWindows(window, !(hideTop && hideBottom))

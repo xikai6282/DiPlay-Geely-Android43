@@ -98,30 +98,7 @@ object UsbDeviceLayoutReader {
         descriptors: ByteArray,
         selectedConfigurationId: Int?,
     ): UsbDeviceLayout {
-        // Records come from the selected configuration only, so a passive configuration's
-        // interfaces can never be mistaken for the active ones.
-        val records = ConfigurationDescriptorScanner.interfaceRecords(descriptors, selectedConfigurationId)
-        val configurationId = selectedConfigurationId?.takeIf { it > 0 }
-            ?: ConfigurationDescriptorScanner.configurationId(descriptors)
-        val interfaces = (0 until device.interfaceCount).mapNotNull { index ->
-            val platform = device.getInterface(index)
-            val record = records.firstOrNull { it.interfaceNumber == platform.id }
-            // Match on endpoint addresses too: two alternates of one interface differ only there,
-            // so the endpoint set identifies which alternate the platform object represents.
-            val alternate = record?.let { candidate ->
-                val platformAddresses = (0 until platform.endpointCount)
-                    .map { platform.getEndpoint(it).address }
-                    .toSet()
-                // Exact set equality on the full 8-bit address (direction bit included). A
-                // containsAll-style match would let an empty platform set match every alternate.
-                candidate.endpointAddressesByAlternate.entries
-                    .firstOrNull { (_, addresses) -> addresses.toSet() == platformAddresses }
-                    ?.key
-                    ?: record.alternateSettings.firstOrNull()
-            } ?: 0
-            UsbInterfaceView(platform, alternate)
-        }
-        return UsbDeviceLayout(configurationId, interfaces)
+        return H52UsbConfigurationFix.read(device, descriptors, selectedConfigurationId)
     }
 
     /**

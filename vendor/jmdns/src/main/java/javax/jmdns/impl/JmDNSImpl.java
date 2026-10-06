@@ -1559,12 +1559,12 @@ public class JmDNSImpl extends JmDNS implements DNSStatefulObject, DNSTaskStarte
      * Additional records
      * DeviceManagementService._ibisip_http._tcp.local: type TXT, class IN, cache flush
      * PassengerCountingService._ibisip_http._tcp.local: type TXT, class IN, cache flush
-     * DIST500_7-F07_OC030_05_03941.local: type A, class IN, cache flush, addr 192.168.88.236
-     * DeviceManagementService._ibisip_http._tcp.local: type SRV, class IN, cache flush, priority 0, weight 0, port 5000, target DIST500_7-F07_OC030_05_03941.local
-     * PassengerCountingService._ibisip_http._tcp.local: type SRV, class IN, cache flush, priority 0, weight 0, port 5001, target DIST500_7-F07_OC030_05_03941.local
+     * example.local: type A, class IN, cache flush, addr 192.0.2.1
+     * DeviceManagementService._ibisip_http._tcp.local: type SRV, class IN, cache flush, priority 0, weight 0, port 5000, target example.local
+     * PassengerCountingService._ibisip_http._tcp.local: type SRV, class IN, cache flush, priority 0, weight 0, port 5001, target example.local
      * DeviceManagementService._ibisip_http._tcp.local: type NSEC, class IN, cache flush, next domain name DeviceManagementService._ibisip_http._tcp.local
      * PassengerCountingService._ibisip_http._tcp.local: type NSEC, class IN, cache flush, next domain name PassengerCountingService._ibisip_http._tcp.local
-     * DIST500_7-F07_OC030_05_03941.local: type NSEC, class IN, cache flush, next domain name DIST500_7-F07_OC030_05_03941.local
+     * example.local: type NSEC, class IN, cache flush, next domain name example.local
      */
     private List<DNSRecord> aRecordsLast(List<DNSRecord> allAnswers) {
         ArrayList<DNSRecord> ret = new ArrayList<>(allAnswers.size());
@@ -1702,6 +1702,7 @@ public class JmDNSImpl extends JmDNS implements DNSStatefulObject, DNSTaskStarte
             final MulticastSocket ms = _socket;
             if (ms != null && !ms.isClosed()) {
                 ms.send(packet);
+                H52MdnsDiagnostics.packet(packet, false);
             }
         }
     }

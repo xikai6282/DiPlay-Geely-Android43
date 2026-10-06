@@ -85,6 +85,17 @@ class Api18CompatProbeActivity : Activity(), SurfaceHolder.Callback {
 
     private fun runProbes(surface: Surface) {
         val mode = intent.getStringExtra("probe") ?: "full"
+        if (mode == "usb_native") {
+            checkCase("USBFS_NATIVE_API18") {
+                check(LegacyUsbNative.configure(-1, 2) == -9)
+                check(LegacyUsbNative.selectAlternate(-1, 3, 0) == -9)
+                check(LegacyUsbNative.claim(-1, 3) == -9)
+                check(LegacyUsbNative.configure(0, -1) == -22)
+                "library loaded; invalid fd/config guarded; real USB iPhone not tested"
+            }
+            complete()
+            return
+        }
         if (mode == "wifi_p2p") {
             checkCase("WIFI_P2P_LEGACY_API18") {
                 android.net.wifi.p2p.WifiP2pManager::class.java.getMethod("createGroup",

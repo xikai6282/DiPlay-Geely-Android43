@@ -1586,14 +1586,11 @@ class CarPlayController(
                 ?: throw IphoneUsbException.Protocol(
                     "iPhone exposes no active CarPlay USB configuration (layout=${layout.describe()})",
                 )
-            val selected = if (configuration != null) {
-                com.shilapi.xcertplay.compat.UsbCompat.setConfiguration(connection, configuration)
-            } else {
-                com.shilapi.xcertplay.compat.UsbCompat.setConfigurationById(connection, configurationId)
-            }
-            if (!selected) {
-                connectionDiagnostic("NCM SET_CONFIGURATION $configurationId reported failure; continuing")
-            }
+            // USBMUX is already claimed on another fd. Never reset configuration here:
+            // it can invalidate the existing session and kernel interface bookkeeping.
+            val activeId = com.shilapi.xcertplay.transport.UsbDeviceLayoutReader.activeConfigurationId(connection)
+            com.shilapi.xcertplay.transport.NcmConfigurationGuard.requireActive(activeId, configurationId)
+            connectionDiagnostic("NCM configuration confirmed=$activeId action=keep-usbmux-configuration")
             val selectedLayout = IphoneCarPlayConfiguration.readLayout(device, connection)
             val function = if (configuration != null) {
                 NcmFunctionDiscovery.find(configuration, selectedLayout)
@@ -1606,7 +1603,7 @@ class CarPlayController(
                     " status=${function.statusIn?.address?.let { "0x${it.toString(16)}" } ?: "none"}" +
                     " in=0x${function.bulkIn.address.toString(16)} out=0x${function.bulkOut.address.toString(16)}",
             )
-            return NcmUsbBridge.open(connection, function).also { bridgeOwnsConnection = true }
+            return NcmUsbBridge.open(connection, function, ::debugLog).also { bridgeOwnsConnection = true }
         } finally {
             if (!bridgeOwnsConnection) connection.close()
         }
@@ -1633,38 +1630,7 @@ class CarPlayController(
             )
             onStatus(CarPlayStatus.ConnectingControl)
             val carKitClient = LockdownCarKitClient(mux)
-            // Temporary lab capture, limited to accessory/authentication messages and two minutes.
-            try {
-                val relay = carKitClient.openService(pairRecord, config.label, "com.apple.syslog_relay")
-                Thread({
-                    try {
-                        relay.use {
-                            val deadline = System.nanoTime() + 120_000_000_000L
-                            val pending = StringBuilder()
-                            val relevant = Regex(" (accessoryd|ACCCarPlayService|iap2d|CarPlay)([\\[(])", RegexOption.IGNORE_CASE)
-                            while (!closed && System.nanoTime() < deadline) {
-                                val bytes = relay.recv(8192, 1000) ?: continue
-                                if (bytes.isEmpty()) break
-                                pending.append(bytes.toString(Charsets.UTF_8).replace('\u0000', '\n'))
-                                while (true) {
-                                    val end = pending.indexOf("\n")
-                                    if (end < 0) break
-                                    val line = pending.substring(0, end)
-                                    pending.delete(0, end + 1)
-                                    if (relevant.containsMatchIn(line)) debugLog("PHONE ${line.take(2000)}")
-                                }
-                                if (pending.length > 65536) pending.clear()
-                            }
-                        }
-                        debugLog("phone authentication diagnostic capture ended")
-                    } catch (error: Exception) {
-                        debugLog("phone authentication diagnostic capture ended: ${error.javaClass.simpleName}")
-                    }
-                }, "carplay-lab-phone-diagnostics").apply { isDaemon = true; start() }
-                debugLog("phone authentication diagnostic capture started")
-            } catch (error: Exception) {
-                debugLog("phone authentication diagnostics unavailable: ${error.message}")
-            }
+            // H52 production path: no phone syslog relay on the live USB transport.
             val carkit = try {
                 carKitClient.open(pairRecord, config.label)
             } catch (error: Throwable) {

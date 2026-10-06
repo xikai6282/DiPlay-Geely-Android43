@@ -2663,12 +2663,12 @@
 - L1558: `* _ibisip_http._tcp.local: type PTR, class IN, PassengerCountingService._ibisip_http._tcp.local`
 - L1560: `* DeviceManagementService._ibisip_http._tcp.local: type TXT, class IN, cache flush`
 - L1561: `* PassengerCountingService._ibisip_http._tcp.local: type TXT, class IN, cache flush`
-- L1562: `* DIST500_7-F07_OC030_05_03941.local: type A, class IN, cache flush, addr 192.168.88.236`
-- L1563: `* DeviceManagementService._ibisip_http._tcp.local: type SRV, class IN, cache flush, priority 0, weight 0, port 5000, target DIST500_7-F07_OC030_05_03941.local`
-- L1564: `* PassengerCountingService._ibisip_http._tcp.local: type SRV, class IN, cache flush, priority 0, weight 0, port 5001, target DIST500_7-F07_OC030_05_03941.local`
+- L1562: `* example.local: type A, class IN, cache flush, addr 192.0.2.1`
+- L1563: `* DeviceManagementService._ibisip_http._tcp.local: type SRV, class IN, cache flush, priority 0, weight 0, port 5000, target example.local`
+- L1564: `* PassengerCountingService._ibisip_http._tcp.local: type SRV, class IN, cache flush, priority 0, weight 0, port 5001, target example.local`
 - L1565: `* DeviceManagementService._ibisip_http._tcp.local: type NSEC, class IN, cache flush, next domain name DeviceManagementService._ibisip_http._tcp.local`
 - L1566: `* PassengerCountingService._ibisip_http._tcp.local: type NSEC, class IN, cache flush, next domain name PassengerCountingService._ibisip_http._tcp.local`
-- L1567: `* DIST500_7-F07_OC030_05_03941.local: type NSEC, class IN, cache flush, next domain name DIST500_7-F07_OC030_05_03941.local`
+- L1567: `* example.local: type NSEC, class IN, cache flush, next domain name example.local`
 - L2159: `private static class ServiceCollector implements ServiceListener {`
 
 ## vendor/jmdns/src/main/java/javax/jmdns/impl/JmmDNSImpl.java

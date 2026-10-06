@@ -40,7 +40,7 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".hudtest"
+            applicationIdSuffix = ".repair1"
             versionNameSuffix = "-hud-test"
         }
         release {

@@ -254,6 +254,7 @@ class Iap2WirelessControlClient(
                 passphrase = endpoint.passphrase,
                 channel = endpoint.channel,
                 securityType = endpoint.security.wireValue,
+                bssid = com.shilapi.xcertplay.compat.H52WirelessBssid.parse(endpoint.deviceIdentifier),
             )
 
         /** Wireless 0x4301 reply carrying the receiver address, port and pairing identity. */

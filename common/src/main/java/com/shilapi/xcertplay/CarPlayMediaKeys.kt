@@ -210,6 +210,8 @@ internal object CarPlayMediaKeys {
         }
         val context = appContext ?: return
         registerLegacyMediaButtons(context)
+        // H52 track coordinator owns vendor focus; a second MUSIC focus mutes that route.
+        if (AirPlayPersistence.loadGeelyAudioRouting(context)) return
         if (legacyFocusHeld) return
         val audio = context.systemService(AudioManager::class.java, "audio") ?: return
         @Suppress("DEPRECATION")

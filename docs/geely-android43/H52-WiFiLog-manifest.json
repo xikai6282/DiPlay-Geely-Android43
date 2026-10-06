@@ -28,7 +28,7 @@
     },
     "hotspot-ui": {
       "readButton": true,
-      "readResult": "已读取车机热点：SSID“AndroidAP”；安全类型：WPA/WPA2；频段：无法获取；信道：无法获取。密码已保存到默认遮罩的输入框。",
+      "readResult": "已读取车机热点：SSID“[redacted]”；安全类型：WPA/WPA2；频段：无法获取；信道：无法获取。密码已保存到默认遮罩的输入框。",
       "enableConfirmation": true,
       "cancelWorks": true,
       "enableResult": "车机报告热点开启失败。",

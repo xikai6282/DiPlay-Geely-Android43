@@ -35,6 +35,12 @@ internal object ConnectionRecoveryAdvice {
             error.contains("wi-fi p2p creategroup failed") || error.contains("waiting for a usable wi-fi p2p group") || error.contains("wi-fi direct did not respond") -> Advice(
                 "系统未确认可用的 Wi-Fi 直连网络。请检查车机 Wi-Fi 已开启；仍失败时切回车机热点并保存日志。建组失败不能认定为 iPhone 密码错误。",
                 "The system did not confirm a usable Wi-Fi Direct group. Enable Wi-Fi; if it still fails, use the built-in hotspot and save logs. This does not prove an iPhone password error.")
+            error.contains("could not claim the ncm") -> Advice(
+                "已识别 iPhone，但 Android 无法占用 USB 网络接口。请退出原厂投屏或其他占用 USB 的应用，重新插拔数据线后重试；供电正常不代表接口可用。保存报告可查看具体内核错误码。",
+                "The iPhone was found, but Android could not claim its USB network interface. Exit other USB/projection apps and reconnect the cable. Power alone does not prove interface availability; save the report for the kernel error.")
+            error.contains("usb configuration changed or could not be confirmed") -> Advice(
+                "USBMUX 打开后未确认相同的 USB 配置，本次没有再次切换配置。请重新插拔 iPhone 并重试，保存报告检查是否发生重枚举或其他应用占用。",
+                "The USB configuration was not confirmed after USBMUX opened. Reconnect the iPhone and save the report; configuration was not reset underneath the session.")
             error.contains("the car hotspot is off") -> Advice(
                 "请在 DiPlay 热点设置或车机原厂界面开启车机热点，再点击“读取车机热点信息”并重试。WiFi 客户端开启不等于热点开启。",
                 "Enable the car hotspot in DiPlay or the factory settings, read its configuration, and retry. Client Wi-Fi being on does not mean the hotspot is on.")

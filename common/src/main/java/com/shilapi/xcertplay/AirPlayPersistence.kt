@@ -103,7 +103,7 @@ object AirPlayPersistence {
     }
 
     fun loadHevcEnabled(context: Context): Boolean =
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        com.shilapi.xcertplay.media.H52VideoCapabilities.supportsHevc() && context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getBoolean(KEY_HEVC_ENABLED, false)
 
     fun loadUiScalePercent(context: Context): Int = CarPlayUiScale.sanitize(

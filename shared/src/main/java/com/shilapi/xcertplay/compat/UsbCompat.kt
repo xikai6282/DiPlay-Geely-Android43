@@ -37,12 +37,7 @@ object UsbCompat {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) usbInterface.alternateSetting
         else invokeInt(usbInterface, "getAlternateSetting", fallback = 0)
 
-    /**
-     * Selects [configuration] on the device. The typed setConfiguration() is API 21, so on Android
-     * 4.3 this issues the standard SET_CONFIGURATION request over controlTransfer(), which has
-     * existed since API 12. Returning false here would silently disable the wired CarPlay path, so
-     * the legacy branch performs the real transfer instead of bailing out.
-     */
+    /** Select configuration through usbfs so device and kernel state change together. */
     fun setConfiguration(
         connection: UsbDeviceConnection,
         configuration: UsbConfiguration,
@@ -60,20 +55,27 @@ object UsbCompat {
     fun setConfigurationById(connection: UsbDeviceConnection, configurationId: Int): Boolean =
         setConfigurationLegacy(connection, configurationId)
 
-    /** Standard USB SET_CONFIGURATION: bmRequestType 0x00, bRequest 0x09, wValue = configuration id. */
     private fun setConfigurationLegacy(connection: UsbDeviceConnection, configurationId: Int): Boolean {
-        val value = configurationId and 0xFF
-        val result = connection.controlTransfer(0x00, 0x09, value, 0, null, 0, SET_CONFIGURATION_TIMEOUT_MS)
-        if (result < 0) {
-            Log.w(TAG, "SET_CONFIGURATION $configurationId failed code=$result")
-            return false
-        }
-        return true
+        val result = runCatching { LegacyUsbNative.configure(connection.fileDescriptor, configurationId) }
+            .getOrElse { Log.w(TAG, "USBDEVFS_SETCONFIGURATION helper unavailable", it); return false }
+        Log.i(TAG, "USBDEVFS_SETCONFIGURATION config=$configurationId result=$result errno=${-result}")
+        return result == 0
+    }
+
+    /** Preserve Android's force-claim behavior, then capture the real kernel error on failure. */
+    fun claimInterface(connection: UsbDeviceConnection, usbInterface: UsbInterface, diagnostic: (String) -> Unit = {}): Boolean {
+        if (connection.claimInterface(usbInterface, true)) return true
+        val result = runCatching { LegacyUsbNative.claim(connection.fileDescriptor, usbInterface.id) }
+            .getOrElse { Log.w(TAG, "USBDEVFS_CLAIMINTERFACE helper unavailable", it); return false }
+        val detail = "USBDEVFS_CLAIMINTERFACE iface=${usbInterface.id} result=$result errno=${-result}"
+        Log.w(TAG, detail)
+        diagnostic(detail)
+        return result == 0
     }
 
     /**
      * Selects an alternate setting on an already-claimed interface. setInterface() is API 21; the
-     * legacy branch sends SET_INTERFACE (0x01 0x0B) with wIndex encoding interface and alternate.
+     * legacy branch uses USBDEVFS_SETINTERFACE to update the kernel endpoint state too.
      */
     fun setInterface(connection: UsbDeviceConnection, usbInterface: UsbInterface): Boolean =
         setInterface(connection, usbInterface, alternateSetting(usbInterface))
@@ -91,23 +93,14 @@ object UsbCompat {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && alternateSetting == alternateSetting(usbInterface)) {
             return runCatching { connection.setInterface(usbInterface) }.getOrDefault(false)
         }
-        // SET_INTERFACE: bmRequestType=0x01, bRequest=0x0B, wValue=alternateSetting,
-        // wIndex=interface id. Putting the alternate in wIndex instead selects alt 0.
-        val result = connection.controlTransfer(
-            0x01, 0x0B,
-            alternateSetting and 0xFF,
-            usbInterface.id and 0xFF,
-            null, 0, SET_CONFIGURATION_TIMEOUT_MS,
-        )
-        if (result < 0) {
-            Log.w(TAG, "SET_INTERFACE ${usbInterface.id}/$alternateSetting failed code=$result")
-            return false
-        }
-        return true
+        val result = runCatching {
+            LegacyUsbNative.selectAlternate(connection.fileDescriptor, usbInterface.id, alternateSetting)
+        }.getOrElse { Log.w(TAG, "USBDEVFS_SETINTERFACE helper unavailable", it); return false }
+        Log.i(TAG, "USBDEVFS_SETINTERFACE iface=${usbInterface.id}/$alternateSetting result=$result errno=${-result}")
+        return result == 0
     }
 
     private const val TAG = "xcertplay-usb"
-    private const val SET_CONFIGURATION_TIMEOUT_MS = 2_000
 
     private inline fun <reified T> invoke(target: Any, name: String, arg: Int): T? = runCatching {
         @Suppress("UNCHECKED_CAST")

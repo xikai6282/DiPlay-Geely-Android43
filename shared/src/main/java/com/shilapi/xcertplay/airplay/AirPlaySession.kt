@@ -655,6 +655,8 @@ class AirPlaySession(
         try {
             val socket = server.accept()
             socket.setSoLinger(true, 0)
+            // Upstream v0.2.13 PR311: send small touch events without Nagle withholding.
+            socket.tcpNoDelay = true
             debugLog("airplay event connection accepted from ${socket.remoteSocketAddress}")
             eventSocket = socket
             val shared = pairVerify.shared

@@ -121,7 +121,7 @@ class AnwBluetoothBackend internal constructor(context: Context, private val sup
                         .apply { isDaemon = true; start() }
                 }
             }
-            onTrace("H52 ANW connect request result=${request.result} index=${request.index} uuidEncoding=canonical-big-endian peerInterpretation=unverified")
+            onTrace("H52 ANW connect request result=${request.result} index=${request.index} uuidEncoding=guid-fields-little-endian peerInterpretation=unverified")
             if (request.result != 1 || request.index !in 0..3) {
                 throw IOException("H52 ANW connect request rejected: result=${request.result} index=${request.index}")
             }
@@ -135,6 +135,7 @@ class AnwBluetoothBackend internal constructor(context: Context, private val sup
             val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15)
             while (!stopped.get() && !cancelled() && System.nanoTime() < deadline) {
                 val state = rpc.deviceState(ownedIndex.get())
+                onTrace("H52 ANW connect observation index=${ownedIndex.get()} result=${state.result} state=${state.state} addressPresent=${!state.address.isNullOrBlank()} addressMatches=${state.address.equals(address, ignoreCase = true)}")
                 if (state.result == 1 && state.state == 1 && state.address.equals(address, ignoreCase = true)) {
                     onTrace("H52 ANW native SPP link confirmed index=${ownedIndex.get()} addressMatches=true")
                     if (stopped.get() || cancelled()) throw IOException("H52 ANW connection cancelled")
@@ -211,6 +212,10 @@ class AnwBluetoothBackend internal constructor(context: Context, private val sup
 
     companion object {
         internal fun uuidBytes(uuid: UUID): ByteArray = ByteBuffer.allocate(16)
-            .putLong(uuid.mostSignificantBits).putLong(uuid.leastSignificantBits).array()
+            .putLong(uuid.mostSignificantBits).putLong(uuid.leastSignificantBits).array().also { bytes ->
+                for ((a, b) in arrayOf(0 to 3, 1 to 2, 4 to 5, 6 to 7)) {
+                    val value = bytes[a]; bytes[a] = bytes[b]; bytes[b] = value
+                }
+            }
     }
 }

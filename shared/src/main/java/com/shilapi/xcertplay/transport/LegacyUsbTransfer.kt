@@ -65,7 +65,7 @@ object LegacyUsbTransfer {
         target: ByteArray,
         offset: Int,
     ): ChunkTransfer = ChunkTransfer { chunkOffset, length, timeoutMillis ->
-        connection.bulkTransfer(endpoint, target, offset + chunkOffset, length, timeoutMillis)
+        H52UsbReadPump.read(connection, endpoint, target, offset + chunkOffset, length, timeoutMillis)
     }
 
     fun endpointWriter(
