@@ -130,8 +130,7 @@ object AirPlayInfoPlist {
         val pcmVoice = 0x3fc
         val pcm = pcmVoice or (if (is48) 0xc000 else 0xc00)
         val pcmMono = 0x154 or (if (is48) 0x4000 else 0x400)
-        // H52/API18 has no Opus codec. Advertise PCM so the phone sends decodable guidance.
-        val opus = if (android.os.Build.VERSION.SDK_INT >= 21) 0x70000000 else 0
+        val opus = 0x70000000
         val aacLc = if (is48) 0x800000 else 0x400000
         val pcmInput = if (microphone) pcmMono else null
         val wirelessInput = if (microphone) pcmMono or opus else null
