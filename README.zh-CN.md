@@ -7,9 +7,9 @@
 | 版本 | 用途 | 状态 |
 | --- | --- | --- |
 | **[P21 实车测试包](https://github.com/xikai6282/DiPlay-Geely-Android43/releases/tag/h52-p21-20261008)** | 音乐、导航声音修复及无效 HUD 重试停止 | **用户实车确认两者有声，画面和触摸正常** |
-| [P22 整合候选](https://github.com/xikai6282/DiPlay-Geely-Android43/releases/tag/h52-p22-20261008) | 最终 P16 的流畅度/免 root 改动 + P21 音频/HUD 修复 | **未再次实车测试，标记 Pre-release** |
+| P22 本地整合候选 | 最终 P16 的流畅度/免 root 改动 + P21 音频/HUD 修复 | **尚未实车测试，暂不发布** |
 
-P21 已上传并保留，P22 不替代 P21 的实车验证状态。下载页同时提供 APK、源码归档、校验值和说明。包名为 `com.shihab.diplay.repair1`；P21 清单仍显示 P16/code30，P22 已统一显示 P22/code31，请用文件名与 SHA256 区分。
+P21 已上传并保留，P22 不替代 P21 的实车验证状态。P21 下载页提供 APK、源码归档、校验值和说明；P22 仅保留本地待测。包名为 `com.shihab.diplay.repair1`；P21 清单仍显示 P16/code30，P22 已统一显示 P22/code31，请用文件名与 SHA256 区分。
 
 ## 流畅度、触控和免 root 修复
 
@@ -23,7 +23,7 @@ P21 已上传并保留，P22 不替代 P21 的实车验证状态。下载页同�
 
 P16 阶段现场已确认 Freescale 硬解与 1920×720 正常画面；对话记录报告跟手改善。应用提交统计不等于物理屏幕 FPS；零恢复计数窗口未覆盖 flush 触发后的恢复，仍需专门回归。
 
-**打包纠错：** P20/P21 曾沿用过时的 classes2 树，导致 USB 免 root 调用、视频线程/Socket 和恢复改动遗漏。P21 的音频实车结果仍有效；P22 已从最终 P16 APK 重新提取 DEX 后合并修复。P21 源码 ZIP 与其运行 APK 的 USB 路径不完全一致，归档供历史审查；P22 提供实际组装 smali 树和重打包脚本。
+**打包纠错：** P20/P21 曾沿用过时的 classes2 树，导致 USB 免 root 调用、视频线程/Socket 和恢复改动遗漏。P21 的音频实车结果仍有效；P22 已从最终 P16 APK 重新提取 DEX 后合并修复。P21 源码 ZIP 与其运行 APK 的 USB 路径不完全一致，归档供历史审查；P22 本地候选包含实际组装 smali 树和重打包脚本，测试后再发布。
 
 ## 音乐、导航和后台修复
 
@@ -54,7 +54,7 @@ P16 阶段现场已确认 Freescale 硬解与 1920×720 正常画面；对话记
 3. 免 root 桥接取决于对应固件服务；测试车本身已有 root，尚未完成无 root 环境全部 USB 场景验证。fallback36 是回退信道值，不代表已测得 5GHz。
 4. E01/6Q 自动识别与配置、自动读取原车热点、方向盘按键、首次启动优化仍在规划。5GHz 必须免 root 临时测试成功后才允许持久修改，失败不永久写入。
 
-当前默认分支应用源码保留历史 P12，最新源码与实际组装文件在各下载包中；P22 全 Gradle 构建、模拟器及实车复测未运行。历史技术说明见 [H52 修复状态](docs/geely-android43/H52-REPAIR-STATUS-2026-10-06.md)、[构建说明](docs/geely-android43/BUILD.md)、[API18 迁移审查](MIGRATION-REVIEW.md)。
+当前默认分支应用源码保留历史 P12，P21源码归档在下载页，P22源码及实际组装文件仅本地待测；P22 全 Gradle 构建、模拟器及实车复测未运行。历史技术说明见 [H52 修复状态](docs/geely-android43/H52-REPAIR-STATUS-2026-10-06.md)、[构建说明](docs/geely-android43/BUILD.md)、[API18 迁移审查](MIGRATION-REVIEW.md)。
 
 ## 来源与许可
 
