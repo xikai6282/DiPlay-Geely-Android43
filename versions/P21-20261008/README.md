@@ -1,5 +1,10 @@
 # P21 · H52 音乐与导航声音修复（2026-10-08）
 
+**补充复核：P21 的音频、画面和触摸已实车通过，但重建 classes2 时误用过时树，遗漏部分最终 P16 的流畅度与 USB 免 root 调用。源码 ZIP 与实际 APK 的 USB 路径不一致。P22 本地候选已重新整合，尚未测试，暂不发布。**
+
+[正式 P21 Release（含 APK、源码 ZIP、校验文件）](https://github.com/xikai6282/DiPlay-Geely-Android43/releases/tag/h52-p21-20261008) · [完整逐项版本记录](../../VERSION-HISTORY.md)
+
+
 本目录保存实际安装并验证的 P21。只在一台博瑞 H52 / i.MX6 / Android 4.3 API18 实车测试，E01尚未验证。
 
 ## 下载
@@ -24,14 +29,15 @@ APK SHA-256：`d15a8655b0225579e018d578619fbff23d2a4d5da0de6b2e971b768fec66437f`
 
 无线使用车机热点，iPhone关闭个人热点并保持Wi-Fi/蓝牙开启。本车现场发现手机个人热点开启会阻止进入无线CarPlay；没有把它推广为所有iOS/车机的通用结论。
 
-保留P16已有免Root相关桥接实现，本轮音频与HUD修复不增加su调用。当前测试车机本身已有Root，未完成未Root环境完整验证，不能据此保证所有固件免Root。5GHz免Root临时测试/永久修改、E01整合、自动热点配置、方向盘按键和启动瘦身尚未合入P21。
+classes3保留P16热点桥接，但USB配置路径在classes2重建时回退为su，不能宣称完整保留免Root。当前测试车机本身已有Root，未完成未Root环境完整验证，不能据此保证所有固件免Root。5GHz免Root临时测试/永久修改、E01整合、自动热点配置、方向盘按键和启动瘦身尚未合入P21。
 
 切换页面时仍出现Surface已释放/解码器重建警告，随后用户确认画面与触摸恢复；不宣称生命周期问题彻底修复。未完成长时间运行、重启、Siri/电话、所有USB场景及其他车型回归。
 
 ## 构建和来源
 
-基于P16→P20，P21只修改AudioRenderer与BydHudBridge，并新增软件解码器DEX和许可文件。API18 v1/v2签名、zipalign、最终DEX回读、其他payload保持检查通过。软件Opus50帧本地编码/解码样本通过；全Gradle构建未运行，源码快照不是经过全工程重新编译验收的发布版。默认分支原应用源码仍为历史P12；P21源码见本目录ZIP。
+P21相对P20修改AudioRenderer与BydHudBridge，并新增软件解码器DEX和许可文件；相对最终P16还存在前述误回退，原先只对P20做比对不充分。API18 v1/v2签名、zipalign、最终DEX回读、其他payload保持检查通过。软件Opus50帧本地编码/解码样本通过；全Gradle构建未运行，源码快照不是经过全工程重新编译验收的发布版。默认分支原应用源码仍为历史P12；P21源码见本目录ZIP。
 
 Concentus依赖：`io.github.jaredmdobson:concentus:1.0.2`，[Maven Central](https://central.sonatype.com/artifact/io.github.jaredmdobson/concentus/1.0.2)。许可保留于APK及源码包。无线压缩音频要求参见[Apple WWDC2016](https://developer.apple.com/videos/play/wwdc2016/722/)。
 
 源码包不含独立认证密钥及签名密钥；APK保留现有实验性认证资产及原项目声明，不是Apple认证产品。
+
