@@ -1,89 +1,62 @@
-# DiPlay — 吉利 Android 4.3 适配
+# DiPlay · 吉利 Android 4.3 适配
 
-## 最新实车测试包：P21（2026-10-08）
+面向博瑞 H52 / i.MX6 / API18 的 CarPlay 适配。**视频流畅度与触控优化、原厂免 root 桥接，以及音乐和导航声音修复，是这一轮迭代的主要成果。** 其他车型仍需独立验证。
 
-**音乐与导航声音已修复，H52 无效 BYD HUD 重试已停止。用户实车确认音乐、导航、画面和触摸正常。**
+## 下载与测试状态
 
-[P21 APK、源码快照与技术说明](versions/P21-20261008/README.md)。仅H52/API18实车验证；页面切换Surface问题、E01整合、5GHz测试及方向盘按键仍待处理。下方保留历史P12说明，默认分支原应用代码未在本次整体替换；P21对应源码在版本目录ZIP中。
+| 版本 | 用途 | 状态 |
+| --- | --- | --- |
+| **[P21 实车测试包](https://github.com/xikai6282/DiPlay-Geely-Android43/releases/tag/h52-p21-20261008)** | 音乐、导航声音修复及无效 HUD 重试停止 | **用户实车确认两者有声，画面和触摸正常** |
+| [P22 整合候选](https://github.com/xikai6282/DiPlay-Geely-Android43/releases/tag/h52-p22-20261008) | 最终 P16 的流畅度/免 root 改动 + P21 音频/HUD 修复 | **未再次实车测试，标记 Pre-release** |
 
-## 历史版本：P12（2026-10-06）
+P21 已上传并保留，P22 不替代 P21 的实车验证状态。下载页同时提供 APK、源码归档、校验值和说明。包名为 `com.shihab.diplay.repair1`；P21 清单仍显示 P16/code30，P22 已统一显示 P22/code31，请用文件名与 SHA256 区分。
 
-目标适配范围为 **2018–2020 款吉利博瑞、缤越、缤瑞、嘉际、星越 GKUI 系统**。目前实车验证仅限一台博瑞 H52、Android 4.3/API 18，其他车型和硬件/固件版本尚未验证。
+## 流畅度、触控和免 root 修复
 
-当前源码采用实车使用的 P12。USB CarPlay 和原车热点无线 CarPlay 已出画面，全屏显示及 Freescale H.264 硬件解码已确认，画质配置为 1920×720。音乐已确认有声，但原车蓝牙与 CarPlay 音频焦点协调尚未完成。
+**P16 是从“已出画面但卡顿”推进到流畅度优化的关键版本。** 最终 P16 已加入以下改动，P22 已逐项核对并保留：
 
-**仍存在的问题：严重卡顿、触控不跟手、无线导航无声，以及离开/返回投影时的 Surface 错误。** 当前仅测试了原车 5 GHz 热点，2.4 GHz 和其他车型尚未验证；启动速度、断线返回等待界面的完整场景仍需测试。
+- 视频积压恢复由每次销毁硬解改为 flush 与关键帧重同步，减少该路径反复重建开销。
+- 视频接收与解码线程提升至 URGENT_DISPLAY；视频 Socket 开启 TCP_NODELAY，申请 512KB 接收缓冲。
+- 继承 P14 的触控 Event Socket TCP_NODELAY，改善交互发送延迟。
+- USB 配置切换与热点信道读取接入吉利固件 usbprotect 桥接，替代对应 su 路径，保留我们自己的免 root 实现。
+- 修正界面、清单与源码版本号，继续保留 API18/Dalvik、多 DEX、Freescale 硬解和原厂蓝牙兼容。
 
-[查看 P12 修复与问题说明](docs/geely-android43/H52-REPAIR-STATUS-2026-10-06.md)。
+P16 阶段现场已确认 Freescale 硬解与 1920×720 正常画面；对话记录报告跟手改善。应用提交统计不等于物理屏幕 FPS；零恢复计数窗口未覆盖 flush 触发后的恢复，仍需专门回归。
 
-## Root 辅助要求
+**打包纠错：** P20/P21 曾沿用过时的 classes2 树，导致 USB 免 root 调用、视频线程/Socket 和恢复改动遗漏。P21 的音频实车结果仍有效；P22 已从最终 P16 APK 重新提取 DEX 后合并修复。P21 源码 ZIP 与其运行 APK 的 USB 路径不完全一致，归档供历史审查；P22 提供实际组装 smali 树和重打包脚本。
 
-**当前 P12 在博瑞 H52 上验证成功的连接路线需要已 root 的车机，并授权 DiPlay 执行 `su`。安装 APK、开启系统蓝牙或开启应用中的 H52 蓝牙开关，都不能代替这项授权。** 请先确认车机已有可用的 root；应用请求 root 权限时允许该请求，再进行连接测试。
+## 音乐、导航和后台修复
 
-| 功能 | P12 的 root 辅助用途 |
+- 撤回 API18 清零 Opus 的协商尝试，恢复手机建立无线音频流。
+- API21 以下以 Concentus 软件解码导航 Opus，保留 AAC-LC 音乐及既有媒体/导航音频通道。
+- 每个解码实例独立状态、复用采样缓冲，结束时清理；坏包限量记录。
+- BYD SomeIp 服务存在且启用才启动 HUD；H52 不再每 300ms 反复尝试绑定不存在的服务。
+- P21 实车用户确认：音乐、导航都从车机出声，画面和触摸正常。切换页面仍观察过 Surface 释放警告，不能据此宣称所有生命周期问题已修复。
+
+## 版本迭代与全部改动
+
+| 阶段 | 内容 |
 | --- | --- |
-| USB CarPlay | 当普通 USB 配置切换被系统占用阻止时，通过 root/sysfs 将已识别、已连接的 iPhone 从 USB 配置 2 切到 6。仅处理该 iPhone，不切换车机整体 USB Host/ADB 模式。 |
-| 原车热点无线 CarPlay | 通过 `su` 只读访问 `/data/misc/wifi/hostapd.conf`，取得实际热点信道并发送给 iPhone。热点仍需在原车设置中开启；该信道读取不修改热点配置。 |
-| H52／E01 蓝牙状态检测 | 检测按钮本身不执行 root 命令，返回情况取决于厂商蓝牙服务及其访问权限。E01／Android 4.4 可以先检测、保留结果，再判断后续适配。 |
+| P12 | USB / 原车热点无线连接、宽屏与硬解基线，仍有卡顿和导航无声 |
+| P13 / P14 | 音频 PCM 协商尝试 / 触控 TCP_NODELAY；PCM-only 尝试后续撤回 |
+| P15 | 从 P12 单独分出的硬解调用计时诊断包 |
+| **P16** | **流畅度、触控、USB/Wi-Fi 免 root 桥接、版本号修正** |
+| P17–P19 | 会话保护与 CPU/蓝牙检测支线，不默认累计进 P16 |
+| P20 / **P21** | 无线音频协商恢复 / **导航 Opus 解码、音乐有声、HUD 门控实车通过** |
+| P22 | 重新合并完整 P16 与 P21；本地检查通过，等待实车复测 |
 
-未 root 或未授权时，USB 配置切换或热点信道读取可能失败，不能按本次已验证路线保证连接。本文说明当前 P12 的运行前提，不是车机 root 教程。
+完整逐项说明、版本分支关系、打包遗漏与未实施方案集中在 **[VERSION-HISTORY.md](VERSION-HISTORY.md)**。后续更新统一写在该文件，不在首页末尾重复追加。
 
-## 使用前设置
+## 使用与后续工作
 
-1. 在车机原厂蓝牙界面先配对 iPhone，并保持 iPhone 的蓝牙、Wi-Fi 开启。
-2. 对本项目列出的 GKUI 车型，打开 DiPlay **设置 → 连接设置 →「尝试 H52 原厂蓝牙连接」**开关，再选择已在原厂界面配对的 iPhone。这是应用中的连接通路开关，不是仅打开车机系统蓝牙。
-3. **E01、Android 4.4 的车主先检测：**打开 **设置 → 诊断 →「H52 厂商蓝牙状态检测」**，再点击 **「检查 H52 厂商蓝牙状态」**，查看并保留返回结果。该按钮读取厂商蓝牙状态；检测结果用于判断是否存在可用的厂商通路，不等于已经完成 CarPlay 连接。E01 尚未实车验证，请先根据检测返回情况判断。
-4. 使用原车热点无线方式时，开启车机热点，让 iPhone 加入该热点，再尝试连接。
+1. 在原车蓝牙中配对 iPhone，打开 DiPlay 的 H52 原厂蓝牙连接通路。
+2. 无线连接使用车机热点，iPhone 保持 Wi-Fi/蓝牙开启。本车观察到手机个人热点开启会阻止连接，关闭后恢复。
+3. 免 root 桥接取决于对应固件服务；测试车本身已有 root，尚未完成无 root 环境全部 USB 场景验证。fallback36 是回退信道值，不代表已测得 5GHz。
+4. E01/6Q 自动识别与配置、自动读取原车热点、方向盘按键、首次启动优化仍在规划。5GHz 必须免 root 临时测试成功后才允许持久修改，失败不永久写入。
 
-## 历史说明（截至 2026-10-05 的原 README 内容）
+当前默认分支应用源码保留历史 P12，最新源码与实际组装文件在各下载包中；P22 全 Gradle 构建、模拟器及实车复测未运行。历史技术说明见 [H52 修复状态](docs/geely-android43/H52-REPAIR-STATUS-2026-10-06.md)、[构建说明](docs/geely-android43/BUILD.md)、[API18 迁移审查](MIGRATION-REVIEW.md)。
 
-以下保留原来的项目介绍、下载信息、适配清单和文档链接；其中历史验证状态以日期为准，最新情况见上方 P12 说明。
+## 来源与许可
 
-基于 [shihabal3amri/DiPlay](https://github.com/shihabal3amri/DiPlay) **v0.2.10** 的社区适配版本，目标为吉利 H41 类 Android 4.3（API 18）车机。原始 CarPlay 接收器、界面及协议实现由上游项目和其贡献者提供；本仓库主要完成旧 Android 系统兼容、中文文案修正、模拟器验收和适配文档。
+基于 [shihabal3amri/DiPlay](https://github.com/shihabal3amri/DiPlay) v0.2.10 的 API18 适配，选择性移植上游 0.2.13 的适用修复，不是直接运行官方现代系统 APK。保留 [GPL-3.0 LICENSE](LICENSE) 和 [第三方来源及许可](docs/THIRD_PARTY_NOTICES.md)。实验性认证资产沿用现有声明，APK 不是 Apple 认证产品；源码归档不提供独立认证或签名私钥。
 
-**状态：实验性适配。Android 4.3.1 x86 模拟器验证通过；吉利 ARM 实车及真实 iPhone 连接尚未验证。** H41 固件只做静态研究，没有移植其私有系统服务、固件、认证材料或原厂 CarPlay 二进制。此项目与 Apple、吉利和原作者均无官方隶属或认证关系。
-
-## 下载与安装
-
-[本仓库 Releases](https://github.com/xikai6282/DiPlay-Geely-Android43/releases) 提供公开测试 APK 及对应源码。安装在车机端。测试包标识为 `com.shihab.diplay.hudtest`、`versionCode=29`、`versionName=0.2.10-hud-test`，最低 API 18。
-
-Release 提供**内置实验性认证材料的完整车测 APK**，无需用户自行补充认证文件即可尝试连接。源码不包含独立认证密钥或 APK 签名密钥；本地重新构建完整包仍需外部认证输入，见构建文档。
-
-这不是 Apple 认证产品。APK 中的认证身份可被提取；该实验身份并非为本项目新签发，来源说明沿用上游 [第三方声明](docs/THIRD_PARTY_NOTICES.md)。内置材料和模拟器签名测试均不能保证真实 iPhone 接受，未来 iOS 更新的兼容性也未验证。
-
-## 本次适配
-
-- API 18 启动、设置页、权限检查、前台服务、悬浮窗和旧版 UI 属性兼容。
-- 旧版 MediaCodec 输入/输出缓冲区、AudioTrack/AudioRecord、RCC 媒体按键及音频焦点。
-- 旧 USB 配置描述符扫描、同步短写/16 KB 分块、NCM 数据传输和 VPN 非阻塞回退。
-- Java Base64、字符集、时间与集合 API 回退；IPv6 监听和接口级 Bonjour/mDNS。
-- 保留 0.2.10 的 USBMUX framing、动态 AirPlay 端口、媒体元数据、封面队列及诊断边界。
-- 中文术语与热点状态显示修正。Wi-Fi 直连模式由车机创建网络，iPhone 加入；它不代表车机连接苹果个人热点。
-- 需要新版系统的 Media3 视频、使用情况监控和部分仪表盘功能，在 API 18 上明确禁用或返回不支持。无线功能还取决于实际车机固件能力，不能根据模拟器结果承诺可用。
-
-## 文档
-
-- [代码级适配技术说明](docs/geely-android43/TECHNICAL.md)
-- [构建与复现](docs/geely-android43/BUILD.md)
-- [验收结果与限制](docs/geely-android43/VALIDATION.md)
-- [逐文件方法索引](docs/geely-android43/SOURCE-INDEX.md)
-- [上游到适配版源码补丁](docs/geely-android43/UPSTREAM-TO-API18.patch)
-- [详细迁移审查](MIGRATION-REVIEW.md)
-- [上游与第三方来源](docs/geely-android43/ATTRIBUTION.md)
-- [上游原始说明](docs/geely-android43/UPSTREAM-README.md)
-
-## 开源来源与许可
-
-基线：DiPlay v0.2.10，提交 `3e43e25c55921bdf5149f5f92851acf202ed353a`。本次工作从对应 0.2.10 源码归档开始，并非基于 0.2.9，也没有合并上游后续版本。
-
-保留上游 [GPL-3.0 LICENSE](LICENSE)、版权声明及 [第三方许可文件](docs/licenses)。上游注明基础实现来自 xcertplay（GPL-3.0），界面及网站适配自 DiAuto（AGPL-3.0）；这些原始声明及适用许可继续保留，详见 [上游 Credits](docs/THIRD_PARTY_NOTICES.md)。本仓库的适配说明不会替代各组件原有许可。
-
-## H52 最新实验适配（2026-10-05）
-
-新增默认关闭的 H52 ANW 原厂蓝牙连接开关、读取热点配置和用户确认开启车机热点按钮，以及宽屏左侧连接状态/解决建议、右侧实时滚动日志。Android4.3 的完整诊断报告直接保存到用户内存根目录。605项单元测试通过；最终APK通过安卓4.3模拟器宽屏/窄屏、热点按钮、缺配置防崩溃和日志跟随/重试验收，验证范围见技术文档。H52实车 iPhone 握手和热点硬件操作仍待验证，尚无经过验证的5 GHz AP频段控制接口。
-
-代码与使用说明：[ANW接入](docs/geely-android43/H52-ANW-CONNECTION.md)、[热点与连接界面](docs/geely-android43/CONNECTION-UI-IMPLEMENTATION.md)、[WiFi固件证据](docs/geely-android43/H52-WIFI-REVIEW.md)、[原厂音频](docs/geely-android43/H52-AUDIO.md)、[API18报告导出](docs/geely-android43/API18-REPORT-EXPORT.md)。测试APK保留本地认证私钥与证书；源码不包含原始认证凭据。
-
-### Android 4.3 Wi-Fi Direct 更新（2026-10-05）
-
-连接设置恢复“Wi-Fi 直连”选项，API18–28 使用旧版两参数 createGroup，读取系统提供的网络名和密码。H52.10500 固件已核实这些接口、访问权限和 persistent group 语义；未知频段/频道不伪造为 5 GHz。保留车机热点模式、原厂蓝牙开关和运行日志。当前模拟器无有效 Wi-Fi radio，真实 H52 建组与 iPhone 完整连接仍需实车验证。详见 [代码与测试说明](docs/geely-android43/WIFI-DIRECT-API18.md)。
