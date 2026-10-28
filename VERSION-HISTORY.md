@@ -76,4 +76,4 @@ P16现场记录确认Freescale硬解、1920×720正常出画面；对话报告�
 这里的免root是应用不调用su、使用原厂固件服务；支持范围取决于该服务与固件权限。P16/P21测试车本身已有root，尚不能据此保证任意未root固件完整连接。P22没有运行5GHz测试、没有永久改写配置、没有覆盖安装车机。本仓库仍保留GPL/第三方来源与历史测试版本，旧报告按版本和日期理解。
 
 
-发布状态：P21 为历史发布版；P22 保留为历史草稿。C7A-R2 为已发布的测试版，见 [C7A-R2 发布页](https://github.com/xikai6282/DiPlay-Geely-Android43/releases/tag/gkui12-c7a-r2-20261028)。不支持 E01 车机。
+发布状态：P21 为历史发布版；P22 保留为历史草稿。C7A-R2 为当前发布版本，见 [C7A-R2 发布页](https://github.com/xikai6282/DiPlay-Geely-Android43/releases/tag/gkui12-c7a-r2-20261028)。不支持 E01 车机。
