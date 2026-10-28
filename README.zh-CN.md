@@ -36,7 +36,7 @@
 
 | 版本 | 更新内容 | 状态 |
 | --- | --- | --- |
-| **[C7A-R2 测试版](https://github.com/xikai6282/DiPlay-Geely-Android43/releases/tag/gkui12-c7a-r2-20261028)** | 优化通话音频缓冲和蓝牙连接清理 | **已台架测试；完整通话与无线连接稳定性仍需验证** |
+| **[C7A-R2 版本](https://github.com/xikai6282/DiPlay-Geely-Android43/releases/tag/gkui12-c7a-r2-20261028)** | 优化通话音频缓冲和蓝牙连接清理 | **已台架测试；完整通话与无线连接稳定性仍需验证** |
 
 C7A-R2 发布页提供 APK、源码归档及 SHA-256 校验文件。APK SHA-256：`7bb6825032726b693cc995d72091ab7fd208b412491082b80cb34c7369234ddb`；包名 `com.shihab.diplay.repair1`，manifest 为 `v1.6.15` / code `80`。
 
@@ -83,7 +83,7 @@ P16 阶段现场已确认 Freescale 硬解与 1920×720 正常画面；对话记
 3. 免 root 桥接取决于对应固件服务；测试车本身已有 root，尚未完成无 root 环境全部 USB 场景验证。fallback36 是回退信道值，不代表已测得 5GHz。
 4. 启动时检查 CPU 和免 root 通道，可按提示操作 5GHz 热点。热点功能依赖实际硬件与固件；其他设备需单独验证。
 
-当前默认分支应用源码保留历史 P12；C7A-R2 的 Java 快照、smali 构建树和脚本随测试版发布，依赖既有基线和构建工具，未验证在其他环境完整重建。历史技术说明见 [H52 修复状态](docs/geely-android43/H52-REPAIR-STATUS-2026-10-06.md)、[构建说明](docs/geely-android43/BUILD.md)、[API18 迁移审查](MIGRATION-REVIEW.md)。
+当前默认分支应用源码保留历史 P12；C7A-R2 的 Java 快照、smali 构建树和脚本随 C7A-R2 发布，依赖既有基线和构建工具，未验证在其他环境完整重建。历史技术说明见 [H52 修复状态](docs/geely-android43/H52-REPAIR-STATUS-2026-10-06.md)、[构建说明](docs/geely-android43/BUILD.md)、[API18 迁移审查](MIGRATION-REVIEW.md)。
 
 ## 来源与许可
 
